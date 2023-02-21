@@ -16,7 +16,7 @@ dependencies = [
   "transformers>=4.22.0",
   "timm>0.6.11",
 ]
-description = "Efficient multimodal semantic search models by unum.cloud"
+description = "Efficient Multi-Modal Semantic Search Models by Unum"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [

@@ -1,11 +1,26 @@
-## UniForm 
+<h1 align="center">UForm</h1>
+<h3 align="center">
+Multi-Modal Inference Library<br/>
+For Semantic Search Applications<br/>
+</h3>
+<br/>
 
-UniForm (UForm) is unum.cloud library, which allows to embed media and texts written across numerous languages in unified vector space with state-of-the-art quality, but at the fraction of the cost, making Artificial Intelligence accessible for the next million applications.
+<p align="center">
+<a href="https://discord.gg/jsMURnSFM2"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/discord.svg" alt="Discord"></a>
+&nbsp;&nbsp;&nbsp;
+<a href="https://www.linkedin.com/company/unum-cloud/"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/linkedin.svg" alt="LinkedIn"></a>
+&nbsp;&nbsp;&nbsp;
+<a href="https://twitter.com/unum_cloud"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/twitter.svg" alt="Twitter"></a>
+&nbsp;&nbsp;&nbsp;
+<a href="https://unum.cloud/post"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/blog.svg" alt="Blog"></a>
+&nbsp;&nbsp;&nbsp;
+<a href="https://github.com/unum-cloud/uform"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/github.svg" alt="GitHub"></a>
+</p>
 
-Currently, there are two visual-language models available:
+---
 
-* Monolingual English model: BERT with 4 layers (2 unimodal layers and 2 multimodal layers) + ViT-B/16
-* Multilingual model, supporting 11 languages (en, de, es, fr, it, jp, ko, pl, ru, tr, zh): BERT with 12 layers (8 unimodal layers and 4 multimodal layers) + ViT-B/16
+UForm is Multi-Modal Modal Inference package, designed to encode Multi-Lingual Texts, Images, and, soon, Audio, Video, and Documents, into a shared vector space!
+It extends HuggingFace `transfromers` to ...
 
 ## Installation
 
@@ -32,7 +47,7 @@ from PIL import Image
 # data preprocessing
 img = Image.open('red_panda.jpg')
 img = model.img_transform(img).unsqueeze(0)
-text = 'a small red panda in zoo'
+text = 'a small red panda in a zoo'
 text = model.text_transform(text)
 
 # image encoding
@@ -58,3 +73,23 @@ scores = (image_embedding * text_embedding).sum(dim=1)
 # multimodal similarity (range [0, 1])
 scores = model.get_matching_scores(img_text_embedding)
 ```
+
+## Models
+
+The Multilingual model supports 11 language, trained on a balanced dataset, containing the following languages.
+
+|      |      |      |      |
+| :--- | :--- | :--- | :--- |
+| en   | de   | es   | fr   |
+| it   | jp   | ko   | pl   |
+| ru   | tr   | zh   |      |
+
+### Architecture
+
+| Model        | Language Tower | Image Tower |  Shared  |  URL |
+| :----------- | :------------: | :---------: | :------: | ---: |
+| Monolingual  | BERT, 2 layers |  ViT-B/16   | 2 layers |      |
+| Multilingual | BERT, 8 layers |  ViT-B/16   | 4 layers |      |
+
+### Performance
+
