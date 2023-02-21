@@ -7,6 +7,12 @@ Currently, there are two visual-language models available:
 * Monolingual English model: BERT with 4 layers (2 unimodal layers and 2 multimodal layers) + ViT-B/16
 * Multilingual model, supporting 11 languages (en, de, es, fr, it, jp, ko, pl, ru, tr, zh): BERT with 12 layers (8 unimodal layers and 4 multimodal layers) + ViT-B/16
 
+## Installation
+
+```bash
+pip install uform
+```
+
 ## Usage
 
 To load model use following code:
