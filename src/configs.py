@@ -32,12 +32,10 @@ model2config = {
         },
         'img_encoder': {
             'backbone': 'deit3_base_patch16_224_in21ft1k',
-            'pretrained': True,
             'dim': 768,
             'output_dim': 256,
             'backbone_type': 'vit',
-            'pooling': 'cls',
-            'context_dim': 768
+            'pooling': 'cls'
         },
         'checkpoint_name': '2ykv5gpp.pt'
     }
