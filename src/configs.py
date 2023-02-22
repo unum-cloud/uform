@@ -1,5 +1,5 @@
 model2config = {
-    'eng': {
+    'english': {
         'text_encoder': {
             'backbone': 'google/bert_uncased_L-4_H-768_A-12',
             'backbone_type': 'bert',
@@ -37,6 +37,6 @@ model2config = {
             'backbone_type': 'vit',
             'pooling': 'cls'
         },
-        'checkpoint_name': '2ykv5gpp.pt'
+        'checkpoint_name': 'wp37uexl.pt'
     }
 }

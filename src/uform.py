@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import timm
-from configs import *
+from .configs import *
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize, InterpolationMode
 from transformers import AutoTokenizer
 from transformers import BertConfig, BertModel, RobertaConfig, RobertaModel, XLMRobertaConfig, XLMRobertaModel
@@ -267,7 +267,7 @@ class VLM(nn.Module):
         self.img_encoder = VisualEncoder(**config['img_encoder'])
         self.text_encoder = TextEncoder(**config['text_encoder'])
 
-        self.img_transform = Compose([
+        self.image_transform = Compose([
             Resize(224, interpolation=InterpolationMode.BICUBIC),
             lambda x: x.convert('RGB'),
             CenterCrop(224),
@@ -298,20 +298,20 @@ class VLM(nn.Module):
 
     def encode_multimodal(
         self,
-        img: torch.Tensor = None,
+        image: torch.Tensor = None,
         text_data: dict = None,
-        img_features: torch.Tensor = None,
+        image_features: torch.Tensor = None,
         text_features: torch.Tensor = None,
         attention_mask: torch.Tensor = None):
 
-        assert img is not None or img_features is not None, "Either 'img' or 'img_features' should be non None"
+        assert image is not None or image_features is not None, "Either 'image' or 'image_features' should be non None"
         assert text_data is not None or text_features is not None, "Either 'text_data' or 'text_features' should be non None"
 
         if text_features is not None:
             assert attention_mask is not None, "if 'text_features' is not None, then you should pass 'attention_mask'"
 
-        if img_features is None:
-            img_features = self.img_encoder.forward_features(img)
+        if image_features is None:
+            image_features = self.img_encoder.forward_features(image)
 
         if text_features is None:
             text_features = self.text_encoder.forward_unimodal(
@@ -322,7 +322,7 @@ class VLM(nn.Module):
         return self.text_encoder.forward_multimodal(
             text_features,
             attention_mask if attention_mask is not None else text_data['attention_mask'],
-            img_features
+            image_features
         )
 
     def get_matching_scores(
