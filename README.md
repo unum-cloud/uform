@@ -34,7 +34,7 @@ __Early fusion models__ encode both modalities jointly so they can take into acc
 __Mid fusion models__ are golden middle between the previous two types. Mid fusion models consist of two parts – unimodal and multimodal. The unimodal part allows encoding each modality separately as late fusion models do. The multimodal part takes unimodal features from the unimodal part as input and enhances them by cross-attention mechanism.
 Mid fusion models combine the speed of late fusion models and the accuracy of early fusion models.
 
-HuggingFace `transfromers` library have not supported mid fusion models' architecture yet, and because of it we wrote a small wrapper for it.
+HuggingFace `transfromers` library has not supported mid fusion models' architecture yet, and because of it we wrote a small wrapper for it.
 
 ## Installation
 
