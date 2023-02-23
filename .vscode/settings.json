@@ -1,8 +1,13 @@
 {
     "cSpell.words": [
+        "embs",
         "keepdim",
+        "logits",
         "multimodal",
         "preprocess",
+        "pretrained",
+        "probs",
+        "softmax",
         "transfromers",
         "uform",
         "unimodal",

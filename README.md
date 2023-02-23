@@ -105,7 +105,7 @@ import torch.nn.functional as F
 similarity = F.cosine_similarity(image_embedding, text_embedding)
 ```
 
-The `similarity` will belong to `[-1, 1]` range, `1` meaning the absolute match.
+The `similarity` will belong to the `[-1, 1]` range, `1` meaning the absolute match.
 
 __Pros__:
 
@@ -121,13 +121,11 @@ __Cons__:
 ### Matching Score 
 
 Unlike cosine similarity, unimodal embedding are not enough.
-Joint embedding will 
+Joint embedding will be needed and the resulting `score` will belong to the `[0, 1]` range, `1` meaning the absolute match.
 
 ```python
 score = model.get_matching_scores(joint_embedding)
 ```
-
-Matching score equals to the the probability (so it is in range from 0 to 1) that the image and the text contain the same semantics.
 
 __Pros__:
 
