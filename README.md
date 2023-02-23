@@ -19,14 +19,12 @@ For Semantic Search Applications<br/>
 
 ---
 
-UForm is Multi-Modal Modal Inference package, designed to encode Multi-Lingual Texts, Images, and, soon, Audio, Video, and Documents, into a shared vector space!
+UForm is a Multi-Modal Modal Inference package, designed to encode Multi-Lingual Texts, Images, and, soon, Audio, Video, and Documents, into a shared vector space!
 It comes with a set of homonymous pre-trained networks available on [HuggingFace portal](https://huggingface.co/unum-cloud/uform) and extends the `transfromers` package to support Mid-fusion Models.
 
 ## Three Kinds of Multi-Modal Encoding
 
-![](assets/model_types_bg.png)
-
-Three types of multimodal models exist:
+![Early, Mid and Late Fusion Transformer Models](assets/model_types_bg.png)
 
 __Late-fusion models__ encode each modality independently, but into one shared vector space.
 Due to independent encoding late-fusion models are good at capturing coarse-grained features but often neglect fine-grained ones.
