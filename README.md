@@ -60,26 +60,21 @@ from PIL import Image
 
 # data preprocessing
 image = Image.open('red_panda.jpg')
-image = model.img_transform(image).unsqueeze(0)
+image_data = model.preprocess_image(image).unsqueeze(0)
 text = 'a small red panda in a zoo'
 # text_data contains the tokenized text and the attention mask
-text_data = model.text_transform(text)
+text_data = model.preprocess_text(text)
 
-# unimodal image encoding
-image_embedding = model.encode_image(image)
-
-# unimodal text encoding
+image_embedding = model.encode_image(image_data)
 text_embedding = model.encode_text(text_data)
-
-# joint multimodal encoding
-image_text_embedding = model.encode_multimodal(image=image, text_data=text_data)
+image_text_embedding = model.encode_multimodal(image=image_data, text=text_data)
 ```
 
 You can get not only embeddings but features too:
 
 ```python
-image_features, image_embedding = model.encode_image(image, return_features=True)
-text_features, text_embedding = model.encode_text(text, return_features=True)
+image_features, image_embedding = model.encode_image(image_data, return_features=True)
+text_features, text_embedding = model.encode_text(text_data, return_features=True)
 ```
 
 These features also can be used for multimodal encoding:

@@ -23,14 +23,14 @@
         <g id="late-fusion" transform="translate(93.000000, 188.000000)">
             <g id="text-tower">
                 <rect id="Rectangle" fill="#55828B" x="0" y="96" width="163.090909" height="115" rx="6"></rect>
-                <text id="text" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#000000">
-                    <tspan x="60" y="260">text</tspan>
+                <text id="text" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#000000">
+                    <tspan x="64" y="260">text</tspan>
                 </text>
-                <text id="image" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#000000">
-                    <tspan x="243" y="260">image</tspan>
+                <text id="image" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#000000">
+                    <tspan x="242" y="260">image</tspan>
                 </text>
-                <text id="Text-Encoder" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#FFFFFF">
-                    <tspan x="16" y="160">Text Encoder</tspan>
+                <text id="Text-Encoder" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#FFFFFF">
+                    <tspan x="23" y="160">Text Encoder</tspan>
                 </text>
                 <path id="Line" d="M81.5,219 L86,228 L82,228 L82,242 L81,242 L81,228 L77,228 L81.5,219 Z" fill="#000000" fill-rule="nonzero"></path>
                 <path id="Line" d="M81.5,27 L86,36 L82,36 L82,88 L81,88 L81,36 L77,36 L81.5,27 Z" fill="#000000" fill-rule="nonzero"></path>
@@ -45,8 +45,8 @@
             </g>
             <g id="image-tower" transform="translate(188.000000, 0.000000)">
                 <rect id="Rectangle" fill="#5D558B" x="0" y="96" width="163.090909" height="115" rx="6"></rect>
-                <text id="Image-Encoder" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#FFFFFF">
-                    <tspan x="11" y="160">Image Encoder</tspan>
+                <text id="Image-Encoder" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#FFFFFF">
+                    <tspan x="12" y="160">Image Encoder</tspan>
                 </text>
                 <path id="Line" d="M81.5,220 L86,229 L82,229 L82,243 L81,243 L81,229 L77,229 L81.5,220 Z" fill="#000000" fill-rule="nonzero"></path>
                 <path id="Line" d="M81.5,27 L86,36 L82,36 L82,88 L81,88 L81,36 L77,36 L81.5,27 Z" fill="#000000" fill-rule="nonzero"></path>
@@ -58,8 +58,8 @@
                     <path d="M76,0 L93,0 C94.1045695,-2.02906125e-16 95,0.8954305 95,2 L95,17 C95,18.1045695 94.1045695,19 93,19 L76,19 L76,19 L76,0 Z" id="Rectangle" fill="#7D789C"></path>
                 </g>
             </g>
-            <text id="Late-Fusion-Model" font-family="Menlo-Regular, Menlo" font-size="18" font-weight="normal" fill="#000000">
-                <tspan x="83" y="303">Late Fusion Model</tspan>
+            <text id="Late-Fusion-Model" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#000000">
+                <tspan x="92" y="303">Late Fusion Model</tspan>
             </text>
         </g>
         <g id="mid-fusion" transform="translate(546.000000, 67.000000)">
@@ -69,18 +69,18 @@
                     <use fill="#55828B" xlink:href="#path-2"></use>
                     <use fill="url(#linearGradient-1)" xlink:href="#path-2"></use>
                 </g>
-                <text id="text" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#000000">
-                    <tspan x="181" y="287">text</tspan>
+                <text id="text" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#000000">
+                    <tspan x="185" y="287">text</tspan>
                 </text>
-                <text id="image" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#000000">
-                    <tspan x="364" y="287">image</tspan>
+                <text id="image" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#000000">
+                    <tspan x="362" y="287">image</tspan>
                 </text>
-                <text id="Text-Encoder" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#FFFFFF">
-                    <tspan x="137" y="187">Text Encoder</tspan>
+                <text id="Text-Encoder" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#FFFFFF">
+                    <tspan x="144" y="187">Text Encoder</tspan>
                 </text>
-                <text id="Multimodal-Layers" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#FFFFFF">
-                    <tspan x="147.81543" y="54">Multimodal</tspan>
-                    <tspan x="169.489258" y="75">Layers</tspan>
+                <text id="Multimodal-Layers" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#FFFFFF">
+                    <tspan x="150.584" y="52">Multimodal</tspan>
+                    <tspan x="173.228" y="77">Layers</tspan>
                 </text>
                 <path id="Line" d="M202.5,246 L207,255 L203,255 L203,269 L202,269 L202,255 L198,255 L202.5,246 Z" fill="#000000" fill-rule="nonzero"></path>
                 <path id="Line" d="M72.6642373,101.802567 L82.2867218,104.74498 L79.529,107.643 L116.844607,143.137721 L117.206886,143.482328 L116.517672,144.206886 L116.155393,143.862279 L78.84,108.367 L76.0837979,111.266002 L72.6642373,101.802567 Z" fill="#000000" fill-rule="nonzero"></path>
@@ -95,8 +95,8 @@
             </g>
             <g id="image-tower" transform="translate(309.000000, 121.000000)">
                 <rect id="Rectangle" fill="#5D558B" x="0" y="96" width="163.090909" height="115" rx="6"></rect>
-                <text id="Image-Encoder" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#FFFFFF">
-                    <tspan x="11" y="160">Image Encoder</tspan>
+                <text id="Image-Encoder" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#FFFFFF">
+                    <tspan x="12" y="160">Image Encoder</tspan>
                 </text>
                 <path id="Line" d="M81.5,219 L86,228 L82,228 L82,242 L81,242 L81,228 L77,228 L81.5,219 Z" fill="#000000" fill-rule="nonzero"></path>
                 <path id="Line" d="M81.5,27 L86,36 L82,36 L82,88 L81,88 L81,36 L77,36 L81.5,27 Z" fill="#000000" fill-rule="nonzero"></path>
@@ -108,8 +108,8 @@
                     <path d="M76,0 L93,0 C94.1045695,-2.02906125e-16 95,0.8954305 95,2 L95,17 C95,18.1045695 94.1045695,19 93,19 L76,19 L76,19 L76,0 Z" id="Rectangle" fill="#7D789C"></path>
                 </g>
             </g>
-            <text id="Mid-Fusion-Model" font-family="Menlo-Regular, Menlo" font-size="18" font-weight="normal" fill="#000000">
-                <tspan x="204" y="424">Mid Fusion Model</tspan>
+            <text id="Mid-Fusion-Model" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#000000">
+                <tspan x="210" y="424">Mid Fusion Model</tspan>
             </text>
             <path id="Line" d="M200.5,27 L205,36 L200.999,36 L201,88 L200,88 L199.999,36 L196,36 L200.5,27 Z" fill="#000000" fill-rule="nonzero"></path>
             <path id="Line-2" d="M297.385233,147.81861 L297.008,151.816 L297.376809,151.861145 C313.804632,153.917691 327.105505,158.312757 337.276231,165.053819 C349.201814,172.957985 361.745221,187.35093 374.922846,208.233165 C375.070215,208.466697 375.000367,208.775477 374.766835,208.922846 C374.533303,209.070215 374.224523,209.000367 374.077154,208.766835 C360.968346,187.993653 348.511753,173.700324 336.723769,165.887357 C326.623797,159.19319 313.355104,154.832011 296.914425,152.811453 L296.539551,156.778789 L288.002212,151.453018 L297.385233,147.81861 Z" fill="#000000" fill-rule="nonzero"></path>
@@ -124,18 +124,18 @@
                     <use fill="#55828B" xlink:href="#path-6"></use>
                     <use fill="url(#linearGradient-5)" xlink:href="#path-6"></use>
                 </g>
-                <text id="text-&amp;-image" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#000000">
-                    <tspan x="99" y="260">text &amp; image</tspan>
+                <text id="text-&amp;-image" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#000000">
+                    <tspan x="106" y="261">text &amp; image</tspan>
                 </text>
-                <text id="Multimodal-Encoder" font-family="Menlo-Bold, Menlo" font-size="18" font-weight="bold" fill="#FFFFFF">
-                    <tspan x="78" y="160">Multimodal Encoder</tspan>
+                <text id="Multimodal-Encoder" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#FFFFFF">
+                    <tspan x="73" y="160">Multimodal Encoder</tspan>
                 </text>
                 <path id="Line" d="M164.5,219 L169,228 L165,228 L165,242 L164,242 L164,228 L160,228 L164.5,219 Z" fill="#000000" fill-rule="nonzero"></path>
                 <path id="Line" d="M164.5,27 L169,36 L165,36 L165,88 L164,88 L164,36 L160,36 L164.5,27 Z" fill="#000000" fill-rule="nonzero"></path>
                 <rect id="Rectangle" fill="url(#linearGradient-3)" x="117" y="0" width="95" height="19" rx="2"></rect>
             </g>
-            <text id="Early-Fusion-Model" font-family="Menlo-Regular, Menlo" font-size="18" font-weight="normal" fill="#000000">
-                <tspan x="66" y="303">Early Fusion Model</tspan>
+            <text id="Early-Fusion-Model" font-family="Poppins-SemiBold, Poppins" font-size="18" font-weight="500" fill="#000000">
+                <tspan x="79" y="303">Early Fusion Model</tspan>
             </text>
         </g>
     </g>

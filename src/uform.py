@@ -267,7 +267,7 @@ class VLM(nn.Module):
         self.img_encoder = VisualEncoder(**config['img_encoder'])
         self.text_encoder = TextEncoder(**config['text_encoder'])
 
-        self.image_transform = Compose([
+        self.preprocess_image = Compose([
             Resize(224, interpolation=InterpolationMode.BICUBIC),
             lambda x: x.convert('RGB'),
             CenterCrop(224),
@@ -299,13 +299,13 @@ class VLM(nn.Module):
     def encode_multimodal(
         self,
         image: torch.Tensor = None,
-        text_data: dict = None,
+        text: dict = None,
         image_features: torch.Tensor = None,
         text_features: torch.Tensor = None,
         attention_mask: torch.Tensor = None):
 
         assert image is not None or image_features is not None, "Either 'image' or 'image_features' should be non None"
-        assert text_data is not None or text_features is not None, "Either 'text_data' or 'text_features' should be non None"
+        assert text is not None or text_features is not None, "Either 'text_data' or 'text_features' should be non None"
 
         if text_features is not None:
             assert attention_mask is not None, "if 'text_features' is not None, then you should pass 'attention_mask'"
@@ -315,13 +315,13 @@ class VLM(nn.Module):
 
         if text_features is None:
             text_features = self.text_encoder.forward_unimodal(
-                text_data['input_ids'],
-                text_data['attention_mask']
+                text['input_ids'],
+                text['attention_mask']
             )
 
         return self.text_encoder.forward_multimodal(
             text_features,
-            attention_mask if attention_mask is not None else text_data['attention_mask'],
+            attention_mask if attention_mask is not None else text['attention_mask'],
             image_features
         )
 
@@ -331,7 +331,7 @@ class VLM(nn.Module):
         return self.text_encoder._logit_and_norm(x)
 
 
-    def text_transform(self, x):
+    def preprocess_text(self, x):
         x = self._tokenizer(x,
                            padding='max_length',
                            truncation=True,
