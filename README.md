@@ -1,6 +1,3 @@
-<link rel="preconnect" href="https://fonts.googleapis.com"> 
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
 <h1 align="center">UForm</h1>
 <h3 align="center">
 Multi-Modal Inference Library<br/>
@@ -27,7 +24,7 @@ UForm is Multi-Modal Modal Inference package, designed to encode Multi-Lingual T
 It extends HuggingFace `transfromers` to mid fusion model. Three types of multimodal models exist:
 
 \
-<img src="assets/model_types_bg.svg">
+<img src="assets/model_types_bg.png">
 
 \
 __Late fusion models__ encode each modality independently, but into one shared vector space. Due to independent encoding late fusion models are good at capturing coarse-grained features but often neglect fine-grained ones. This type of models is well-suited for retrieval in large collections. The most famous example of such models is CLIP by OpenAI.
