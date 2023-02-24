@@ -24,7 +24,7 @@ It comes with a set of homonymous pre-trained networks available on [HuggingFace
 
 ## Three Kinds of Multi-Modal Encoding
 
-![Early, Mid and Late Fusion Transformer Models](assets/model_types_bg.png)
+![Early, Mid and Late Fusion Transformer Models](https://raw.githubusercontent.com/unum-cloud/uform/main/assets/model_types_bg.png)
 
 __Late-fusion models__ encode each modality independently, but into one shared vector space.
 Due to independent encoding late-fusion models are good at capturing coarse-grained features but often neglect fine-grained ones.
