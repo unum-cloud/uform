@@ -1,3 +1,4 @@
 requirements.txt
+.vscode
 *.egg-info
 dist/
