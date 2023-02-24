@@ -223,7 +223,7 @@ class TextEncoderBackbone(nn.Module):
 
         for layer in backbone.encoder.layer[self.unimodal_n_layers:]:
             self.multimodal_encoder.append(
-                FusedTrasformerLayer(
+                FusedTransformerLayer(
                     config,
                     attention_layer_cls,
                     layer)
@@ -231,7 +231,7 @@ class TextEncoderBackbone(nn.Module):
 
         self.multimodal_encoder = nn.ModuleList(self.multimodal_encoder)
 
-class FusedTrasformerLayer(nn.Module):
+class FusedTransformerLayer(nn.Module):
     def __init__(self, config, attention_layer_cls, base_layer):
         super().__init__()
 
