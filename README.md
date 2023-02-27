@@ -54,9 +54,11 @@ To load the model:
 ```python
 import uform
 
-model = uform.get_model('english')
-model = uform.get_model('multilingual')
+model = uform.get_model('unum-cloud/uform-vl-english')
+model = uform.get_model('unum-cloud/uform-vl-multilingual')
 ```
+
+You can also load your own Mid-fusion model. Just upload it on HuggingFace and pass model name to `get_model`.
 
 To encode data:
 
