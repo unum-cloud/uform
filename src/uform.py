@@ -161,7 +161,7 @@ class TextEncoder(nn.Module):
     def _logit_and_norm(self, embeddings):
         logits = self.clf_head(embeddings)
         if self.head_one_neuron:
-            return torch.sigmoid(logits)
+            return torch.sigmoid(logits)[:, 0]
 
         return F.softmax(logits, dim=1)[:, 1]
 
@@ -336,7 +336,7 @@ class VLM(nn.Module):
 
 def get_model(model_name, token=None):
     model_path = snapshot_download(
-        repo_id=f'unum-cloud/uform-vl-{model_name}',
+        repo_id=model_name,
         token=token
     )
     config_path = f'{model_path}/config.json'
