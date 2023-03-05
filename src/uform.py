@@ -8,7 +8,7 @@ from transformers import BertConfig, BertModel, RobertaConfig, RobertaModel, XLM
 from transformers.models.bert.modeling_bert import BertAttention
 from transformers.models.roberta.modeling_roberta import RobertaAttention
 from transformers.models.xlm_roberta.modeling_xlm_roberta import XLMRobertaAttention
-from huggingface_hub import hf_hub_download
+from huggingface_hub import snapshot_download, hf_hub_download
 from json import load
 
 
@@ -161,7 +161,7 @@ class TextEncoder(nn.Module):
     def _logit_and_norm(self, embeddings):
         logits = self.clf_head(embeddings)
         if self.head_one_neuron:
-            return torch.sigmoid(logits)
+            return torch.sigmoid(logits)[:, 0]
 
         return F.softmax(logits, dim=1)[:, 1]
 
@@ -190,6 +190,11 @@ class TextEncoder(nn.Module):
 
 
 class TextEncoderBackbone(nn.Module):
+    type2classes = {
+        'bert': (BertConfig, BertModel, BertAttention),
+        'roberta': (RobertaConfig, RobertaModel, RobertaAttention),
+        'xlm_roberta': (XLMRobertaConfig, XLMRobertaModel, XLMRobertaAttention)
+    }
     def __init__(
         self,
         pretrained,
@@ -200,24 +205,11 @@ class TextEncoderBackbone(nn.Module):
         self.unimodal_n_layers = unimodal_n_layers
 
         config_file = hf_hub_download(repo_id=pretrained, filename='config.json')
-
-        if backbone_type == 'bert':
-            config = BertConfig.from_json_file(config_file)
-            model = BertModel(config)
-            backbone = model
-            attention_layer_cls = BertAttention
-        elif backbone_type == 'roberta':
-            config = RobertaConfig.from_json_file(config_file)
-            model = RobertaModel(config)
-            backbone = model
-            attention_layer_cls = RobertaAttention
-        elif backbone_type == 'xlm_roberta':
-            config = XLMRobertaConfig.from_json_file(config_file)
-            model = XLMRobertaModel(config)
-            backbone = model
-            attention_layer_cls = XLMRobertaAttention
+        config_cls, model_cls, attention_layer_cls = self.type2classes[backbone_type]
+        config = config_cls.from_json_file(config_file)
+        model = model_cls(config)
             
-        self.construct_model(backbone, attention_layer_cls, model.config)
+        self.construct_model(model, attention_layer_cls, config)
 
     def construct_model(
         self,
@@ -231,7 +223,7 @@ class TextEncoderBackbone(nn.Module):
 
         for layer in backbone.encoder.layer[self.unimodal_n_layers:]:
             self.multimodal_encoder.append(
-                FusedTrasformerLayer(
+                FusedTransformerLayer(
                     config,
                     attention_layer_cls,
                     layer)
@@ -239,7 +231,7 @@ class TextEncoderBackbone(nn.Module):
 
         self.multimodal_encoder = nn.ModuleList(self.multimodal_encoder)
 
-class FusedTrasformerLayer(nn.Module):
+class FusedTransformerLayer(nn.Module):
     def __init__(self, config, attention_layer_cls, base_layer):
         super().__init__()
 
@@ -342,11 +334,13 @@ class VLM(nn.Module):
             
         return x
 
-def get_model(model_name):
-    config_path = hf_hub_download(repo_id='unum-cloud/uform', filename=f'{model_name}/config.json')
-    state_path = hf_hub_download(repo_id='unum-cloud/uform', filename=f'{model_name}/weight.pt')
-
-    state = torch.load(state_path)
+def get_model(model_name, token=None):
+    model_path = snapshot_download(
+        repo_id=model_name,
+        token=token
+    )
+    config_path = f'{model_path}/config.json'
+    state = torch.load(f'{model_path}/weight.pt')
 
     with open(config_path, 'r') as f:
         model = VLM(load(f))

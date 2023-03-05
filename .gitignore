@@ -1,3 +1,5 @@
 requirements.txt
 *.egg-info
 dist/
+test
+src/__pycache__

@@ -24,7 +24,7 @@ It comes with a set of homonymous pre-trained networks available on [HuggingFace
 
 ## Three Kinds of Multi-Modal Encoding
 
-![Early, Mid and Late Fusion Transformer Models](assets/model_types_bg.png)
+![Early, Mid and Late Fusion Transformer Models](https://raw.githubusercontent.com/unum-cloud/uform/main/assets/model_types_bg.png)
 
 __Late-fusion models__ encode each modality independently, but into one shared vector space.
 Due to independent encoding late-fusion models are good at capturing coarse-grained features but often neglect fine-grained ones.
@@ -54,9 +54,11 @@ To load the model:
 ```python
 import uform
 
-model = uform.get_model('english')
-model = uform.get_model('multilingual')
+model = uform.get_model('unum-cloud/uform-vl-english')
+model = uform.get_model('unum-cloud/uform-vl-multilingual')
 ```
+
+You can also load your own Mid-fusion model. Just upload it on HuggingFace and pass model name to `get_model`.
 
 To encode data:
 
