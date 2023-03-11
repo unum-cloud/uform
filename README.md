@@ -1,4 +1,4 @@
-<h1 align="center">UForm</h1>
+<h1 align="center">Unified Form</h1>
 <h3 align="center">
 Multi-Modal Inference Library<br/>
 For Semantic Search Applications<br/>
