@@ -147,12 +147,14 @@ __Cons__:
 | Multilingual | BERT, 8 layers |  ViT-B/16   |    4 layers     | [weights.pt][weights-m] |
 
 The Multilingual model supports 11 languages, after being trained on a balanced dataset.
+For pre-training we used translated captions made with [NLLB](https://github.com/facebookresearch/fairseq/tree/nllb)
 
-|      |      |      |      |
-| :--- | :--- | :--- | :--- |
-| en   | de   | es   | fr   |
-| it   | jp   | ko   | pl   |
-| ru   | tr   | zh   |      |
+| Code     | Language | #    | Code     | Language             | #    | Code     | Language |
+| :------- | :------- | :--- | :------- | :------------------- | :--- | :------- | :------- |
+| eng_Latn | English  | #    | fra_Latn | French               | #    | kor_Hang | Korean   |
+| deu_Latn | German   | #    | ita_Latn | Italian              | #    | pol_Latn | Polish   |
+| ita_Latn | Spanish  | #    | jpn_Jpan | Japanese             | #    | rus_Cyrl | Russian  |
+| tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    |          |          |
 
 [weights-e]: https://huggingface.co/unum-cloud/uform/resolve/main/english/weight.pt
 [weights-m]: https://huggingface.co/unum-cloud/uform/resolve/main/multilingual/weight.pt
