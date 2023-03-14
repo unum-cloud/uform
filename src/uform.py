@@ -13,23 +13,31 @@ from json import load
 
 
 class VisualEncoder(nn.Module):
-    def __init__(self,
-                 backbone,
-                 dim,
-                 output_dim,
-                 backbone_type,
-                 pooling='cls'):
+    def __init__(
+        self,
+        backbone,
+        dim,
+        output_dim,
+        backbone_type,
+        pooling='cls',
+    ):
 
         super().__init__()
-        self.encoder = timm.create_model(backbone,
-                                         pretrained=False,
-                                         num_classes=0)
+        self.encoder = timm.create_model(
+            backbone,
+            pretrained=False,
+            num_classes=0,
+        )
         self.backbone_type = backbone_type
         self.pooling = pooling
 
         if self.pooling == 'attention':
             self.attention_pooling = nn.MultiheadAttention(
-                dim, 1, batch_first=True, dropout=0.1)
+                dim,
+                1,
+                batch_first=True,
+                dropout=0.1,
+            )
             self.queries = nn.Parameter(torch.randn(1, 197, dim))
 
         self.proj = nn.Linear(dim, output_dim, bias=False)
@@ -54,7 +62,11 @@ class VisualEncoder(nn.Module):
             features = self.forward_features_conv(x)
 
         if self.pooling == 'attention':
-            return self.attention_pooling(self.queries.expand(x.shape[0], -1, -1), features, features)[0]
+            return self.attention_pooling(
+                self.queries.expand(x.shape[0], -1, -1),
+                features,
+                features,
+            )[0]
 
         return features
 
@@ -89,21 +101,23 @@ class VisualEncoder(nn.Module):
 
 
 class TextEncoder(nn.Module):
-    def __init__(self,
-                 backbone,
-                 backbone_type,
-                 unimodal_n_layers,
-                 context_dim,
-                 dim,
-                 output_dim,
-                 pooling='cls',
-                 head_one_neuron=False):
+    def __init__(
+        self,
+        backbone,
+        backbone_type,
+        unimodal_n_layers,
+        context_dim,
+        dim,
+        output_dim,
+        pooling='cls',
+        head_one_neuron=False,
+    ):
 
         super().__init__()
         self.backbone = TextEncoderBackbone(
             backbone,
             backbone_type,
-            unimodal_n_layers
+            unimodal_n_layers,
         )
 
         if context_dim != dim:
@@ -122,7 +136,9 @@ class TextEncoder(nn.Module):
 
     def forward_unimodal(self, x, attention_mask, causal=False):
         prep_attention_mask = self.prepare_attention_mask(
-            attention_mask, causal)
+            attention_mask,
+            causal,
+        )
         x = self.backbone.embeddings(x)
 
         for layer in self.backbone.unimodal_encoder:
@@ -131,34 +147,34 @@ class TextEncoder(nn.Module):
         return x
 
     def forward_multimodal(
-            self,
-            x,
-            attention_mask,
-            context,
-            causal=False):
-
+        self,
+        x,
+        attention_mask,
+        context,
+        causal=False,
+    ):
         prep_attention_mask = self.prepare_attention_mask(
-            attention_mask, causal)
+            attention_mask,
+            causal,
+        )
         context = self.context_proj(context)
-
         for layer in self.backbone.multimodal_encoder:
             x, _, _ = layer(x, prep_attention_mask, context)
 
         return self.get_embedding(x, attention_mask, project=False)
 
     def get_matching_scores(
-            self,
-            x,
-            attention_mask,
-            context):
-
+        self,
+        x,
+        attention_mask,
+        context,
+    ):
         embeddings = self.forward_multimodal(
             x,
             attention_mask,
             context,
-            False
+            False,
         )
-
         return self._logit_and_norm(embeddings)
 
     def _logit_and_norm(self, embeddings):
@@ -173,6 +189,7 @@ class TextEncoder(nn.Module):
             mask_expanded = attention_mask.unsqueeze(2)
             vec_sum = (x * mask_expanded).sum(dim=1)
             x = vec_sum / mask_expanded.sum(dim=1)
+
         elif self.pooling == 'cls':
             x = x[:, 0]
 
@@ -211,7 +228,9 @@ class TextEncoderBackbone(nn.Module):
         self.unimodal_n_layers = unimodal_n_layers
 
         config_file = hf_hub_download(
-            repo_id=pretrained, filename='config.json')
+            repo_id=pretrained,
+            filename='config.json',
+        )
         config_cls, model_cls, attention_layer_cls = self.type2classes[backbone_type]
         config = config_cls.from_json_file(config_file)
         model = model_cls(config)
@@ -219,10 +238,11 @@ class TextEncoderBackbone(nn.Module):
         self.construct_model(model, attention_layer_cls, config)
 
     def construct_model(
-            self,
-            backbone,
-            attention_layer_cls,
-            config):
+        self,
+        backbone,
+        attention_layer_cls,
+        config,
+    ):
 
         self.unimodal_encoder = backbone.encoder.layer[:self.unimodal_n_layers]
         self.embeddings = backbone.embeddings
@@ -233,7 +253,8 @@ class TextEncoderBackbone(nn.Module):
                 FusedTransformerLayer(
                     config,
                     attention_layer_cls,
-                    layer)
+                    layer,
+                )
             )
 
         self.multimodal_encoder = nn.ModuleList(self.multimodal_encoder)
@@ -250,11 +271,14 @@ class FusedTransformerLayer(nn.Module):
 
     def forward(self, x, attention_mask, context):
         attention_output, self_attention_probs = self.self_attention(
-            x, attention_mask, output_attentions=True)
+            x,
+            attention_mask,
+            output_attentions=True,
+        )
         attention_output, cross_attention_probs = self.cross_attention(
             attention_output,
             encoder_hidden_states=context,
-            output_attentions=True
+            output_attentions=True,
         )  # [0]
         intermediate_output = self.intermediate(attention_output)
         layer_output = self.output(intermediate_output, attention_output)
@@ -286,12 +310,13 @@ class VLM(nn.Module):
         return embs
 
     def encode_multimodal(
-            self,
-            image: torch.Tensor = None,
-            text: dict = None,
-            image_features: torch.Tensor = None,
-            text_features: torch.Tensor = None,
-            attention_mask: torch.Tensor = None):
+        self,
+        image: torch.Tensor = None,
+        text: dict = None,
+        image_features: torch.Tensor = None,
+        text_features: torch.Tensor = None,
+        attention_mask: torch.Tensor = None,
+    ):
 
         assert image is not None or image_features is not None, "Either 'image' or 'image_features' should be non None"
         assert text is not None or text_features is not None, "Either 'text_data' or 'text_features' should be non None"
@@ -320,12 +345,14 @@ class VLM(nn.Module):
         return self.text_encoder._logit_and_norm(x)
 
     def preprocess_text(self, x):
-        x = self._tokenizer(x,
-                            padding='max_length',
-                            truncation=True,
-                            return_tensors='pt',
-                            pad_to_max_length=True,
-                            max_length=77)
+        x = self._tokenizer(
+            x,
+            padding='max_length',
+            truncation=True,
+            return_tensors='pt',
+            pad_to_max_length=True,
+            max_length=77,
+        )
         if 'token_type_ids' in x:
             del x['token_type_ids']
 
@@ -356,7 +383,7 @@ class VLM(nn.Module):
 def get_model(model_name, token=None):
     model_path = snapshot_download(
         repo_id=model_name,
-        token=token
+        token=token,
     )
     config_path = f'{model_path}/config.json'
     state = torch.load(f'{model_path}/weight.pt')
