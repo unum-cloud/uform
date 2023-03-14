@@ -147,7 +147,7 @@ __Cons__:
 | Multilingual | BERT, 8 layers |  ViT-B/16   |    4 layers     | [weights.pt][weights-m] |
 
 The Multilingual model supports 11 languages, after being trained on a balanced dataset.
-For pre-training we used translated captions made with [NLLB](https://github.com/facebookresearch/fairseq/tree/nllb)
+For pre-training we used translated captions made with [NLLB](https://github.com/facebookresearch/fairseq/tree/nllb).
 
 | Code     | Language | #    | Code     | Language             | #    | Code     | Language |
 | :------- | :------- | :--- | :------- | :------------------- | :--- | :------- | :------- |
