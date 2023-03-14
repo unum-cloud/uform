@@ -340,8 +340,9 @@ class VLM(nn.Module):
         )
 
     def get_matching_scores(
-            self,
-            x: torch.Tensor):
+        self,
+        x: torch.Tensor,
+    ):
         return self.text_encoder._logit_and_norm(x)
 
     def preprocess_text(self, x):
