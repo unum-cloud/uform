@@ -68,7 +68,7 @@ from PIL import Image
 text = 'a small red panda in a zoo'
 image = Image.open('red_panda.jpg')
 
-image_data = model.preprocess_image(image).unsqueeze(0)
+image_data = model.preprocess_image(image)
 text_data = model.preprocess_text(text)
 
 image_embedding = model.encode_image(image_data)
