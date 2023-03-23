@@ -9,6 +9,7 @@
 project = 'Unum · UForm'
 copyright = '2023, Unum'
 author = 'Unum'
+release = open('../VERSION', 'r').read().strip()
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
