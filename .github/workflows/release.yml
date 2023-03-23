@@ -6,22 +6,37 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: ["main"]
 
-permissions:
-  contents: read
+env:
+  GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
 
 jobs:
+
+  versioning:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v3
+    - run: cp .github/workflows/package.json . && npm install && npx semantic-release
+
+
   deploy:
 
     runs-on: ubuntu-latest
+    needs: versioning
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: 'main'    
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
