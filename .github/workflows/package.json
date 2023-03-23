@@ -7,7 +7,7 @@
   },
   "release": {
     "branches": [
-      "Add-Semantic-Versioning"
+      "main"
     ],
     "debug": true,
     "ci": true,
