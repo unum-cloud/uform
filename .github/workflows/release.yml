@@ -6,14 +6,11 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Release
 
 on:
-  release:
-    types: [published]
-
-permissions:
-  contents: read
+  push:
+    branches: ["main"]
 
 env:
   GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
