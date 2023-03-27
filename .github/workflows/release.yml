@@ -15,6 +15,12 @@ on:
 env:
   GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
 
   versioning:
@@ -29,7 +35,7 @@ jobs:
 
 
   pypi_publish:
-    name: Publish PyPi
+    name: Publish to PyPi
     runs-on: ubuntu-latest
     needs: versioning
 
@@ -67,17 +73,17 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: 'main'   
-      - name: Setup Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v2
-      - name: Install Deps
+      - name: Install dependencies
         run: sudo apt update && sudo apt install -y doxygen graphviz dia git && pip install sphinx breathe furo m2r2 sphinxcontrib-googleanalytics==0.2.dev20220708 sphinxcontrib-jquery toml
-      - name: Install uform from pip
+      - name: Install UForm from PyPi
         run: pip install uform
-      - name: Build Docs
+      - name: Build documentation
         run: cd docs && make html
       - name: Copy assets
         run: cp -r assets build/docs/html/
-      - name: Upload Artifacts
+      - name: Upload artifacts
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
