@@ -69,7 +69,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Install Deps
-        run: sudo apt update && sudo apt install -y doxygen graphviz dia git && pip install sphinx breathe furo m2r2 sphinxcontrib-googleanalytics==0.2.dev20220708 sphinxcontrib-jquery
+        run: sudo apt update && sudo apt install -y doxygen graphviz dia git && pip install sphinx breathe furo m2r2 sphinxcontrib-googleanalytics==0.2.dev20220708 sphinxcontrib-jquery toml
       - name: Install uform from pip
         run: pip install uform
       - name: Build Docs
