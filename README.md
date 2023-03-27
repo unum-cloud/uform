@@ -154,7 +154,7 @@ For pre-training we used translated captions made with [NLLB](https://github.com
 | eng_Latn | English  | #    | fra_Latn | French               | #    | kor_Hang | Korean   |
 | deu_Latn | German   | #    | ita_Latn | Italian              | #    | pol_Latn | Polish   |
 | ita_Latn | Spanish  | #    | jpn_Jpan | Japanese             | #    | rus_Cyrl | Russian  |
-| tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    |          |          |
+| tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    |     .    |    .     |
 
 [weights-e]: https://huggingface.co/unum-cloud/uform/resolve/main/english/weight.pt
 [weights-m]: https://huggingface.co/unum-cloud/uform/resolve/main/multilingual/weight.pt
