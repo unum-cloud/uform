@@ -93,6 +93,22 @@ joint_embedding = model.encode_multimodal(
 )
 ```
 
+### Remote Procedure Calls for Cloud Deployments
+
+You can also use our larger, faster, better proprietary models deployed in optimized cloud environments.
+For that, please, choose the cloud of liking, search the marketplace for "Unum UniForm" and reinstall UForm with optional dependencies:
+
+```bash
+pip install uform[remote]
+```
+
+The only thing that changes after that is calling `get_client` with the IP address of your instance instead of using `get_model` for local usage.
+
+```python
+model = uform.get_client('0.0.0.0:7000')
+```
+
+
 ## Evaluation
 
 There are two options to calculate semantic compatibility between an image and a text: [Cosine Similarity](#cosine-similarity) and [Matching Score](#matching-score).
@@ -154,7 +170,7 @@ For pre-training we used translated captions made with [NLLB](https://github.com
 | eng_Latn | English  | #    | fra_Latn | French               | #    | kor_Hang | Korean   |
 | deu_Latn | German   | #    | ita_Latn | Italian              | #    | pol_Latn | Polish   |
 | ita_Latn | Spanish  | #    | jpn_Jpan | Japanese             | #    | rus_Cyrl | Russian  |
-| tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    |     .    |    .     |
+| tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    | .        | .        |
 
 [weights-e]: https://huggingface.co/unum-cloud/uform/resolve/main/english/weight.pt
 [weights-m]: https://huggingface.co/unum-cloud/uform/resolve/main/multilingual/weight.pt
