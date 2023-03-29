@@ -29,3 +29,8 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/unum-cloud/uform"
+
+[project.optional-dependencies]
+remote = [
+  "tritonclient[all]"
+]

@@ -93,6 +93,23 @@ joint_embedding = model.encode_multimodal(
 )
 ```
 
+## Cloud AWS Usage
+Client for your running AWS instance with our Unum's AMI [placeholder for AWS link]()
+
+Install optional dependencies:
+```bash
+pip install uform[remote]
+```
+
+To load the Client (use your instance IP):
+```python
+import uform
+
+model = uform.get_model('0.0.0.0:7000')
+```
+
+To encode data the same way as interface above!
+
 ## Evaluation
 
 There are two options to calculate semantic compatibility between an image and a text: [Cosine Similarity](#cosine-similarity) and [Matching Score](#matching-score).
@@ -154,7 +171,7 @@ For pre-training we used translated captions made with [NLLB](https://github.com
 | eng_Latn | English  | #    | fra_Latn | French               | #    | kor_Hang | Korean   |
 | deu_Latn | German   | #    | ita_Latn | Italian              | #    | pol_Latn | Polish   |
 | ita_Latn | Spanish  | #    | jpn_Jpan | Japanese             | #    | rus_Cyrl | Russian  |
-| tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    |     .    |    .     |
+| tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    | .        | .        |
 
 [weights-e]: https://huggingface.co/unum-cloud/uform/resolve/main/english/weight.pt
 [weights-m]: https://huggingface.co/unum-cloud/uform/resolve/main/multilingual/weight.pt

@@ -318,11 +318,11 @@ class VLM(nn.Module):
         attention_mask: torch.Tensor = None,
     ):
 
-        assert image is not None or image_features is not None, "Either 'image' or 'image_features' should be non None"
-        assert text is not None or text_features is not None, "Either 'text_data' or 'text_features' should be non None"
+        assert image is not None or image_features is not None, 'Either `image` or `image_features` should be non None'
+        assert text is not None or text_features is not None, 'Either `text_data` or `text_features` should be non None'
 
         if text_features is not None:
-            assert attention_mask is not None, "if 'text_features' is not None, then you should pass 'attention_mask'"
+            assert attention_mask is not None, 'if `text_features` is not None, then you should pass `attention_mask`'
 
         if image_features is None:
             image_features = self.img_encoder.forward_features(image)
@@ -381,6 +381,94 @@ class VLM(nn.Module):
             return preprocessor(x).unsqueeze(0)
 
 
+class TritonClient(VLM):
+    """
+    Triton Client with the same interface as VLM
+    """
+
+    def __init__(
+        self,
+        url: str = 'localhost:7001'
+    ):
+        import tritonclient.http as httpclient
+        self._client = httpclient
+        self._triton_client = self._client.InferenceServerClient(
+            url=url
+        )
+        self._tokenizer = AutoTokenizer.from_pretrained(
+            'google/bert_uncased_L-4_H-768_A-12'
+        )
+
+    def encode_image(
+        self,
+        imgs,
+    ):
+        """
+        Returns the image embedding.
+            Parameters:
+                imgs (numpy.ndarray): Pre-processed image
+
+            Returns:
+                output_data (numpy.ndarray): Image embedding
+        """
+        # images prep
+        inputs = []
+        outputs = []
+        imgs = imgs.cpu().detach().numpy()
+        inputs.append(
+            self._client.InferInput('inputs', imgs.shape, 'FP32')
+        )
+        inputs[0].set_data_from_numpy(imgs)
+        outputs.append(self._client.InferRequestedOutput('output'))
+
+        # Querying the server
+        results = self._triton_client.infer(
+            model_name='vit',
+            inputs=inputs,
+            outputs=outputs
+        )
+        output_data = torch.from_numpy(results.as_numpy('output'))
+        return output_data
+
+    def encode_text(
+        self,
+        text,
+    ):
+        """
+        Returns the image embedding.
+            Parameters:
+                text (dict): Tokenized Text
+
+            Returns:
+                output_vec (numpy.ndarray): Text embedding
+        """
+        # texts prep
+        inputs = []
+        input_ids, attention_mask = text['input_ids'], text['attention_mask']
+        input_ids = input_ids.type(dtype=torch.int32).cpu().detach().numpy()
+        attention_mask = attention_mask.type(
+            dtype=torch.int32).cpu().detach().numpy()
+        inputs.append(self._client.InferInput(
+            'attention_mask', attention_mask.shape, 'INT32'))
+        inputs.append(self._client.InferInput(
+            'input_ids', input_ids.shape, 'INT32'))
+        inputs[0].set_data_from_numpy(attention_mask)
+        inputs[1].set_data_from_numpy(input_ids)
+        test_output = self._client.InferRequestedOutput('output')
+
+        # Querying the server
+        results = self._triton_client.infer(
+            model_name='albef',
+            inputs=inputs,
+            outputs=[test_output]
+        )
+        output_vec = torch.from_numpy(results.as_numpy('output'))
+        return output_vec
+
+    def encode_multimodal(self, *args, **kwargs):
+        raise NotImplementedError('Multimodal encodings coming soon!')
+
+
 def get_model(model_name, token=None):
     model_path = snapshot_download(
         repo_id=model_name,
@@ -396,3 +484,7 @@ def get_model(model_name, token=None):
     model.text_encoder.load_state_dict(state['text_encoder'])
 
     return model.eval()
+
+
+def get_client(url):
+    return TritonClient(url)
