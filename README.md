@@ -93,22 +93,21 @@ joint_embedding = model.encode_multimodal(
 )
 ```
 
-## Cloud AWS Usage
-Client for your running AWS instance with our Unum's AMI [placeholder for AWS link]()
+### Remote Procedure Calls for Cloud Deployments
 
-Install optional dependencies:
+You can also use our larger, faster, better proprietary models deployed in optimized cloud environments.
+For that, please, choose the cloud of liking, search the marketplace for "Unum UniForm" and reinstall UForm with optional dependencies:
+
 ```bash
 pip install uform[remote]
 ```
 
-To load the Client (use your instance IP):
-```python
-import uform
+The only thing that changes after that is calling `get_client` with the IP address of your instance instead of using `get_model` for local usage.
 
-model = uform.get_model('0.0.0.0:7000')
+```python
+model = uform.get_client('0.0.0.0:7000')
 ```
 
-To encode data the same way as interface above!
 
 ## Evaluation
 
