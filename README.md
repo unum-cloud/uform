@@ -1,20 +1,20 @@
-<h1 align="center">Unified Form</h1>
+<h1 align="center">UForm</h1>
 <h3 align="center">
-Multi-Modal Inference Library<br/>
+Multi-Modal Transformers Library<br/>
 For Semantic Search Applications<br/>
 </h3>
 <br/>
 
 <p align="center">
-<a href="https://discord.gg/jsMURnSFM2"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/discord.svg" alt="Discord"></a>
+<a href="https://discord.gg/jsMURnSFM2"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/discord.svg" alt="Discord"></a>
 &nbsp;&nbsp;&nbsp;
-<a href="https://www.linkedin.com/company/unum-cloud/"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/linkedin.svg" alt="LinkedIn"></a>
+<a href="https://www.linkedin.com/company/unum-cloud/"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/linkedin.svg" alt="LinkedIn"></a>
 &nbsp;&nbsp;&nbsp;
-<a href="https://twitter.com/unum_cloud"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/twitter.svg" alt="Twitter"></a>
+<a href="https://twitter.com/unum_cloud"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/twitter.svg" alt="Twitter"></a>
 &nbsp;&nbsp;&nbsp;
-<a href="https://unum.cloud/post"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/blog.svg" alt="Blog"></a>
+<a href="https://unum.cloud/post"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/blog.svg" alt="Blog"></a>
 &nbsp;&nbsp;&nbsp;
-<a href="https://github.com/unum-cloud/uform"><img height="25" src="https://github.com/unum-cloud/ukv/raw/main/assets/icons/github.svg" alt="GitHub"></a>
+<a href="https://github.com/unum-cloud/uform"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/github.svg" alt="GitHub"></a>
 </p>
 
 ---
@@ -96,7 +96,7 @@ joint_embedding = model.encode_multimodal(
 ### Remote Procedure Calls for Cloud Deployments
 
 You can also use our larger, faster, better proprietary models deployed in optimized cloud environments.
-For that, please, choose the cloud of liking, search the marketplace for "Unum UniForm" and reinstall UForm with optional dependencies:
+For that, please, choose the cloud of liking, search the marketplace for "Unum UForm" and reinstall UForm with optional dependencies:
 
 ```bash
 pip install uform[remote]

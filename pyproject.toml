@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uform"
-version = "0.2.0"
+version = "0.2.1"
 authors = [
   { name="Mikhail Kim", email="mike.kim@unum.cloud" },
   { name="Vladimir Orshulevich", email="vladimir.orshulevich@unum.cloud" },
@@ -16,15 +16,30 @@ dependencies = [
   "transformers>=4.22.0",
   "timm>0.6.11",
 ]
-description = "Efficient Multi-Modal Semantic Search Models by Unum"
+description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+
+    "Natural Language :: English",
+    "Natural Language :: French",
+    "Natural Language :: Korean",
+    "Natural Language :: German",
+    "Natural Language :: Italian",
+    "Natural Language :: Polish",
+    "Natural Language :: Spanish",
+    "Natural Language :: Japanese",
+    "Natural Language :: Russian",
+    "Natural Language :: Turkish",
+    "Natural Language :: Chinese (Simplified)",
 ]
 
 [project.urls]
