@@ -44,6 +44,7 @@ class VisualEncoder(nn.Module):
             self.queries = nn.Parameter(torch.randn(1, 197, dim))
 
         self.proj = nn.Linear(dim, output_dim, bias=False)
+        self.dim = dim
 
         if hasattr(self.encoder, 'fc_norm'):
             self.encoder.fc_norm = nn.Identity()
@@ -125,6 +126,7 @@ class TextEncoder(nn.Module):
         self.proj = nn.Linear(dim, output_dim, bias=False)
         self.clf_head = nn.Linear(dim, 1 if head_one_neuron else 2)
         self.head_one_neuron = head_one_neuron
+        self.dim = dim
 
     def forward(self, x: Tensor, attention_mask: Tensor, causal: bool = False) -> Tensor:
         features = self.forward_unimodal(x, attention_mask, causal)
@@ -245,7 +247,7 @@ class FusedTransformerLayer(nn.Module):
         self.output = base_layer.output
         self.cross_attention = attention_layer_cls(config)
 
-    def forward(self, x: Tensor, attention_mask: Tensor, context: any) -> tuple[Tensor, Tensor, Tensor]:
+    def forward(self, x: Tensor, attention_mask: Tensor, context: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         attention_output, self_attention_probs = self.self_attention(
             x,
             attention_mask,
@@ -295,11 +297,12 @@ class VLM(nn.Module):
 
     def __init__(self, config: dict):
         super().__init__()
-        
         self.text_encoder = TextEncoder(**config['text_encoder'])
         self.image_encoder = VisualEncoder(**config['img_encoder'])
         self._tokenizer = AutoTokenizer.from_pretrained(
             config['text_encoder']['backbone'])
+
+        self._embedding_dim = config['text_encoder']['output_dim']
 
     def encode_image(self, x: Tensor, return_features: bool = False) -> Tensor:
         features, embs = self.image_encoder(x)
@@ -365,7 +368,7 @@ class VLM(nn.Module):
 
         return x
 
-    def preprocess_image(self, x) -> dict:
+    def preprocess_image(self, x) -> Tensor:
         preprocessor = Compose([
             Resize(224, interpolation=InterpolationMode.BICUBIC),
             lambda x: x.convert('RGB'),
@@ -385,6 +388,22 @@ class VLM(nn.Module):
             return batch_images
         else:
             return preprocessor(x).unsqueeze(0)
+
+    @property
+    def text_features_dim(self) -> int:
+        return self.text_encoder.dim
+
+    @property
+    def image_features_dim(self) -> int:
+        return self.image_encoder.dim
+
+    @property
+    def embedding_dim(self) -> int:
+        return self._embedding_dim
+    
+    @property
+    def multimodal_embedding_dim(self) -> int:
+        return self.text_encoder.dim
 
 
 class TritonClient(VLM):
@@ -472,7 +491,7 @@ class TritonClient(VLM):
         raise NotImplementedError('Multimodal encodings coming soon!')
 
 
-def get_model(model_name: str, token: Optional[Union[bool, str]] = None):
+def get_model(model_name: str, token: Optional[Union[bool, str]] = None) -> VLM:
     model_path = snapshot_download(
         repo_id=model_name,
         token=token,
@@ -489,5 +508,5 @@ def get_model(model_name: str, token: Optional[Union[bool, str]] = None):
     return model.eval()
 
 
-def get_client(url: str):
+def get_client(url: str) -> TritonClient:
     return TritonClient(url)
