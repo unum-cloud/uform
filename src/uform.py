@@ -33,8 +33,6 @@ class VisualEncoder(nn.Module):
         )
         self.backbone_type = backbone_type
         self.pooling = pooling
-        self.dim = dim
-        self.output_dim = output_dim
 
         if self.pooling == 'attention':
             self.attention_pooling = nn.MultiheadAttention(
@@ -123,8 +121,6 @@ class TextEncoder(nn.Module):
         else:
             self.context_proj = nn.Identity()
 
-        self.dim = dim
-        self.output_dim = output_dim
         self.pooling = pooling
         self.proj = nn.Linear(dim, output_dim, bias=False)
         self.clf_head = nn.Linear(dim, 1 if head_one_neuron else 2)
@@ -148,7 +144,7 @@ class TextEncoder(nn.Module):
         self,
         x: Tensor,
         attention_mask: Tensor,
-        context: any,  # TODO:
+        context: Tensor,
         causal: bool = False,
     ) -> Tensor:
         prep_attention_mask = self.prepare_attention_mask(
@@ -293,13 +289,13 @@ class VLM(nn.Module):
         Passes the pre-processed images through `image_encoder` to produce embeddings.
     encode_multimodal(image=image, text=text)
         Passes pre-processed texts and images through both towers, mixing the signal.
-    get_matching_scores(outputs)
-        TODO:
+    get_matching_scores(multimodal_embedding)
+        Computes the probability that there is a match between image and text based on their multimodal embedding
     """
 
     def __init__(self, config: dict):
         super().__init__()
-        self.dim = 0  # TODO:
+        
         self.text_encoder = TextEncoder(**config['text_encoder'])
         self.image_encoder = VisualEncoder(**config['img_encoder'])
         self._tokenizer = AutoTokenizer.from_pretrained(
