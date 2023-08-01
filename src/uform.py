@@ -488,7 +488,7 @@ def get_model(model_name: str, token: Optional[Union[bool, str]] = None):
         model = VLM(load(f))
 
     model.image_encoder.load_state_dict(state['img_encoder'])
-    model.text_encoder.load_state_dict(state['text_encoder'])
+    model.text_encoder.load_state_dict(state['text_encoder'], strict=False)
 
     return model.eval()
 
