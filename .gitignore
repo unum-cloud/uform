@@ -3,5 +3,6 @@ requirements.txt
 dist/
 test
 src/__pycache__
+src/test.py
 build/
 package-lock.json
