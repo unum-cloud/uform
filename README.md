@@ -47,6 +47,8 @@ This tiny package will help you deal with the last!
 pip install uform
 ```
 
+UForm v0.3.0 and below depends on `transformers` and `timm` libraries, all newer versions depend only on PyTorch (except libraries for the text tokenization and checkpoint downloading). For the best performance, Pytorch v2.0.0 and above is recommended.
+
 ## Usage
 
 To load the model:

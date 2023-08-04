@@ -1,7 +1,10 @@
 requirements.txt
+.DS_Store
 *.egg-info
 dist/
 test
 src/__pycache__
 build/
 package-lock.json
+src/assets
+src/test.ipynb
