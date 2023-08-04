@@ -8,13 +8,15 @@ version = "0.3.0"
 authors = [
   { name="Mikhail Kim", email="mike.kim@unum.cloud" },
   { name="Vladimir Orshulevich", email="vladimir.orshulevich@unum.cloud" },
+  { name="Ash Vardanian", email="ash.vardanian@unum.cloud" },
 ]
 maintainers = [
-  { name="unum", email="info@unum.cloud" },
+  { name="Unum Cloud", email="info@unum.cloud" },
 ]
 dependencies = [
-  "transformers>=4.22.0",
-  "timm>0.6.11",
+  "torch>=1.13.1",
+  "tokenizers>=0.13.3",
+  "huggingface_hub>=0.16.4"
 ]
 description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
 readme = "README.md"
