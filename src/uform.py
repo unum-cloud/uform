@@ -21,5 +21,15 @@ def get_model(model_name: str, token: Optional[str] = None) -> VLM:
     return model.eval()
 
 
-def get_client(url: str) -> TritonClient:
-    return TritonClient(url)
+def get_client(
+        url: str,
+        model_name: str = "unum-cloud/uform-vl-english",
+        token: Optional[str] = None) -> TritonClient:
+    
+    config_path = hf_hub_download(model_name, "torch_config.json", token=token)
+    tokenizer_path = hf_hub_download(model_name, "tokenizer.json", token=token)
+
+    with open(config_path, 'r') as f:
+        pad_token_idx = load(f)["text_encoder"]["padding_idx"]
+
+    return TritonClient(tokenizer_path, pad_token_idx, url)
