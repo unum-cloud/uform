@@ -6,9 +6,9 @@ from models import VLM, TritonClient
 
 
 def get_model(model_name: str, token: Optional[str] = None) -> VLM:
-    config_path = hf_hub_download(model_name, 'torch_config.json')
-    state = torch.load(hf_hub_download(model_name, 'torch_weight.pt'))
-    tokenizer_path = hf_hub_download(model_name, 'tokenizer.json')
+    config_path = hf_hub_download(model_name, 'torch_config.json', token=token)
+    state = torch.load(hf_hub_download(model_name, 'torch_weight.pt', token=token))
+    tokenizer_path = hf_hub_download(model_name, 'tokenizer.json', token=token)
 
     with open(config_path, 'r') as f:
         model = VLM(load(f), tokenizer_path)

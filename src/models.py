@@ -402,7 +402,9 @@ class VLM(nn.Module):
 
         param texts: text of list of texts to tokenizer
         """
-        
+        if isinstance(texts, str):
+            texts = [texts]
+            
         input_ids = torch.full(
             (len(texts), self.text_encoder.max_position_embeddings),
             fill_value=self._pad_token_idx,

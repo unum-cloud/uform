@@ -174,8 +174,8 @@ For pre-training we used translated captions made with [NLLB](https://github.com
 | ita_Latn | Spanish  | #    | jpn_Jpan | Japanese             | #    | rus_Cyrl | Russian  |
 | tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    | .        | .        |
 
-[weights-e]: https://huggingface.co/unum-cloud/uform/resolve/main/english/weight.pt
-[weights-m]: https://huggingface.co/unum-cloud/uform/resolve/main/multilingual/weight.pt
+[weights-e]: https://huggingface.co/unum-cloud/uform-vl-english/resolve/main/torch_weight.pt
+[weights-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/resolve/main/torch_weight.pt
 
 ### Performance
 
