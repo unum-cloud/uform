@@ -47,6 +47,8 @@ This tiny package will help you deal with the last!
 pip install uform
 ```
 
+UForm v0.3.0 and below depends on `transformers` and `timm` libraries, all newer versions depend only on PyTorch (except libraries for the text tokenization and checkpoint downloading). For the best performance, Pytorch v2.0.0 and above is recommended.
+
 ## Usage
 
 To load the model:
@@ -172,8 +174,8 @@ For pre-training we used translated captions made with [NLLB](https://github.com
 | ita_Latn | Spanish  | #    | jpn_Jpan | Japanese             | #    | rus_Cyrl | Russian  |
 | tur_Latn | Turkish  | #    | zho_Hans | Chinese (Simplified) | #    | .        | .        |
 
-[weights-e]: https://huggingface.co/unum-cloud/uform/resolve/main/english/weight.pt
-[weights-m]: https://huggingface.co/unum-cloud/uform/resolve/main/multilingual/weight.pt
+[weights-e]: https://huggingface.co/unum-cloud/uform-vl-english/resolve/main/torch_weight.pt
+[weights-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/resolve/main/torch_weight.pt
 
 ### Performance
 
