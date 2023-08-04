@@ -528,14 +528,27 @@ class TritonClient(VLM):
     Nvidia Triton client to connect to the remote VLM inference server.
     """
 
-    def __init__(self, url: str = "localhost:7001"):
+    def __init__(self, tokenizer_path, pad_token_idx, url: str = "localhost:7001"):
         import tritonclient.http as httpclient
-        from transformers import AutoTokenizer
 
         self._client = httpclient
         self._triton_client = self._client.InferenceServerClient(url=url)
-        self._tokenizer = AutoTokenizer.from_pretrained(
-            "google/bert_uncased_L-4_H-768_A-12"
+
+        self._tokenizer = Tokenizer.from_file(tokenizer_path)
+        self._tokenizer.no_padding()
+        self._pad_token_idx = pad_token_idx
+        
+        self._image_transform = Compose(
+            [
+                Resize(self._image_size, interpolation=InterpolationMode.BICUBIC),
+                convert_to_rgb,
+                CenterCrop(self._image_size),
+                ToTensor(),
+                Normalize(
+                    mean=(0.48145466, 0.4578275, 0.40821073),
+                    std=(0.26862954, 0.26130258, 0.27577711),
+                ),
+            ]
         )
 
     def encode_image(
