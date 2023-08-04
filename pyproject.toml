@@ -8,9 +8,10 @@ version = "0.2.1"
 authors = [
   { name="Mikhail Kim", email="mike.kim@unum.cloud" },
   { name="Vladimir Orshulevich", email="vladimir.orshulevich@unum.cloud" },
+  { name="Ash Vardanian", email="ash.vardanian@unum.cloud" },
 ]
 maintainers = [
-  { name="unum", email="info@unum.cloud" },
+  { name="Unum Cloud", email="info@unum.cloud" },
 ]
 dependencies = [
   "torch>=1.13.1",
