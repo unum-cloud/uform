@@ -19,16 +19,18 @@ For Semantic Search Applications<br/>
 
 ---
 
-UForm is a Multi-Modal Modal Inference package, designed to encode Multi-Lingual Texts, Images, and, soon, Audio, Video, and Documents, into a shared vector space!
-It comes with a set of homonymous pre-trained networks available on [HuggingFace portal](https://huggingface.co/unum-cloud/uform) and extends the `transfromers` package to support Mid-fusion Models.
+UForm is a Multi-Modal Modal inference library designed to encode Multi-Lingual Texts, Images, and, soon, *Audio, Video, and Documents*, into a shared vector space!
+It comes with a family of homonymous pre-trained networks, so tiny and efficient you can run them anywhere from large servers to mobile phones... 
+[All available on HuggingFace](https://huggingface.co/unum-cloud) 🤗
+
 
 ## Three Kinds of Multi-Modal Encoding
 
 ![Early, Mid and Late Fusion Transformer Models](https://raw.githubusercontent.com/unum-cloud/uform/main/assets/model_types_bg.png)
 
-__Late-fusion models__ encode each modality independently, but into one shared vector space.
-Due to independent encoding late-fusion models are good at capturing coarse-grained features but often neglect fine-grained ones.
-This type of models is well-suited for retrieval in large collections.
+__Late-fusion models__ encode each modality independently but into one shared vector space.
+Due to independent encoding, late-fusion models are good at capturing coarse-grained features but often neglect fine-grained ones.
+This type of model is well-suited for retrieval in extensive collections.
 The most famous example of such models is CLIP by OpenAI.
 
 __Early-fusion models__ encode both modalities jointly so they can take into account fine-grained features.
@@ -47,7 +49,9 @@ This tiny package will help you deal with the last!
 pip install uform
 ```
 
-UForm v0.3.0 and below depends on `transformers` and `timm` libraries, all newer versions depend only on PyTorch (except libraries for the text tokenization and checkpoint downloading). For the best performance, Pytorch v2.0.0 and above is recommended.
+UForm v0.3.0 and below depend on `transformers` and `timm` libraries.
+All newer versions depend only on PyTorch and utility libraries.
+For the best performance, PyTorch v2.0.0 and above is recommended.
 
 ## Usage
 
@@ -60,7 +64,7 @@ model = uform.get_model('unum-cloud/uform-vl-english')
 model = uform.get_model('unum-cloud/uform-vl-multilingual')
 ```
 
-You can also load your own Mid-fusion model. Just upload it on HuggingFace and pass model name to `get_model`.
+You can also load your own Mid-fusion model. Just upload it on HuggingFace and pass the model name to `get_model`.
 
 To encode data:
 
@@ -110,6 +114,29 @@ The only thing that changes after that is calling `get_client` with the IP addre
 model = uform.get_client('0.0.0.0:7000')
 ```
 
+### GraphCore IPU Inference
+
+First, you will need to setup PopTorch for GraphCore IPUs.
+Follow the user [guide](https://docs.graphcore.ai/projects/poptorch-user-guide/en/latest/intro.html).
+
+```python
+import poptorch
+from PIL import Image
+
+options = poptorch.Options()
+options.replicationFactor(1)
+options.deviceIterations(4)
+
+model = get_model_ipu('unum-cloud/uform-vl-english').parallelize()
+model = poptorch.inferenceModel(model, options=options)
+
+text = 'a small red panda in a zoo'
+image = Image.open('red_panda.jpg')
+image_data = model.preprocess_image(image)
+text_data = model.preprocess_text(text)
+
+image_features, text_features = model(image_data, text_data)
+```
 
 ## Evaluation
 
@@ -128,7 +155,7 @@ The `similarity` will belong to the `[-1, 1]` range, `1` meaning the absolute ma
 __Pros__:
 
 - Computationally cheap.
-- Only unimodal embeddings are required, unimodal encoding is faster than joint encoding.
+- Only unimodal embeddings are required. Unimodal encoding is faster than joint encoding.
 - Suitable for retrieval in large collections.
 
 __Cons__:
@@ -138,8 +165,8 @@ __Cons__:
 
 ### Matching Score 
 
-Unlike cosine similarity, unimodal embedding are not enough.
-Joint embedding will be needed and the resulting `score` will belong to the `[0, 1]` range, `1` meaning the absolute match.
+Unlike cosine similarity, unimodal embedding is not enough.
+Joint embedding will be needed, and the resulting `score` will belong to the `[0, 1]` range, `1` meaning the absolute match.
 
 ```python
 score = model.get_matching_scores(joint_embedding)
@@ -164,8 +191,8 @@ __Cons__:
 | English      | BERT, 2 layers |  ViT-B/16   |    2 layers     | [weights.pt][weights-e] |
 | Multilingual | BERT, 8 layers |  ViT-B/16   |    4 layers     | [weights.pt][weights-m] |
 
-The Multilingual model supports 11 languages, after being trained on a balanced dataset.
-For pre-training we used translated captions made with [NLLB](https://github.com/facebookresearch/fairseq/tree/nllb).
+The Multilingual model supports 11 languages after being trained on a balanced dataset.
+For pre-training, we used translated captions made with [NLLB](https://github.com/facebookresearch/fairseq/tree/nllb).
 
 | Code     | Language | #    | Code     | Language             | #    | Code     | Language |
 | :------- | :------- | :--- | :------- | :------------------- | :--- | :------- | :------- |

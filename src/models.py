@@ -276,6 +276,11 @@ class TextEncoder(nn.Module):
         positional_embedding = self.position_embeddings(self.get_position_ids(x))
         x = self.word_embeddings(x) + positional_embedding
         return self.dropout(self.layer_norm(x))
+    
+    def forward(self, x: dict) -> torch.Tensor:
+        features = self.forward_features(x["input_ids"], x["attention_mask"])
+        embeddings = self.forward_embedding(features, x["attention_mask"])
+        return features, embeddings
 
 
 @dataclass(eq=False)
@@ -321,6 +326,11 @@ class VisualEncoder(nn.Module):
             x = x.mean(dim=1)
 
         return self.embedding_projection(x)
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        features = self.forward_features(x)
+        embeddings = self.forward_embedding(features)
+        return features, embeddings
 
 
 class VLM(nn.Module):
@@ -499,6 +509,21 @@ class VLM(nn.Module):
         else:
             return self._image_transform(images).unsqueeze(0)
 
+    def forward(
+        self,
+        images: torch.Tensor,
+        texts: dict,
+    ):
+        """Inference forward method
+
+        :param images: Preprocessed images
+        :param texts: Preprocessed texts
+        :return: embeddings for images and texts
+        """
+        _, embs_imgs = self.image_encoder(images)
+        _, embs_txts = self.text_encoder(texts)
+        return embs_imgs, embs_txts
+    
     @property
     def text_features_dim(self) -> int:
         """Dimensionality of the text encoder features."""
@@ -556,7 +581,7 @@ class TritonClient(VLM):
         imgs: Tensor,
     ):
         """
-        Passes the pre-processed images through `image_encoder` to produce images embeddings.
+        Passes the pre-processed images through `image_encoder` to produce image embeddings.
 
         :param imgs: Preprocessed image
         """
@@ -608,3 +633,75 @@ class TritonClient(VLM):
 
     def encode_multimodal(self, *args, **kwargs):
         raise NotImplementedError("Multimodal encodings coming soon!")
+
+
+class VLM_IPU(VLM):
+    """
+    Code for GraphCore IPUs. 
+    Please read User Guide if you want UForm to work on GraphCore hardware.
+    (https://docs.graphcore.ai/projects/poptorch-user-guide/en/latest/intro.html)
+    """
+    
+    def __init__(self, config: Dict, tokenizer_path: PathLike):
+        import poptorch
+        self.poptorch = poptorch
+        super().__init__(config, tokenizer_path)
+        
+    def recomputation_checkpoint(self, module):
+        """
+        Annotates the output of a module to be checkpointed instead of recomputed
+        """
+        def recompute_outputs(module, inputs, outputs):
+            if type(outputs) is tuple:
+                return tuple(self.poptorch.recomputationCheckpoint(y) for y in outputs)
+            else:
+                return self.poptorch.recomputationCheckpoint(outputs)
+
+        module.register_forward_hook(recompute_outputs)
+
+    def parallelize(self):
+        """
+        Splits the model layers between IPU devices.
+        """        
+        print("---------- Device Allocation -----------")
+        print("image_encoder 0 ~ 6--> IPU 0")
+        for index in range(4):
+            layer = self.image_encoder.blocks[index]
+            self.recomputation_checkpoint(layer)
+            self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
+                layer, 
+                f"image_encoder_layer{index}", 
+                ipu_id=0,
+            )
+
+        print("image_encoder 4 ~ 8 --> IPU 1")
+        for index in range(4, 8):
+            layer = self.image_encoder.blocks[index]
+            self.recomputation_checkpoint(layer)
+            self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
+                layer, 
+                f"image_encoder_layer{index}", 
+                ipu_id=1,
+            )
+
+        print("image_encoder 8 ~ 12 --> IPU 2")
+        for index in range(8, 12):
+            layer = self.image_encoder.blocks[index]
+            self.recomputation_checkpoint(layer)
+            self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
+                layer, 
+                f"image_encoder_layer{index}", 
+                ipu_id=2,
+            )
+
+        print("text_enocder 0 ~ 4 --> IPU 3")
+        for index in range(0, 4):
+            layer = self.text_encoder.blocks[index]
+            self.recomputation_checkpoint(layer)
+            self.text_encoder.blocks[index] = self.poptorch.BeginBlock(
+                layer, 
+                f"text_encoder_layer{index}", 
+                ipu_id=3,
+            )
+
+        return self    
