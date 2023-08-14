@@ -51,3 +51,6 @@ classifiers = [
 remote = [
   "tritonclient[all]"
 ]
+ipu = [
+  "poptorch"
+]
