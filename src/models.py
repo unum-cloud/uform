@@ -581,7 +581,7 @@ class TritonClient(VLM):
         imgs: Tensor,
     ):
         """
-        Passes the pre-processed images through `image_encoder` to produce images embeddings.
+        Passes the pre-processed images through `image_encoder` to produce image embeddings.
 
         :param imgs: Preprocessed image
         """
@@ -638,7 +638,7 @@ class TritonClient(VLM):
 class VLM_IPU(VLM):
     """
     Code for GraphCore IPUs. 
-    Please read User Guide if you want UForm work on Graphcore's hardware
+    Please read User Guide if you want UForm to work on GraphCore hardware.
     (https://docs.graphcore.ai/projects/poptorch-user-guide/en/latest/intro.html)
     """
     
@@ -659,14 +659,10 @@ class VLM_IPU(VLM):
 
         module.register_forward_hook(recompute_outputs)
 
-    def parallelize(
-        self, 
-    ):
-        """_summary_
-
-        :return: _description_
-        :rtype: _type_
+    def parallelize(self):
         """
+        Splits the model layers between IPU devices.
+        """        
         print("---------- Device Allocation -----------")
         print("image_encoder 0 ~ 6--> IPU 0")
         for index in range(4):
