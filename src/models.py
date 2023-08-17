@@ -276,7 +276,7 @@ class TextEncoder(nn.Module):
         positional_embedding = self.position_embeddings(self.get_position_ids(x))
         x = self.word_embeddings(x) + positional_embedding
         return self.dropout(self.layer_norm(x))
-    
+
     def forward(self, x: dict) -> torch.Tensor:
         features = self.forward_features(x["input_ids"], x["attention_mask"])
         embeddings = self.forward_embedding(features, x["attention_mask"])
@@ -326,7 +326,7 @@ class VisualEncoder(nn.Module):
             x = x.mean(dim=1)
 
         return self.embedding_projection(x)
-    
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         features = self.forward_features(x)
         embeddings = self.forward_embedding(features)
@@ -523,7 +523,7 @@ class VLM(nn.Module):
         _, embs_imgs = self.image_encoder(images)
         _, embs_txts = self.text_encoder(texts)
         return embs_imgs, embs_txts
-    
+
     @property
     def text_features_dim(self) -> int:
         """Dimensionality of the text encoder features."""
@@ -562,7 +562,7 @@ class TritonClient(VLM):
         self._tokenizer = Tokenizer.from_file(tokenizer_path)
         self._tokenizer.no_padding()
         self._pad_token_idx = pad_token_idx
-        
+
         self._image_transform = Compose(
             [
                 Resize(self._image_size, interpolation=InterpolationMode.BICUBIC),
@@ -637,20 +637,22 @@ class TritonClient(VLM):
 
 class VLM_IPU(VLM):
     """
-    Code for GraphCore IPUs. 
+    Code for GraphCore IPUs.
     Please read User Guide if you want UForm to work on GraphCore hardware.
     (https://docs.graphcore.ai/projects/poptorch-user-guide/en/latest/intro.html)
     """
-    
+
     def __init__(self, config: Dict, tokenizer_path: PathLike):
         import poptorch
+
         self.poptorch = poptorch
         super().__init__(config, tokenizer_path)
-        
+
     def recomputation_checkpoint(self, module):
         """
         Annotates the output of a module to be checkpointed instead of recomputed
         """
+
         def recompute_outputs(module, inputs, outputs):
             if type(outputs) is tuple:
                 return tuple(self.poptorch.recomputationCheckpoint(y) for y in outputs)
@@ -662,15 +664,15 @@ class VLM_IPU(VLM):
     def parallelize(self):
         """
         Splits the model layers between IPU devices.
-        """        
+        """
         print("---------- Device Allocation -----------")
         print("image_encoder 0 ~ 6--> IPU 0")
         for index in range(4):
             layer = self.image_encoder.blocks[index]
             self.recomputation_checkpoint(layer)
             self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
-                layer, 
-                f"image_encoder_layer{index}", 
+                layer,
+                f"image_encoder_layer{index}",
                 ipu_id=0,
             )
 
@@ -679,8 +681,8 @@ class VLM_IPU(VLM):
             layer = self.image_encoder.blocks[index]
             self.recomputation_checkpoint(layer)
             self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
-                layer, 
-                f"image_encoder_layer{index}", 
+                layer,
+                f"image_encoder_layer{index}",
                 ipu_id=1,
             )
 
@@ -689,8 +691,8 @@ class VLM_IPU(VLM):
             layer = self.image_encoder.blocks[index]
             self.recomputation_checkpoint(layer)
             self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
-                layer, 
-                f"image_encoder_layer{index}", 
+                layer,
+                f"image_encoder_layer{index}",
                 ipu_id=2,
             )
 
@@ -699,9 +701,9 @@ class VLM_IPU(VLM):
             layer = self.text_encoder.blocks[index]
             self.recomputation_checkpoint(layer)
             self.text_encoder.blocks[index] = self.poptorch.BeginBlock(
-                layer, 
-                f"text_encoder_layer{index}", 
+                layer,
+                f"text_encoder_layer{index}",
                 ipu_id=3,
             )
 
-        return self    
+        return self
