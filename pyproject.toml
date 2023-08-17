@@ -16,7 +16,8 @@ maintainers = [
 dependencies = [
   "torch>=1.13.1",
   "tokenizers>=0.13.3",
-  "huggingface_hub>=0.16.4"
+  "huggingface_hub>=0.16.4",
+  "torchvision"
 ]
 description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
 readme = "README.md"
