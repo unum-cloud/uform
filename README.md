@@ -115,9 +115,9 @@ The only thing that changes after that is calling `get_client` with the IP addre
 model = uform.get_client('0.0.0.0:7000')
 ```
 
-### GraphCore IPU Inference
+### Graphcore IPU Inference
 
-First, you will need to setup PopTorch for GraphCore IPUs.
+First, you will need to setup PopTorch for Graphcore IPUs.
 Follow the user [guide](https://docs.graphcore.ai/projects/poptorch-user-guide/en/latest/intro.html).
 
 ```python
@@ -135,6 +135,9 @@ text = 'a small red panda in a zoo'
 image = Image.open('red_panda.jpg')
 image_data = model.preprocess_image(image)
 text_data = model.preprocess_text(text)
+
+image_data = image_data.repeat(4, 1, 1, 1)
+text_data = {k: v.repeat(4, 1) for k,v in text_data.items()}
 
 image_features, text_features = model(image_data, text_data)
 ```
