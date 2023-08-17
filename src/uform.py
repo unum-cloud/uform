@@ -8,14 +8,12 @@ from models import VLM, TritonClient, VLM_IPU
 
 
 def get_checkpoint(model_name, token) -> Tuple[str, Mapping, str]:
-    model_path = snapshot_download(
-        repo_id=model_name,
-        token=token
-    )
+    model_path = snapshot_download(repo_id=model_name, token=token)
     config_path = f"{model_path}/torch_config.json"
     state = torch.load(f"{model_path}/torch_weight.pt")
 
     return config_path, state, f"{model_path}/tokenizer.json"
+
 
 def get_model(model_name: str, token: Optional[str] = None) -> VLM:
     config_path, state, tokenizer_path = get_checkpoint(model_name, token)
@@ -30,13 +28,13 @@ def get_model(model_name: str, token: Optional[str] = None) -> VLM:
 
 
 def get_client(
-        url: str,
-        model_name: str = "unum-cloud/uform-vl-english",
-        token: Optional[str] = None) -> TritonClient:
-    
+    url: str,
+    model_name: str = "unum-cloud/uform-vl-english",
+    token: Optional[str] = None,
+) -> TritonClient:
     config_path, _, tokenizer_path = get_checkpoint(model_name, token)
 
-    with open(config_path, 'r') as f:
+    with open(config_path, "r") as f:
         pad_token_idx = load(f)["text_encoder"]["padding_idx"]
 
     return TritonClient(tokenizer_path, pad_token_idx, url)
@@ -44,7 +42,7 @@ def get_client(
 
 def get_model_ipu(model_name: str, token: Optional[str] = None) -> VLM_IPU:
     config_path, state, tokenizer_path = get_checkpoint(model_name, token)
-    
+
     with open(config_path, "r") as f:
         model = VLM_IPU(load(f), tokenizer_path)
 
