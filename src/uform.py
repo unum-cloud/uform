@@ -1,16 +1,24 @@
 from json import load
-from typing import Optional
+from typing import Optional, Tuple, Mapping
 
 import torch
-from huggingface_hub import hf_hub_download
+from huggingface_hub import snapshot_download
 
 from models import VLM, TritonClient, VLM_IPU
 
 
+def get_checkpoint(model_name, token) -> Tuple[str, Mapping, str]:
+    model_path = snapshot_download(
+        repo_id=model_name,
+        token=token
+    )
+    config_path = f"{model_path}/torch_config.json"
+    state = torch.load(f"{model_path}/torch_weight.pt")
+
+    return config_path, state, f"{model_path}/tokenizer.json"
+
 def get_model(model_name: str, token: Optional[str] = None) -> VLM:
-    config_path = hf_hub_download(model_name, "torch_config.json", token=token)
-    state = torch.load(hf_hub_download(model_name, "torch_weight.pt", token=token))
-    tokenizer_path = hf_hub_download(model_name, "tokenizer.json", token=token)
+    config_path, state, tokenizer_path = get_checkpoint(model_name, token)
 
     with open(config_path, "r") as f:
         model = VLM(load(f), tokenizer_path)
@@ -26,8 +34,7 @@ def get_client(
         model_name: str = "unum-cloud/uform-vl-english",
         token: Optional[str] = None) -> TritonClient:
     
-    config_path = hf_hub_download(model_name, "torch_config.json", token=token)
-    tokenizer_path = hf_hub_download(model_name, "tokenizer.json", token=token)
+    config_path, _, tokenizer_path = get_checkpoint(model_name, token)
 
     with open(config_path, 'r') as f:
         pad_token_idx = load(f)["text_encoder"]["padding_idx"]
@@ -36,9 +43,7 @@ def get_client(
 
 
 def get_model_ipu(model_name: str, token: Optional[str] = None) -> VLM_IPU:
-    config_path = hf_hub_download(model_name, "torch_config.json", token=token)
-    state = torch.load(hf_hub_download(model_name, "torch_weight.pt", token=token))
-    tokenizer_path = hf_hub_download(model_name, "tokenizer.json", token=token)
+    config_path, state, tokenizer_path = get_checkpoint(model_name, token)
     
     with open(config_path, "r") as f:
         model = VLM_IPU(load(f), tokenizer_path)
