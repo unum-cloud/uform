@@ -19,7 +19,7 @@ For Semantic Search & Recommendation Systems<br/>
 
 ---
 
-![UForm + USearch + UCall Demo](https://github.com/ashvardanian/usearch-images/raw/main/assets/usearch-images-slow.gif)
+[![UForm + USearch + UCall Demo](https://github.com/ashvardanian/usearch-images/raw/main/assets/usearch-images-slow.gif)](http://usearch-images.com)
 
 Welcome to UForm, a multi-modal AI library that's as versatile as it is efficient.
 Imagine encoding text, images, and soon, audio, video, and JSON documents into a shared Semantic Vector Space.
