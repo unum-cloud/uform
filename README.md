@@ -1,6 +1,6 @@
 <h1 align="center">UForm</h1>
 <h3 align="center">
-Pocket-Sized Multi-Modal Transformers Library<br/>
+Pocket-Sized Multi-Modal AI<br/>
 For Semantic Search & Recommendation Systems<br/>
 </h3>
 <br/>
@@ -23,7 +23,7 @@ For Semantic Search & Recommendation Systems<br/>
 
 Welcome to UForm, a multi-modal AI library that's as versatile as it is efficient.
 Imagine encoding text, images, and soon, audio, video, and documents into a shared Semantic Vector Space.
-All of this, with models so compact, they can run anywhere—from your server farm down to your smartphone. 📱💻 
+With compact __custom pre-trained transformer models__, all of this can run anywhere—from your server farm down to your smartphone. 📱💻 
 [Check them out on HuggingFace!](https://huggingface.co/unum-cloud) 🤗
 
 ## 🌟 Key Features
@@ -32,7 +32,7 @@ All of this, with models so compact, they can run anywhere—from your server fa
 
 - __Tiny Embeddings__: With just 256 dimensions, our embeddings are lean and fast to work with, making your search operations 1.5-3x quicker compared to other CLIP-like models with 512-1024 dimensions.
 
-- __Quantization Magic__: Our models are trained to be quantization-aware, letting you downcast embeddings from `f32` to `i8` without losing much accuracy. Supported by __[USearch](https://github.com/unum-cloud/usearch)__, this leads to further 3x reduction in index size and up to 5x higher performance, especially on IoT devices with low floating-point performance.
+- __Quantization Magic__: Our models are trained to be quantization-aware, letting you downcast embeddings from `f32` to `i8` without losing much accuracy. Supported by __[USearch](https://github.com/unum-cloud/usearch)__, this leads to a further 3x reduction in index size and up to a 5x higher performance, especially on IoT devices with low floating-point performance.
 
 ### 🌍 Global Reach
 
@@ -60,11 +60,11 @@ While they may not be suited for zero-shot classification tasks, they are your _
 
 - __Late-Fusion Models__: Great for capturing the big picture but might miss the details. Ideal for large-scale retrieval. OpenAI CLIP is one of those.
 
-- __Early-Fusion Models__: These are your detail-oriented models, capturing fine-grained features. They're usually employed for re-ranking smaller retrieval results.
+- __Early-Fusion Models__: These are detail-oriented models that capture fine-grained features. They're usually employed for re-ranking smaller retrieval results.
 
-- __Mid-Fusion Models__: The balanced diet of models. They offer both a unimodal and a multimodal part, capturing both the forest and the trees. The multimodal part enhances the unimodal features with a cross-attention mechanism.
+- __Mid-Fusion Models__: The balanced diet of models. They offer an unimodal and a multimodal part, capturing both the forest and the trees. The multimodal part enhances the unimodal features with a cross-attention mechanism.
 
-So, if you're looking to navigate the complex world of multi-modal data, UForm is the tiny but mighty companion you've been searching for! 🌈🔍
+So, if you're looking to navigate the complex world of multi-modal data, UForm is the tiny but mighty companion you've been searching for!
 
 ### New Training Objectives
 
@@ -93,9 +93,9 @@ model = uform.get_model('unum-cloud/uform-vl-english') # Just English
 model = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
 ```
 
-The multi-lingual model is much heavier due to 10x larger vocabulary.
-So if you only expect English data, take the former for efficiency.
-You can also load your own Mid-fusion model.
+The multi-lingual model is much heavier due to a 10x more extensive vocabulary.
+So, if you only expect English data, take the former for efficiency.
+You can also load your Mid-fusion model.
 Just upload it on HuggingFace and pass the model name to `get_model`.
 
 ### Encoding Data
@@ -122,7 +122,7 @@ text_features, text_embedding = model.encode_text(text_data, return_features=Tru
 ```
 
 These features can later be used to produce joint multimodal encodings faster, as the first layers of the transformer can be skipped.
-Those might be useful for both re-ranking of search results, and recommendation systems.
+Those might be useful for re-ranking search results, and recommendation systems.
 
 ```python
 joint_embedding = model.encode_multimodal(
@@ -134,9 +134,9 @@ joint_embedding = model.encode_multimodal(
 
 ### Graphcore IPUs
 
-To run on Graphcore IPUs, you will need to setup PopTorch first.
+To run on Graphcore IPUs, you must set up PopTorch first.
 Follow the [user guide](https://docs.graphcore.ai/projects/poptorch-user-guide/en/latest/intro.html) on their website.
-Once complete, our example would need a couple of adjustments to best leverage available data- and model-parallelism of the Graphcore platform.
+Once complete, our example would need a couple of adjustments to best leverage the Graphcore platform's available data and model-parallelism.
 
 ```python
 import poptorch
@@ -163,7 +163,7 @@ image_features, text_features = model(image_data, text_data)
 ### Cloud API
 
 You can also use our larger, faster, better proprietary models deployed in optimized cloud environments.
-For that, please, choose the cloud of liking, search the marketplace for "Unum UForm" and reinstall UForm with optional dependencies:
+For that, please choose the cloud of liking, search the marketplace for "Unum UForm", and reinstall UForm with optional dependencies:
 
 ```python
 $ pip install uform[remote]
@@ -275,7 +275,7 @@ score = model.get_matching_scores(joint_embedding)
 __Pros__:
 
 - Joint embedding captures fine-grained features.
-- Suitable for re-ranking - sorting retrieval result.
+- Suitable for re-ranking - sorting retrieval results.
 
 __Cons__:
 
