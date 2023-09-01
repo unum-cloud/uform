@@ -1,7 +1,7 @@
 <h1 align="center">UForm</h1>
 <h3 align="center">
-Multi-Modal Transformers Library<br/>
-For Semantic Search Applications<br/>
+Pocket-Sized Multi-Modal Transformers Library<br/>
+For Semantic Search & Recommendation Systems<br/>
 </h3>
 <br/>
 
@@ -19,55 +19,82 @@ For Semantic Search Applications<br/>
 
 ---
 
-UForm is a Multi-Modal Modal inference library designed to encode Multi-Lingual Texts, Images, and, soon, *Audio, Video, and Documents*, into a shared vector space!
-It comes with a family of homonymous pre-trained networks, so tiny and efficient you can run them anywhere from large servers to mobile phones... 
-[All available on HuggingFace](https://huggingface.co/unum-cloud) 🤗
+![UForm + USearch + UCall Demo](https://github.com/ashvardanian/usearch-images/raw/main/assets/usearch-images-slow.gif)
 
-## Three Kinds of Multi-Modal Encoding
+Welcome to UForm, a multi-modal AI library that's as versatile as it is efficient.
+Imagine encoding text, images, and soon, audio, video, and documents into a shared digital playground.
+All of this, with models so compact, they can run anywhere—from your server farm down to your smartphone. 📱💻 
+[Check them out on HuggingFace!](https://huggingface.co/unum-cloud) 🤗
 
-![Early, Mid and Late Fusion Transformer Models](https://raw.githubusercontent.com/unum-cloud/uform/main/assets/model_types_bg.png)
+## 🌟 Key Features
 
-__Late-fusion models__ encode each modality independently but into one shared vector space.
-Due to independent encoding, late-fusion models are good at capturing coarse-grained features but often neglect fine-grained ones.
-This type of model is well-suited for retrieval in extensive collections.
-The most famous example of such models is CLIP by OpenAI.
+### 🚀 Speed & Efficiency
 
-__Early-fusion models__ encode both modalities jointly so they can take into account fine-grained features.
-Usually, these models are used for re-ranking relatively small retrieval results.
+- __Tiny Embeddings__: With just 256 dimensions, our embeddings are lean and fast, making your search operations 1.5-3x quicker compared to other CLIP-like models with 512-1024 dimensions.
+  
+- __Quantization Magic__: Our models are trained to be quantization-aware, letting you downcast embeddings from `f32` to `i8` without losing much accuracy. The result? Smaller search indexes and blazing-fast performance, especially on IoT devices.
 
-__Mid-fusion models__ are the golden midpoint between the previous two types.
-Mid-fusion models consist of two parts – unimodal and multimodal.
-The unimodal part allows encoding each modality separately as late-fusion models do.
-The multimodal part takes unimodal features from the unimodal part as input and enhances them with a cross-attention mechanism.
+### 🌍 Global Reach
 
-This tiny package will help you deal with the last!
+- __Balanced Training__: Our models are cosmopolitan, trained on a balanced diet of English and other languages. This gives us an edge in languages often overlooked by other models, from Hebrew and Armenian to Hindi and Arabic.
 
-## Performance
+### 🛠 Versatility
+
+- __Mid-Fusion Tech__: Our models use mid-fusion to align multiple transformer towers, enabling database-like operations on multi-modal data. 
+
+- __Mixed Features__: Thanks to mid-fusion, our models can produce mixed vision+language features, perfect for recommendation systems.
+
+- __Hardware Friendly__: Whether it's CoreML, ONNX, or specialized AI hardware like Graphcore IPUs, we've got you covered.
+
+## 🎓 Architectural Innovation
+
+Inspired by the ALBEF paper by Salesforce, we've pushed the boundaries of pre-training objectives to squeeze more language-vision understanding into smaller models.
+Some UForm models were trained on just 4 million samples across 10 GPUs — a __100x reduction in both dataset size and compute budget compared to OpenAI's CLIP__.
+While they may not be suited for zero-shot classification tasks, they are your __go-to choice for processing large image datasets or even petabytes of video frame-by-frame__.
+
+### 🤝 Mid-Fusion: The Best of Both Worlds
+
+![Fusion Models](https://raw.githubusercontent.com/unum-cloud/uform/main/assets/model_types_bg.png)
+
+- __Late-Fusion Models__: Great for capturing the big picture but might miss the details. Ideal for large-scale retrieval. OpenAI CLIP is one of those.
+- __Early-Fusion Models__: These are your detail-oriented models, capturing fine-grained features. They're usually employed for re-ranking smaller retrieval results.
+- __Mid-Fusion Models__: The balanced diet of models. They offer both a unimodal and a multimodal part, capturing both the forest and the trees. The multimodal part enhances the unimodal features with a cross-attention mechanism.
+
+So, if you're looking to navigate the complex world of multi-modal data, UForm is the tiny but mighty companion you've been searching for! 🌈🔍
+
+### New Training Objectives
+
+_Coming soon_
 
 ## Installation
+
+Install UForm via pip:
 
 ```bash
 pip install uform
 ```
 
-UForm v0.3.0 and below depend on `transformers` and `timm` libraries.
-All newer versions depend only on PyTorch and utility libraries.
-For the best performance, PyTorch v2.0.0 and above is recommended.
+> Note: For versions below 0.3.0, dependencies include transformers and timm.
+> Newer versions only require PyTorch and utility libraries.
+> For optimal performance, use PyTorch v2.0.0 or above.
 
-## Usage
+## Quick Start
 
-To load the model:
+### Loading a Model
 
 ```python
 import uform
 
-model = uform.get_model('unum-cloud/uform-vl-english')
-model = uform.get_model('unum-cloud/uform-vl-multilingual-v2')
+model = uform.get_model('unum-cloud/uform-vl-english') # Just English
+model = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
 ```
 
-You can also load your own Mid-fusion model. Just upload it on HuggingFace and pass the model name to `get_model`.
+The Multi-Lingual model is much heavier due to 10x larger vocabulary.
+So if you only expect English data, take the former for efficiency.
+You can also load your own Mid-fusion model.
+Just upload it on HuggingFace and pass the model name to `get_model`.
 
-To encode data:
+### Encoding Data
 
 ```python
 from PIL import Image
@@ -83,14 +110,15 @@ text_embedding = model.encode_text(text_data)
 joint_embedding = model.encode_multimodal(image=image_data, text=text_data)
 ```
 
-Retrieving features is also trivial:
+### Retrieving Features
 
 ```python
 image_features, image_embedding = model.encode_image(image_data, return_features=True)
 text_features, text_embedding = model.encode_text(text_data, return_features=True)
 ```
 
-These features can later be used to produce joint multimodal encodings faster, as the first layers of the transformer can be skipped:
+These features can later be used to produce joint multimodal encodings faster, as the first layers of the transformer can be skipped.
+Those might be useful for both re-ranking of search results, and recommendation systems.
 
 ```python
 joint_embedding = model.encode_multimodal(
@@ -98,21 +126,6 @@ joint_embedding = model.encode_multimodal(
     text_features=text_features,
     attention_mask=text_data['attention_mask']
 )
-```
-
-### Remote Procedure Calls for Cloud Deployments
-
-You can also use our larger, faster, better proprietary models deployed in optimized cloud environments.
-For that, please, choose the cloud of liking, search the marketplace for "Unum UForm" and reinstall UForm with optional dependencies:
-
-```bash
-pip install uform[remote]
-```
-
-The only thing that changes after that is calling `get_client` with the IP address of your instance instead of using `get_model` for local usage.
-
-```python
-model = uform.get_client('0.0.0.0:7000')
 ```
 
 ### Graphcore IPU Inference
@@ -142,6 +155,23 @@ text_data = {k: v.repeat(4, 1) for k,v in text_data.items()}
 image_features, text_features = model(image_data, text_data)
 ```
 
+### Remote Procedure Calls for Cloud Deployments
+
+You can also use our larger, faster, better proprietary models deployed in optimized cloud environments.
+For that, please, choose the cloud of liking, search the marketplace for "Unum UForm" and reinstall UForm with optional dependencies:
+
+```bash
+pip install uform[remote]
+```
+
+The only thing that changes after that is calling `get_client` with the IP address of your instance instead of using `get_model` for local usage.
+
+```python
+model = uform.get_client('0.0.0.0:7000')
+```
+
+__[Please, join our Discord for early access!](https://discord.gg/jsMURnSFM2)__
+
 ## Models
 
 ### Architecture
@@ -166,32 +196,32 @@ Check out the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) for 
 
 | Language             | OpenCLIP @ 1 |    UForm @ 1 | OpenCLIP @ 5 |    UForm @ 5 | OpenCLIP @ 10 |   UForm @ 10 | Speakers |
 | :------------------- | -----------: | -----------: | -----------: | -----------: | ------------: | -----------: | -------: |
-| Arabic 🇸🇦             |         22.7 |     **31.7** |         44.9 |     **57.8** |          55.8 |     **69.2** |    274 M |
-| Armenian 🇦🇲           |          5.6 |     **22.0** |         14.3 |     **44.7** |          20.2 |     **56.0** |      4 M |
-| Chinese 🇨🇳            |         27.3 |     **32.2** |         51.3 |     **59.0** |          62.1 |     **70.5** |  1'118 M |
-| English 🇺🇸            |     **37.8** |         37.7 |         63.5 |     **65.0** |          73.5 |     **75.9** |  1'452 M |
-| French 🇫🇷             |         31.3 |     **35.4** |         56.5 |     **62.6** |          67.4 |     **73.3** |    274 M |
-| German 🇩🇪             |         31.7 |     **35.1** |         56.9 |     **62.2** |          67.4 |     **73.3** |    134 M |
-| Hebrew 🇮🇱             |         23.7 |     **26.7** |         46.3 |     **51.8** |          57.0 |     **63.5** |      9 M |
-| Hindi 🇮🇳              |         20.7 |     **31.3** |         42.5 |     **57.9** |          53.7 |     **69.6** |    602 M |
-| Indonesian 🇮🇩         |         26.9 |     **30.7** |         51.4 |     **57.0** |          62.7 |     **68.6** |    199 M |
-| Italian 🇮🇹            |         31.3 |     **34.9** |         56.7 |     **62.1** |          67.1 |     **73.1** |     67 M |
-| Japanese 🇯🇵           |         27.4 |     **32.6** |         51.5 |     **59.2** |          62.6 |     **70.6** |    125 M |
-| Korean 🇰🇷             |         24.4 |     **31.5** |         48.1 |     **57.8** |          59.2 |     **69.2** |     81 M |
-| Persian 🇮🇷            |         24.0 |     **28.8** |         47.0 |     **54.6** |          57.8 |     **66.2** |     77 M |
-| Polish 🇵🇱             |         29.2 |     **33.6** |         53.9 |     **60.1** |          64.7 |     **71.3** |     41 M |
-| Portuguese 🇵🇹         |         31.6 |     **32.7** |         57.1 |     **59.6** |          67.9 |     **71.0** |    257 M |
-| Russian 🇷🇺            |         29.9 |     **33.9** |         54.8 |     **60.9** |          65.8 |     **72.0** |    258 M |
-| Spanish 🇪🇸            |         32.6 |     **35.6** |         58.0 |     **62.8** |          68.8 |     **73.7** |    548 M |
-| Thai 🇹🇭               |         21.5 |     **28.7** |         43.0 |     **54.6** |          53.7 |     **66.0** |     61 M |
-| Turkish 🇹🇷            |         25.5 |     **33.0** |         49.1 |     **59.6** |          60.3 |     **70.8** |     88 M |
-| Ukranian 🇺🇦           |         26.0 |     **30.6** |         49.9 |     **56.7** |          60.9 |     **68.1** |     41 M |
-| Vietnamese 🇻🇳         |         25.4 |     **28.3** |         49.2 |     **53.9** |          60.3 |     **65.5** |     85 M |
+| Arabic 🇸🇦             |         22.7 |     __31.7__ |         44.9 |     __57.8__ |          55.8 |     __69.2__ |    274 M |
+| Armenian 🇦🇲           |          5.6 |     __22.0__ |         14.3 |     __44.7__ |          20.2 |     __56.0__ |      4 M |
+| Chinese 🇨🇳            |         27.3 |     __32.2__ |         51.3 |     __59.0__ |          62.1 |     __70.5__ |  1'118 M |
+| English 🇺🇸            |     __37.8__ |         37.7 |         63.5 |     __65.0__ |          73.5 |     __75.9__ |  1'452 M |
+| French 🇫🇷             |         31.3 |     __35.4__ |         56.5 |     __62.6__ |          67.4 |     __73.3__ |    274 M |
+| German 🇩🇪             |         31.7 |     __35.1__ |         56.9 |     __62.2__ |          67.4 |     __73.3__ |    134 M |
+| Hebrew 🇮🇱             |         23.7 |     __26.7__ |         46.3 |     __51.8__ |          57.0 |     __63.5__ |      9 M |
+| Hindi 🇮🇳              |         20.7 |     __31.3__ |         42.5 |     __57.9__ |          53.7 |     __69.6__ |    602 M |
+| Indonesian 🇮🇩         |         26.9 |     __30.7__ |         51.4 |     __57.0__ |          62.7 |     __68.6__ |    199 M |
+| Italian 🇮🇹            |         31.3 |     __34.9__ |         56.7 |     __62.1__ |          67.1 |     __73.1__ |     67 M |
+| Japanese 🇯🇵           |         27.4 |     __32.6__ |         51.5 |     __59.2__ |          62.6 |     __70.6__ |    125 M |
+| Korean 🇰🇷             |         24.4 |     __31.5__ |         48.1 |     __57.8__ |          59.2 |     __69.2__ |     81 M |
+| Persian 🇮🇷            |         24.0 |     __28.8__ |         47.0 |     __54.6__ |          57.8 |     __66.2__ |     77 M |
+| Polish 🇵🇱             |         29.2 |     __33.6__ |         53.9 |     __60.1__ |          64.7 |     __71.3__ |     41 M |
+| Portuguese 🇵🇹         |         31.6 |     __32.7__ |         57.1 |     __59.6__ |          67.9 |     __71.0__ |    257 M |
+| Russian 🇷🇺            |         29.9 |     __33.9__ |         54.8 |     __60.9__ |          65.8 |     __72.0__ |    258 M |
+| Spanish 🇪🇸            |         32.6 |     __35.6__ |         58.0 |     __62.8__ |          68.8 |     __73.7__ |    548 M |
+| Thai 🇹🇭               |         21.5 |     __28.7__ |         43.0 |     __54.6__ |          53.7 |     __66.0__ |     61 M |
+| Turkish 🇹🇷            |         25.5 |     __33.0__ |         49.1 |     __59.6__ |          60.3 |     __70.8__ |     88 M |
+| Ukranian 🇺🇦           |         26.0 |     __30.6__ |         49.9 |     __56.7__ |          60.9 |     __68.1__ |     41 M |
+| Vietnamese 🇻🇳         |         25.4 |     __28.3__ |         49.2 |     __53.9__ |          60.3 |     __65.5__ |     85 M |
 |                      |              |              |              |              |               |              |          |
-| Mean                 |     26.5±6.4 | **31.8±3.5** |     49.8±9.8 | **58.1±4.5** |     60.4±10.6 | **69.4±4.3** |        - |
-| Google Translate     |     27.4±6.3 | **31.5±3.5** |     51.1±9.5 | **57.8±4.4** |     61.7±10.3 | **69.1±4.3** |        - |
-| Microsoft Translator |     27.2±6.4 | **31.4±3.6** |     50.8±9.8 | **57.7±4.7** |     61.4±10.6 | **68.9±4.6** |        - |
-| Meta NLLB            |     24.9±6.7 | **32.4±3.5** |    47.5±10.3 | **58.9±4.5** |     58.2±11.2 | **70.2±4.3** |        - |
+| Mean                 |     26.5±6.4 | __31.8±3.5__ |     49.8±9.8 | __58.1±4.5__ |     60.4±10.6 | __69.4±4.3__ |        - |
+| Google Translate     |     27.4±6.3 | __31.5±3.5__ |     51.1±9.5 | __57.8±4.4__ |     61.7±10.3 | __69.1±4.3__ |        - |
+| Microsoft Translator |     27.2±6.4 | __31.4±3.6__ |     50.8±9.8 | __57.7±4.7__ |     61.4±10.6 | __68.9±4.6__ |        - |
+| Meta NLLB            |     24.9±6.7 | __32.4±3.5__ |    47.5±10.3 | __58.9±4.5__ |     58.2±11.2 | __70.2±4.3__ |        - |
 
 ### Performance
 
