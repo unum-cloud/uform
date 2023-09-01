@@ -64,14 +64,12 @@ While they may not be suited for zero-shot classification tasks, they are your _
 
 - __Mid-Fusion Models__: The balanced diet of models. They offer an unimodal and a multimodal part, capturing both the forest and the trees. The multimodal part enhances the unimodal features with a cross-attention mechanism.
 
-So, if you're looking to navigate the complex world of multi-modal data, UForm is the tiny but mighty companion you've been searching for!
-
 ### Broad Training Objectives
 
 We adopt the following training objectives, in line with methodologies presented in the ALBEF and ViCHA papers:
 
-- Image-Text Matching (ITM): Utilizes a loss function based on the probability of the image complementing the text.
-- Masked Language Modeling (MLM): Stacked on top of the multimodal encoder to improve language understanding.
+- Image-Text Matching (ITM): Uses a loss function to gauge how well the image complements the text.
+- Masked Language Modeling (MLM): Stacked on the multimodal encoder to improve language understanding.
 - Hierarchical Image-Text Contrastive (H-ITC): Compares representations across layers for better alignment.
 - Masked Image Modeling (SSL): Applied to the image encoder to enhance visual data interpretation.
 
