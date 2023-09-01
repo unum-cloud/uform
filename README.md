@@ -22,9 +22,9 @@ For Semantic Search & Recommendation Systems<br/>
 ![UForm + USearch + UCall Demo](https://github.com/ashvardanian/usearch-images/raw/main/assets/usearch-images-slow.gif)
 
 Welcome to UForm, a multi-modal AI library that's as versatile as it is efficient.
-Imagine encoding text, images, and soon, audio, video, and documents into a shared Semantic Vector Space.
-With compact __custom pre-trained transformer models__, all of this can run anywhere—from your server farm down to your smartphone. 📱💻 
-[Check them out on HuggingFace!](https://huggingface.co/unum-cloud) 🤗
+Imagine encoding text, images, and soon, audio, video, and JSON documents into a shared Semantic Vector Space.
+With compact __custom pre-trained transformer models__, all of this can run anywhere—from your server farm down to your smartphone.
+[Check them out on HuggingFace!](https://huggingface.co/unum-cloud)
 
 ## 🌟 Key Features
 
@@ -36,22 +36,22 @@ With compact __custom pre-trained transformer models__, all of this can run anyw
 
 ### 🌍 Global Reach
 
-- __Balanced Training__: Our models are cosmopolitan, trained on a balanced diet of English and other languages. This gives us [an edge in languages often overlooked by other models, from Hebrew and Armenian to Hindi and Arabic](#accuracy).
+- __Balanced Training__: Our models are cosmopolitan, trained on a uniquely balanced diet of English and other languages. This gives us [an edge in languages often overlooked by other models, from Hebrew and Armenian to Hindi and Arabic](#accuracy).
 
 ### 🎛 Versatility
 
-- __Mid-Fusion Tech__: Our models use mid-fusion to align multiple transformer towers, enabling database-like operations on multi-modal data. 
+- __Mid-Fusion__: Our models use [mid-fusion](#mid-fusion) to align multiple transformer towers, enabling database-like operations on multi-modal data. 
 
-- __Mixed-Modality Features__: Thanks to mid-fusion, our models can produce mixed vision+language features, perfect for recommendation systems.
+- __Bi-Modal Features__: Thanks to mid-fusion, our models can produce combined vision & language features, perfect for recommendation systems.
 
-- __Cheap Inference__: All of our models have under 1 Billion parameters, meaning substantially [higher throughput and lower inference costs](#speed) than even tiny models, like the famous `distilbert`.
+- __Cheap Inference__: Our models have under 1 Billion parameters, meaning substantially [higher throughput and lower inference costs](#speed) than even tiny models, like the famous `distilbert`.
 
 - __Hardware Friendly__: Whether it's [CoreML, ONNX](https://huggingface.co/unum-cloud/uform-coreml-onnx), or specialized AI hardware like [Graphcore IPUs](#graphcore-ipus), we've got you covered.
 
 ## 🎓 Architectural Improvements
 
 Inspired by the ALBEF paper by Salesforce, we've pushed the boundaries of pre-training objectives to squeeze more language-vision understanding into smaller models.
-Some UForm models were trained on just 4 million samples across 10 GPUs — a __100x reduction in both dataset size and compute budget compared to OpenAI's CLIP__.
+Some UForm models were trained on just 4 million samples across 10x consumer-grade GPUs — a __100x reduction in both dataset size and compute budget compared to OpenAI's CLIP__.
 While they may not be suited for zero-shot classification tasks, they are your __go-to choice for processing large image datasets or even petabytes of video frame-by-frame__.
 
 ### Mid-Fusion
@@ -66,9 +66,14 @@ While they may not be suited for zero-shot classification tasks, they are your _
 
 So, if you're looking to navigate the complex world of multi-modal data, UForm is the tiny but mighty companion you've been searching for!
 
-### New Training Objectives
+### Broad Training Objectives
 
-_Coming soon_
+We adopt the following training objectives, in line with methodologies presented in the ALBEF and ViCHA papers:
+
+- Image-Text Matching (ITM): Utilizes a loss function based on the probability of the image complementing the text.
+- Masked Language Modeling (MLM): Stacked on top of the multimodal encoder to improve language understanding.
+- Hierarchical Image-Text Contrastive (H-ITC): Compares representations across layers for better alignment.
+- Masked Image Modeling (SSL): Applied to the image encoder to enhance visual data interpretation.
 
 ## 🛠 Installation
 
@@ -78,7 +83,7 @@ Install UForm via pip:
 pip install uform
 ```
 
-> Note: For versions below 0.3.0, dependencies include transformers and timm.
+> Note: For versions below 0.3.0, dependencies include `transformers` and `timm`.
 > Newer versions only require PyTorch and utility libraries.
 > For optimal performance, use PyTorch v2.0.0 or above.
 
@@ -185,8 +190,8 @@ __[Please, join our Discord for early access!](https://discord.gg/jsMURnSFM2)__
 | `unum-cloud/uform-vl-multilingual`    | BERT, 8 layers |  ViT-B/16   |    4 layers     |    12     |    [weights.pt][weights-m] |
 | `unum-cloud/uform-vl-multilingual-v2` | BERT, 8 layers |  ViT-B/16   |    4 layers     |    21     | [weights.pt][weights-m-v2] |
 
-The multilingual were trained on a language-balanced dataset.
-For pre-training, we translated captions with [NLLB](https://github.com/facebookresearch/fairseq/tree/nllb).
+The multilingual models were trained on a language-balanced dataset.
+The missing captions were augmented with [NLLB](https://github.com/facebookresearch/fairseq/tree/nllb), effectively distilling multi-lingual capabilities from a large NMT model into our tiny multi-modal encoder.
 
 [weights-e]: https://huggingface.co/unum-cloud/uform-vl-english/resolve/main/torch_weight.pt
 [weights-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/resolve/main/torch_weight.pt
@@ -195,7 +200,8 @@ For pre-training, we translated captions with [NLLB](https://github.com/facebook
 ### Accuracy
 
 Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the following metrics for text-to-image search, compared against `xlm-roberta-base-ViT-B-32` [OpenCLIP](https://github.com/mlfoundations/open_clip) model.
-Check out the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) for details.
+The `@ 1`, `@ 5`, and `@ 10` showcase the quality of top-1, top-5, and top-10 search results, compared to human-annotated dataset.
+Higher is better.
 
 | Language             | OpenCLIP @ 1 |    UForm @ 1 | OpenCLIP @ 5 |    UForm @ 5 | OpenCLIP @ 10 |   UForm @ 10 | Speakers |
 | :------------------- | -----------: | -----------: | -----------: | -----------: | ------------: | -----------: | -------: |
@@ -225,6 +231,9 @@ Check out the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) for 
 | Google Translate     |     27.4±6.3 | __31.5±3.5__ |     51.1±9.5 | __57.8±4.4__ |     61.7±10.3 | __69.1±4.3__ |        - |
 | Microsoft Translator |     27.2±6.4 | __31.4±3.6__ |     50.8±9.8 | __57.7±4.7__ |     61.4±10.6 | __68.9±4.6__ |        - |
 | Meta NLLB            |     24.9±6.7 | __32.4±3.5__ |    47.5±10.3 | __58.9±4.5__ |     58.2±11.2 | __70.2±4.3__ |        - |
+
+> Lacking a broad enough evaluation dataset, we translated the [COCO Karpathy test split](https://www.kaggle.com/datasets/shtvkumar/karpathy-splits) with multiple public and proprietary translation services, averaging the scores across all sets, and breaking them down in the bottom section.
+> Check out the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) repository for details.
 
 ### Speed
 
