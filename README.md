@@ -237,14 +237,14 @@ Higher is better.
 
 On RTX 3090, the following performance is expected from `uform` on text encoding.
 
-| Model                              | Multilingual | Sequences per Second |    Speedup |
-| :--------------------------------- | -----------: | -------------------: | ---------: |
-| `bert-base-uncased`                |           No |                1'612 |            |
-| `distilbert-base-uncased`          |           No |                3'174 |     x 1.96 |
-| `sentence-transformers/MiniLM-L12` |          Yes |                3'604 |     x 2.24 |
-| `sentence-transformers/MiniLM-L6`  |           No |                6'107 |     x 3.79 |
-|                                    |              |                      |            |
-| `unum-cloud/uform-vl-multilingual` |          Yes |                6'809 | __x 4.22__ |
+| Model                                     | Multi-lingual |  Model Size |        Speed |    Speedup |
+| :---------------------------------------- | ------------: | ----------: | -----------: | ---------: |
+| `bert-base-uncased`                       |            No | 109'482'240 | 1'612 seqs/s |            |
+| `distilbert-base-uncased`                 |            No |  66'362'880 | 3'174 seqs/s |     x 1.96 |
+| `sentence-transformers/all-MiniLM-L12-v2` |       __Yes__ |  33'360'000 | 3'604 seqs/s |     x 2.24 |
+| `sentence-transformers/all-MiniLM-L6-v2`  |            No |  22'713'216 | 6'107 seqs/s |     x 3.79 |
+|                                           |               |             |              |            |
+| `unum-cloud/uform-vl-multilingual-v2`     |       __Yes__ | 120'090'242 | 6'809 seqs/s | __x 4.22__ |
 
 ## 🧰 Additional Tooling
 
