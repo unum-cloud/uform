@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Mapping
 import torch
 from huggingface_hub import snapshot_download
 
-from models import VLM, TritonClient, VLM_IPU
+from models import *
 
 
 def get_checkpoint(model_name, token) -> Tuple[str, Mapping, str]:
