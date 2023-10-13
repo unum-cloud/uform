@@ -72,10 +72,15 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: '3.x'
+      
+      # Install dependencies:
+      # - build: for PyPi
+      # - anaconda-client: for Anaconda
+      # - urllib3: for Anaconda, as it is a dependency of anaconda-client
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build anaconda-client
+        pip install build anaconda-client urllib3
 
     - name: Build package
       run: python -m build
