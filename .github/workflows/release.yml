@@ -92,10 +92,9 @@ jobs:
         password: ${{ secrets.PYPI_API_TOKEN }}
 
     - name: Publish to Anaconda
+      env:
+        ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
       run: |
-        pip install anaconda-client
-        export ANACONDA_API_TOKEN=${{ secrets.ANACONDA_API_TOKEN }}
-        anaconda login --token $ANACONDA_API_TOKEN
         anaconda upload -u unum-cloud ./dist/*.tar.bz2
 
   deploy_docs:
