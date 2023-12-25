@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
         is_text_only = prompt.startswith("[txt]")
 
-        input_data = processor(text=prompt, images=image, return_tensors="pt").to(
+        input_data = processor(texts=prompt, images=image, return_tensors="pt").to(
             device
         )
 
