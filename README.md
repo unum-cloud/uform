@@ -1,79 +1,50 @@
 <h1 align="center">UForm</h1>
 <h3 align="center">
 Pocket-Sized Multi-Modal AI<br/>
-For Semantic Search & Recommendation Systems<br/>
+For content generation and understanding<br/>
 </h3>
 <br/>
 
 <p align="center">
 <a href="https://discord.gg/jsMURnSFM2"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/discord.svg" alt="Discord"></a>
-&nbsp;&nbsp;&nbsp;
+&nbsp; &nbsp; &nbsp; 
 <a href="https://www.linkedin.com/company/unum-cloud/"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/linkedin.svg" alt="LinkedIn"></a>
-&nbsp;&nbsp;&nbsp;
+&nbsp; &nbsp; &nbsp; 
 <a href="https://twitter.com/unum_cloud"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/twitter.svg" alt="Twitter"></a>
-&nbsp;&nbsp;&nbsp;
+&nbsp; &nbsp; &nbsp; 
 <a href="https://unum.cloud/post"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/blog.svg" alt="Blog"></a>
-&nbsp;&nbsp;&nbsp;
+&nbsp; &nbsp; &nbsp; 
 <a href="https://github.com/unum-cloud/uform"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/github.svg" alt="GitHub"></a>
 </p>
 
 ---
-
-[![UForm + USearch + UCall Demo](https://github.com/ashvardanian/usearch-images/raw/main/assets/usearch-images-slow.gif)](http://usearch-images.com)
-
 Welcome to UForm, a multi-modal AI library that's as versatile as it is efficient.
 Imagine encoding text, images, and soon, audio, video, and JSON documents into a shared Semantic Vector Space.
 With compact __custom pre-trained transformer models__, all of this can run anywhere—from your server farm down to your smartphone.
-[Check them out on HuggingFace!](https://huggingface.co/unum-cloud)
 
-## 🌟 Key Features
+## Key Features
 
-### ⚡ Speed & Efficiency
+* __Tiny Embeddings__: With just 256 dimensions, our embeddings are lean and fast, making your inference [1.5-3x quicker](#speed) compared to other CLIP-like models.
 
-- __Tiny Embeddings__: With just 256 dimensions, our embeddings are lean and fast to work with, making your search operations 1.5-3x quicker compared to other CLIP-like models with 512-1024 dimensions.
+* __Quantization Magic__: Our models are trained to be quantization-aware, letting you downcast embeddings from `f32` to `i8` without losing much accuracy.
 
-- __Quantization Magic__: Our models are trained to be quantization-aware, letting you downcast embeddings from `f32` to `i8` without losing much accuracy. Supported by __[USearch](https://github.com/unum-cloud/usearch)__, this leads to a further 3x reduction in index size and up to a 5x higher performance, especially on IoT devices with low floating-point performance.
+* __Balanced Training__: Our models are cosmopolitan, trained on a uniquely balanced diet of English and other languages. This gives us [an edge in languages often overlooked by other models, from Hebrew and Armenian to Hindi and Arabic](#accuracy).
 
-### 🌍 Global Reach
+* __Hardware Friendly__: Whether it's [CoreML, ONNX](https://huggingface.co/unum-cloud/uform-coreml-onnx), or specialized AI hardware like Graphcore IPUs, we've got you covered.
 
-- __Balanced Training__: Our models are cosmopolitan, trained on a uniquely balanced diet of English and other languages. This gives us [an edge in languages often overlooked by other models, from Hebrew and Armenian to Hindi and Arabic](#accuracy).
+## Model Cards
 
-### 🎛 Versatility
+| Model                                 | Description  | Languages |                        URL |
+| :------------------------------------ | :----------------------------------: | :-------: | -------------------------: |
+| `unum-cloud/uform-vl-english` | 2 layers text encoder, ViT-B/16, 2 layers multimodal part |     1     |    [weights][weights-e] |
+| `unum-cloud/uform-vl-multilingual` | 8 layers text encoder, ViT-B/16, 4 layers multimodal part |    12     |    [weights][weights-m] |
+| `unum-cloud/uform-vl-multilingual-v2` | 8 layers text encoder, ViT-B/16, 4 layers multimodal part |    21     | [weights][weights-m-v2] |
 
-- __Mid-Fusion__: Our models use [mid-fusion](#mid-fusion) to align multiple transformer towers, enabling database-like operations on multi-modal data. 
+[weights-e]: https://huggingface.co/unum-cloud/uform-vl-english/
+[weights-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/
+[weights-m-v2]: https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/
 
-- __Bi-Modal Features__: Thanks to mid-fusion, our models can produce combined vision & language features, perfect for recommendation systems.
-
-- __Cheap Inference__: Our models have under 1 Billion parameters, meaning substantially [higher throughput and lower inference costs](#speed) than even tiny models, like the famous `distilbert`.
-
-- __Hardware Friendly__: Whether it's [CoreML, ONNX](https://huggingface.co/unum-cloud/uform-coreml-onnx), or specialized AI hardware like [Graphcore IPUs](#graphcore-ipus), we've got you covered.
-
-## 🎓 Architectural Improvements
-
-Inspired by the ALBEF paper by Salesforce, we've pushed the boundaries of pre-training objectives to squeeze more language-vision understanding into smaller models.
-Some UForm models were trained on just 4 million samples across 10x consumer-grade GPUs — a __100x reduction in both dataset size and compute budget compared to OpenAI's CLIP__.
-While they may not be suited for zero-shot classification tasks, they are your __go-to choice for processing large image datasets or even petabytes of video frame-by-frame__.
-
-### Mid-Fusion
-
-![Fusion Models](https://raw.githubusercontent.com/unum-cloud/uform/main/assets/model_types_bg.png)
-
-- __Late-Fusion Models__: Great for capturing the big picture but might miss the details. Ideal for large-scale retrieval. OpenAI CLIP is one of those.
-
-- __Early-Fusion Models__: These are detail-oriented models that capture fine-grained features. They're usually employed for re-ranking smaller retrieval results.
-
-- __Mid-Fusion Models__: The balanced diet of models. They offer an unimodal and a multimodal part, capturing both the forest and the trees. The multimodal part enhances the unimodal features with a cross-attention mechanism.
-
-### Broad Training Objectives
-
-We adopt the following training objectives, in line with methodologies presented in the ALBEF and ViCHA papers:
-
-- Image-Text Matching (ITM): Uses a loss function to gauge how well the image complements the text.
-- Masked Language Modeling (MLM): Stacked on the multimodal encoder to improve language understanding.
-- Hierarchical Image-Text Contrastive (H-ITC): Compares representations across layers for better alignment.
-- Masked Image Modeling (SSL): Applied to the image encoder to enhance visual data interpretation.
-
-## 🛠 Installation
+## Installation
 
 Install UForm via pip:
 
@@ -81,13 +52,11 @@ Install UForm via pip:
 pip install uform
 ```
 
-> Note: For versions below 0.3.0, dependencies include `transformers` and `timm`.
-> Newer versions only require PyTorch and utility libraries.
-> For optimal performance, use PyTorch v2.0.0 or above.
+## Quick Start
 
-## 🚀 Quick Start
+### Encoding models
 
-### Loading a Model
+#### Loading a Model
 
 ```python
 import uform
@@ -96,12 +65,7 @@ model = uform.get_model('unum-cloud/uform-vl-english') # Just English
 model = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
 ```
 
-The multi-lingual model is much heavier due to a 10x more extensive vocabulary.
-So, if you only expect English data, take the former for efficiency.
-You can also load your Mid-fusion model.
-Just upload it on HuggingFace and pass the model name to `get_model`.
-
-### Encoding Data
+#### Encoding Data
 
 ```python
 from PIL import Image
@@ -112,22 +76,10 @@ image = Image.open('red_panda.jpg')
 image_data = model.preprocess_image(image)
 text_data = model.preprocess_text(text)
 
-image_embedding = model.encode_image(image_data)
-text_embedding = model.encode_text(text_data)
-joint_embedding = model.encode_multimodal(image=image_data, text=text_data)
-```
-
-### Retrieving Features
-
-```python
 image_features, image_embedding = model.encode_image(image_data, return_features=True)
 text_features, text_embedding = model.encode_text(text_data, return_features=True)
-```
 
-These features can later be used to produce joint multimodal encodings faster, as the first layers of the transformer can be skipped.
-Those might be useful for re-ranking search results, and recommendation systems.
-
-```python
+# Features can be used to produce joint multimodal embeddings
 joint_embedding = model.encode_multimodal(
     image_features=image_features,
     text_features=text_features,
@@ -135,70 +87,47 @@ joint_embedding = model.encode_multimodal(
 )
 ```
 
-### Graphcore IPUs
-
-To run on Graphcore IPUs, you must set up PopTorch first.
-Follow the [user guide](https://docs.graphcore.ai/projects/poptorch-user-guide/en/latest/intro.html) on their website.
-Once complete, our example would need a couple of adjustments to best leverage the Graphcore platform's available data and model-parallelism.
+### Generative Models
 
 ```python
-import poptorch
-from PIL import Image
+import uform
 
-options = poptorch.Options()
-options.replicationFactor(1)
-options.deviceIterations(4)
-
-model = get_model_ipu('unum-cloud/uform-vl-english').parallelize()
-model = poptorch.inferenceModel(model, options=options)
-
-text = 'a small red panda in a zoo'
-image = Image.open('red_panda.jpg')
-image_data = model.preprocess_image(image)
-text_data = model.preprocess_text(text)
-
-image_data = image_data.repeat(4, 1, 1, 1)
-text_data = {k: v.repeat(4, 1) for k,v in text_data.items()}
-
-image_features, text_features = model(image_data, text_data)
+model = uform.get_model('unum-cloud/uform-gen')
 ```
 
-### Cloud API
-
-You can also use our larger, faster, better proprietary models deployed in optimized cloud environments.
-For that, please choose the cloud of liking, search the marketplace for "Unum UForm", and reinstall UForm with optional dependencies:
+### Multi-GPU
 
 ```python
-$ pip install uform[remote]
+import uform
 
-model = uform.get_client('0.0.0.0:7000')
+model = uform.get_model('unum-cloud/uform-vl-english')
+model_image = nn.DataParallel(model.image_encoder)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model_image.to(device)
+
+_, res = model_image(images, 0)
 ```
 
-The only thing that changes after that is calling `get_client` with the IP address of your instance instead of using `get_model` for local usage.
+## Models Evaluation
 
-__[Please, join our Discord for early access!](https://discord.gg/jsMURnSFM2)__
+### Speed
 
-## 📊 Models
+On RTX 3090, the following performance is expected from `uform` on text encoding.
 
-### Architecture
-
-| Model                                 | Language Tower | Image Tower | Multimodal Part | Languages |                        URL |
-| :------------------------------------ | :------------: | :---------: | :-------------: | :-------: | -------------------------: |
-| `unum-cloud/uform-vl-english`         | BERT, 2 layers |  ViT-B/16   |    2 layers     |     1     |    [weights.pt][weights-e] |
-| `unum-cloud/uform-vl-multilingual`    | BERT, 8 layers |  ViT-B/16   |    4 layers     |    12     |    [weights.pt][weights-m] |
-| `unum-cloud/uform-vl-multilingual-v2` | BERT, 8 layers |  ViT-B/16   |    4 layers     |    21     | [weights.pt][weights-m-v2] |
-
-The multilingual models were trained on a language-balanced dataset.
-The missing captions were augmented with [NLLB](https://github.com/facebookresearch/fairseq/tree/nllb), effectively distilling multi-lingual capabilities from a large NMT model into our tiny multi-modal encoder.
-
-[weights-e]: https://huggingface.co/unum-cloud/uform-vl-english/resolve/main/torch_weight.pt
-[weights-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/resolve/main/torch_weight.pt
-[weights-m-v2]: https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/resolve/main/torch_weight.pt
+| Model                                     | Multi-lingual |  Model Size |        Speed |    Speedup |
+| :---------------------------------------- | ------------: | ----------: | -----------: | ---------: |
+| `bert-base-uncased` |            No | 109'482'240 | 1'612 seqs/s |            |
+| `distilbert-base-uncased` |            No |  66'362'880 | 3'174 seqs/s |     x 1.96 |
+| `sentence-transformers/all-MiniLM-L12-v2` |       __Yes__ |  33'360'000 | 3'604 seqs/s |     x 2.24 |
+| `sentence-transformers/all-MiniLM-L6-v2` |            No |  22'713'216 | 6'107 seqs/s |     x 3.79 |
+|                                           |               |             |              |            |
+| `unum-cloud/uform-vl-multilingual-v2` |       __Yes__ | 120'090'242 | 6'809 seqs/s | __x 4.22__ |
 
 ### Accuracy
 
 Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the following metrics for text-to-image search, compared against `xlm-roberta-base-ViT-B-32` [OpenCLIP](https://github.com/mlfoundations/open_clip) model.
-The `@ 1`, `@ 5`, and `@ 10` showcase the quality of top-1, top-5, and top-10 search results, compared to human-annotated dataset.
+The `@ 1` , `@ 5` , and `@ 10` showcase the quality of top-1, top-5, and top-10 search results, compared to human-annotated dataset.
 Higher is better.
 
 | Language             | OpenCLIP @ 1 |    UForm @ 1 | OpenCLIP @ 5 |    UForm @ 5 | OpenCLIP @ 10 |   UForm @ 10 | Speakers |
@@ -231,20 +160,7 @@ Higher is better.
 | Meta NLLB            |     24.9±6.7 | __32.4±3.5__ |    47.5±10.3 | __58.9±4.5__ |     58.2±11.2 | __70.2±4.3__ |        - |
 
 > Lacking a broad enough evaluation dataset, we translated the [COCO Karpathy test split](https://www.kaggle.com/datasets/shtvkumar/karpathy-splits) with multiple public and proprietary translation services, averaging the scores across all sets, and breaking them down in the bottom section.
-> Check out the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) repository for details.
-
-### Speed
-
-On RTX 3090, the following performance is expected from `uform` on text encoding.
-
-| Model                                     | Multi-lingual |  Model Size |        Speed |    Speedup |
-| :---------------------------------------- | ------------: | ----------: | -----------: | ---------: |
-| `bert-base-uncased`                       |            No | 109'482'240 | 1'612 seqs/s |            |
-| `distilbert-base-uncased`                 |            No |  66'362'880 | 3'174 seqs/s |     x 1.96 |
-| `sentence-transformers/all-MiniLM-L12-v2` |       __Yes__ |  33'360'000 | 3'604 seqs/s |     x 2.24 |
-| `sentence-transformers/all-MiniLM-L6-v2`  |            No |  22'713'216 | 6'107 seqs/s |     x 3.79 |
-|                                           |               |             |              |            |
-| `unum-cloud/uform-vl-multilingual-v2`     |       __Yes__ | 120'090'242 | 6'809 seqs/s | __x 4.22__ |
+> Check out the [ `unum-cloud/coco-sm` ](https://github.com/unum-cloud/coco-sm) repository for details.
 
 ## 🧰 Additional Tooling
 
@@ -260,16 +176,6 @@ similarity = F.cosine_similarity(image_embedding, text_embedding)
 
 The `similarity` will belong to the `[-1, 1]` range, `1` meaning the absolute match.
 
-__Pros__:
-
-- Computationally cheap.
-- Only unimodal embeddings are required. Unimodal encoding is faster than joint encoding.
-- Suitable for retrieval in large collections.
-
-__Cons__:
-
-- Takes into account only coarse-grained features.
-
 ### Matching Score 
 
 Unlike cosine similarity, unimodal embedding is not enough.
@@ -279,12 +185,6 @@ Joint embedding will be needed, and the resulting `score` will belong to the `[0
 score = model.get_matching_scores(joint_embedding)
 ```
 
-__Pros__:
+## License
 
-- Joint embedding captures fine-grained features.
-- Suitable for re-ranking - sorting retrieval results.
-
-__Cons__:
-
-- Resource-intensive.
-- Not suitable for retrieval in large collections.
+All models and code available under Apache-2.0 available in [Model LICENSE](LICENSE) file
