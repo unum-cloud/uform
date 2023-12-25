@@ -1,24 +1,24 @@
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
-from torch.utils.checkpoint import checkpoint
 from torch import nn
-
+from torchvision.transforms import *
+from transformers import AutoConfig, AutoTokenizer
+from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.modeling_utils import PreTrainedModel
-from transformers.models.auto.modeling_auto import AutoModelForCausalLM, AutoModel
-from transformers import AutoConfig, AutoTokenizer
-from transformers.utils import logging
+from transformers.models.auto.modeling_auto import AutoModel, AutoModelForCausalLM
 from transformers.processing_utils import ProcessorMixin
 from transformers.tokenization_utils_base import BatchEncoding
-from transformers.configuration_utils import PretrainedConfig
-from torchvision.transforms import *
-
 from uform import VisualEncoder
-from PIL import Image
 
-logger = logging.get_logger(__name__)
+IMAGENET_MEAN = (0.48145466, 0.4578275, 0.40821073)
+IMAGENET_STD = (0.26862954, 0.26130258, 0.27577711)
+
+
+def convert_to_rgb(image):
+    return image.convert("RGB")
 
 
 class LayerScale(nn.Module):
@@ -32,26 +32,34 @@ class LayerScale(nn.Module):
 
 
 class ImageFeaturesPooler(nn.Module):
-    def __init__(self, config, text_config):
+    def __init__(
+        self,
+        input_size,
+        hidden_size,
+        num_attn_heads,
+        intermediate_size,
+        num_latents,
+        initializer_range,
+    ):
         super().__init__()
+        self.projection = nn.Linear(input_size, hidden_size)
+
         self.pooler = nn.TransformerDecoderLayer(
-            text_config.hidden_size,
-            config.image_pooler_num_attn_heads,
-            config.image_pooler_intermediate_size,
+            hidden_size,
+            num_attn_heads,
+            intermediate_size,
             activation=nn.functional.silu,
             batch_first=True,
             norm_first=True,
         )
-        self.projection = nn.Linear(config.in_sizes, text_config.hidden_size)
         self.image_latents = nn.Parameter(
-            torch.randn(1, config.num_image_latents, text_config.hidden_size)
-            * config.initializer_range**0.5
+            torch.randn(1, num_latents, hidden_size) * initializer_range**0.5
         )
 
     def forward(self, features):
         features = self.projection(features)
         return self.pooler(
-            self.image_latents.expand(features.size(0), -1, -1), features
+            self.image_latents.expand(features.shape[0], -1, -1), features
         )
 
 
@@ -61,29 +69,29 @@ class VLMConfig(PretrainedConfig):
     def __init__(
         self,
         text_decoder_name_or_path: str = "",
-        in_sizes: List = [768],
+        tokenizer_name_or_path: str = "",
+        image_size: int = 224,
         image_encoder_hidden_size: int = 768,
         image_encoder_patch_size: int = 16,
-        image_size: int = 224,
         image_encoder_num_layers: int = 12,
         image_encoder_num_heads: int = 12,
         image_encoder_embedding_dim: int = 256,
         image_encoder_pooling: str = "cls",
         image_pooler_num_attn_heads: int = 16,
         image_pooler_intermediate_size: int = 5504,
+        image_pooler_num_latents: int = 196,
         image_token_id: int = 32002,
-        num_image_latents: int = 196,
         initializer_range: float = 0.02,
         use_cache: bool = True,
         center_crop: bool = True,
         **kwargs,
     ):
         self.text_decoder_name_or_path = text_decoder_name_or_path
-        self.in_sizes = in_sizes
+        self.tokenizer_name_or_path = tokenizer_name_or_path
 
+        self.image_size = image_size
         self.image_encoder_hidden_size = image_encoder_hidden_size
         self.image_encoder_patch_size = image_encoder_patch_size
-        self.image_size = image_size
         self.image_encoder_num_layers = image_encoder_num_layers
         self.image_encoder_num_heads = image_encoder_num_heads
         self.image_encoder_embedding_dim = image_encoder_embedding_dim
@@ -91,8 +99,9 @@ class VLMConfig(PretrainedConfig):
 
         self.image_pooler_num_attn_heads = image_pooler_num_attn_heads
         self.image_pooler_intermediate_size = image_pooler_intermediate_size
+        self.image_pooler_num_latents = image_pooler_num_latents
+
         self.image_token_id = image_token_id
-        self.num_image_latents = num_image_latents
 
         self.initializer_range = initializer_range
         self.use_cache = use_cache
@@ -121,16 +130,8 @@ class VLMForCausalLM(VLMPreTrainedModel):
 
         self.config = config
         self.text_config = AutoConfig.from_pretrained(config.text_decoder_name_or_path)
+        self.text_config.vocab_size += 3
         self.text_decoder = AutoModelForCausalLM.from_config(self.text_config)
-
-        vocab_size, dim = self.text_decoder.model.embed_tokens.weight.shape
-        r = 8
-        self.embs_lora_a = nn.Parameter(torch.zeros(vocab_size, r))
-        self.embs_lora_b = nn.Parameter(torch.randn(r, dim))
-
-        self.register_buffer(
-            "trainable_tokens_ids", torch.arange(32003, 32109)[None, None]
-        )
 
         self.image_encoder = VisualEncoder(
             self.config.image_encoder_hidden_size,
@@ -142,7 +143,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
             self.config.image_encoder_pooling,
         )
 
-        # replace models' layerscales because transformers automatically rename keys in state_dict
+        # replace models' layerscales because `transformers` automatically renames keys in state_dict
         for i in range(len(self.image_encoder.blocks)):
             self.image_encoder.blocks[i].ls1 = LayerScale(
                 self.image_encoder.blocks[i].ls1.dim
@@ -151,7 +152,14 @@ class VLMForCausalLM(VLMPreTrainedModel):
                 self.image_encoder.blocks[i].ls2.dim
             )
 
-        self.image_pooler = ImageFeaturesPooler(config, self.text_config)
+        self.image_pooler = ImageFeaturesPooler(
+            self.config.image_encoder_hidden_size,
+            self.text_config.hidden_size,
+            self.config.image_pooler_num_attn_heads,
+            self.config.image_pooler_intermediate_size,
+            self.config.image_pooler_num_latents,
+            self.config.initializer_range,
+        )
 
     def get_input_embeddings(self):
         return self.text_decoder.get_input_embeddings()
@@ -225,11 +233,6 @@ class VLMForCausalLM(VLMPreTrainedModel):
 
         if inputs_embeds is None and past_key_values is None:
             inputs_embeds = self.get_input_embeddings()(input_ids)
-            trainable_add = F.embedding(input_ids, self.embs_lora_a) @ self.embs_lora_b
-            mask = (input_ids[:, :, None] == self.trainable_tokens_ids).int().sum(dim=2)
-            mask = (1 - mask).bool().unsqueeze(2)
-
-            inputs_embeds += trainable_add.masked_fill_(mask, 0)
 
             if images is not None:
                 image_embeds = self.get_images_embeddings(images)
@@ -318,100 +321,54 @@ class VLMForCausalLM(VLMPreTrainedModel):
 
 class VLMProcessor(ProcessorMixin):
     def __init__(self, config, **kwargs):
-        """self.image_processor = AutoImageProcessor.from_pretrained(
-            config.image_encoder_name_or_path
-        )"""
+        self.feature_extractor = None
+        self.config = config
 
         if config.center_crop:
             self.image_processor = Compose(
                 [
-                    # Resize(256, interpolation=InterpolationMode.BICUBIC),
-                    # convert_to_rgb,
-                    # CenterCrop(224),
+                    Resize(256, interpolation=InterpolationMode.BICUBIC),
+                    CenterCrop(config.image_size),
+                    convert_to_rgb,
                     ToTensor(),
                     Normalize(
-                        mean=(0.48145466, 0.4578275, 0.40821073),
-                        std=(0.26862954, 0.26130258, 0.27577711),
+                        mean=IMAGENET_MEAN,
+                        std=IMAGENET_STD,
                     ),
                 ]
             )
         else:
             self.image_processor = Compose(
                 [
-                    # RandomResizedCrop(
-                    #     224, scale=(0.75, 1), interpolation=InterpolationMode.BICUBIC
-                    # ),
-                    # convert_to_rgb,
+                    RandomResizedCrop(
+                        config.image_size,
+                        scale=(0.8, 1),
+                        interpolation=InterpolationMode.BICUBIC,
+                    ),
+                    convert_to_rgb,
                     ToTensor(),
                     Normalize(
-                        mean=(0.48145466, 0.4578275, 0.40821073),
-                        std=(0.26862954, 0.26130258, 0.27577711),
+                        mean=IMAGENET_MEAN,
+                        std=IMAGENET_STD,
                     ),
                 ]
             )
 
         self.tokenizer = AutoTokenizer.from_pretrained(
-            config.text_decoder_name_or_path, additional_special_tokens=["<|im_end|>"]
+            config.tokenizer_name_or_path, additional_special_tokens=["<|im_end|>"]
         )
-        self.num_image_latents = config.num_image_latents
+        self.num_image_latents = config.image_pooler_num_latents
 
-    def __call__(
-        self, text=None, images=None, prompt=None, return_tensors=None, **kwargs
-    ):
-        if prompt is not None and text is not None and images is not None:
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": f" <image> {prompt}"},
-            ]
-            tokenized_prompt = self.tokenizer.apply_chat_template(
-                messages,
-                add_generation_prompt=True,
-            )
-
-            answer = self.tokenizer(f"\n{text} <|im_end|>\n")["input_ids"][3:]
-
-            labels = torch.full(
-                (
-                    len(tokenized_prompt) + len(answer) - 1,
-                ),  # -1 because <image> and task tokens will be deleted
-                fill_value=-100,
-                dtype=torch.int64,
-            )
-            labels[len(tokenized_prompt) - 2 : -1] = torch.LongTensor(answer)
-
-            if isinstance(images, list):
-                batch_images = torch.empty(
-                    (len(images), 3, 224, 224),
-                    dtype=torch.float32,
-                )
-
-                for i, image in enumerate(images):
-                    image = self.letterbox_resize(image, (224, 224))
-                    batch_images[i] = self.image_processor(image)
-
-            else:
-                images = self.letterbox_resize(images, (224, 224))
-                batch_images = self.image_processor(images).unsqueeze(0)
-
-            encoding = {
-                "input_ids": torch.LongTensor(tokenized_prompt + answer),
-                "labels": labels,
-                # "pixel_values": self.image_processor(
-                #     images, return_tensors=return_tensors, **kwargs
-                # ).pixel_values,
-                "pixel_values": batch_images,
-            }
-            return encoding
-
-        if text is not None:
-            if isinstance(text, str):
-                text = [text]
+    def __call__(self, texts=None, images=None, return_tensors="pt", **kwargs):
+        if texts is not None:
+            if isinstance(texts, str):
+                texts = [texts]
 
             tokenized_texts = []
-            for t in text:
+            for text in texts:
                 messages = [
                     {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": f" <image> {t}"},
+                    {"role": "user", "content": f" <image> {text}"},
                 ]
                 tokenized_prompt = self.tokenizer.apply_chat_template(
                     messages, add_generation_prompt=True, return_tensors=return_tensors
@@ -442,73 +399,35 @@ class VLMProcessor(ProcessorMixin):
             )
 
         if images is not None:
-            if isinstance(images, list):
+            if isinstance(images, (list, tuple)):
                 image_features = torch.empty(
-                    (len(images), 3, 224, 224),
+                    (len(images), 3, self.config.image_size, self.config.image_size),
                     dtype=torch.float32,
                 )
 
                 for i, image in enumerate(images):
-                    image = self.letterbox_resize(image, (224, 224))
                     image_features[i] = self.image_processor(image)
-
             else:
-                images = self.letterbox_resize(images, (224, 224))
                 image_features = self.image_processor(images).unsqueeze(0)
 
-        if text is not None and images is not None:
+        if texts is not None and images is not None:
             encoding["images"] = image_features
             return encoding
 
-        elif text is not None:
+        if texts is not None:
             return encoding
 
-        else:
-            return BatchEncoding(
-                data={
-                    "images": image_features,
-                },
-                tensor_type=return_tensors,
-            )
-
-    def letterbox_resize(self, image, target_size):
-        # Calculate the aspect ratio of the original image
-        original_width, original_height = image.size
-        original_aspect_ratio = original_width / original_height
-
-        # Calculate the aspect ratio of the target size
-        target_width, target_height = target_size
-        target_aspect_ratio = target_width / target_height
-
-        # Calculate the new size to fit into the target size while maintaining the aspect ratio
-        if original_aspect_ratio > target_aspect_ratio:
-            new_width = target_width
-            new_height = int(target_width / original_aspect_ratio)
-        else:
-            new_width = int(target_height * original_aspect_ratio)
-            new_height = target_height
-
-        # Resize the image while maintaining the aspect ratio
-        resized_image = image.resize((new_width, new_height)).convert("RGB")
-
-        # Create a new image with the target size and paste the resized image onto it (letterboxing)
-        letterboxed_image = Image.new("RGB", target_size, (122, 116, 104))
-        letterboxed_image.paste(resized_image, (0, 0))
-
-        return letterboxed_image
+        return BatchEncoding(
+            data={
+                "images": image_features,
+            },
+            tensor_type=return_tensors,
+        )
 
     def batch_decode(self, *args, **kwargs):
-        """
-        This method forwards all its arguments to CLIPTokenizerFast's [`~PreTrainedTokenizer.batch_decode`]. Please
-        refer to the docstring of this method for more information.
-        """
         return self.tokenizer.batch_decode(*args, **kwargs)
 
     def decode(self, *args, **kwargs):
-        """
-        This method forwards all its arguments to CLIPTokenizerFast's [`~PreTrainedTokenizer.decode`]. Please refer to
-        the docstring of this method for more information.
-        """
         return self.tokenizer.decode(*args, **kwargs)
 
     @classmethod
