@@ -1,6 +1,6 @@
 <h1 align="center">UForm</h1>
 <h3 align="center">
-Pocket-Sized Multi-Modal AI<br/>
+Pocket-Sized Multimodal AI<br/>
 For Content Understanding and Generation<br/>
 </h3>
 <br/>
@@ -20,18 +20,20 @@ For Content Understanding and Generation<br/>
 ---
 
 Welcome to UForm, a __multimodal__ AI library that's as versatile as it is efficient.
-UForm [tiny embedding models](#encoder) will help you understand and search visual and textual content across a variaty of languages.
-UForm [small generative models](#decoder), on the other hand, don't only support converstional and chat usecases, but are also capable of image captioning and Visual Question Answering (VQA).
-With compact __custom pre-trained transformer models__, all of this can run anywhere—from your server farm down to your smartphone.
+UForm [tiny embedding models](#encoder) will help you understand and search visual and textual content across various languages.
+UForm [small generative models](#decoder), on the other hand, don't only support conversational and chat use-cases, but are also capable of image captioning and Visual Question Answering (VQA).
+With compact __custom pre-trained transformer models__, this can run anywhere from your server farm down to your smartphone.
 
 ## Features
 
 * __Throughput__: Thanks to the small size, the inference speed is [2-4x faster](#speed) than competitors.
-* __Tiny Embeddings__: With just 256 dimensions, our vectors are [2-3x quicker](#speed) to search than from CLIP-like models.
+* __Tiny Embeddings__: With just 256 dimensions, our vectors are 2-3x quicker to [search][usearch] than from CLIP-like models.
 * __Quantization Aware__: Our embeddings can be downcasted from `f32` to `i8` without losing much recall.
-* __Multilingual__: Our models have seen equal amount of samples across 21 languages, resulting in great [accuracy](#accuracy).
-* __Hardware Friendly__: Whether it's Apple's CoreML or ONNX, [we've got you covered](https://huggingface.co/unum-cloud/uform-coreml-onnx).
+* __Multilingual__: Trained on a balanced dataset, the recall is great across over [20 languages](#evaluation).
+* __Hardware Friendly__: Whether it's Apple's CoreML or ONNX, [we've got you covered][onnx].
 
+[usearch]: https://github.com/unum-cloud/usearch
+[onnx]: https://huggingface.co/unum-cloud/uform-coreml-onnx
 
 ## Models
 
@@ -87,10 +89,10 @@ text_features, text_embedding = model.encode_text(text_data, return_features=Tru
 similarity = F.cosine_similarity(image_embedding, text_embedding)
 ```
 
-For efficient search, the embeddings can be compared using cosine similarity.
-The value will belong to the interval `[-1, 1]`, where `1` means a likely match.
-Once the list of nearest neighbors (best matches) is obtained, it can be reranked using the joint multimodal embeddings, produced from both text and image features.
-The model can output a "matching score" which will belong to the `[0, 1]` range, `1` meaning a more likely match.
+To search for similar items, the embeddings can be compared using cosine similarity.
+The resulting value will fall within the range of `-1` to `1`, where `1` indicates a high likelihood of a match. 
+Once the list of nearest neighbors (best matches) is obtained, the joint multimodal embeddings, created from both text and image features, can be used to better rerank (reorder) the list.
+The model can calculate a "matching score" that falls within the range of `[0, 1]`, where `1` indicates a high likelihood of a match.
 
 ```python
 joint_embedding = model.encode_multimodal(
@@ -131,7 +133,7 @@ prompt_len = inputs["input_ids"].shape[1]
 decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
 ```
 
-### Multi-Modal Chat
+### Multimodal Chat
 
 The generative models can be used for chat-like experiences, where the user can provide both text and images as input.
 To use that feature, you can start with the following CLI command:
@@ -163,7 +165,7 @@ _, res = model_image(images, 0)
 
 Few retrieval benchmarks exist for multimodal embeddings.
 The most famous ones for English are "MS-COCO" and "Flickr30k".
-Evaluating `uform-vl-english` model, one can expect following numbers for search quality.
+Evaluating `uform-vl-english` model, one can expect the following numbers for search quality.
 
 | Dataset   | Recall @ 1 | Recall @ 5 | Recall @ 10 |
 | :-------- | ---------: | ---------: | ----------: |
@@ -171,7 +173,7 @@ Evaluating `uform-vl-english` model, one can expect following numbers for search
 | MS-COCO ¹ |      0.510 |      0.761 |       0.838 |
 
 
-For multilingual benchmarks we've created the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) repository ².
+For multilingual benchmarks, we've created the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) repository ².
 Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the following metrics for text-to-image search, compared against `xlm-roberta-base-ViT-B-32` [OpenCLIP](https://github.com/mlfoundations/open_clip) model.
 
 | Language  | OpenCLIP @ 1 | UForm @ 1 | OpenCLIP @ 5 | UForm @ 5 | OpenCLIP @ 10 | UForm @ 10 | Speakers |
