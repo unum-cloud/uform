@@ -112,8 +112,8 @@ The exact behavior is controlled by prompts.
 model = VLMForCausalLM.from_pretrained("unum-cloud/uform-gen")
 processor = VLMProcessor.from_pretrained("unum-cloud/uform-gen")
 
-# [cap] Narrate the contents of the image with precision
-# [cap] Summarize the visual content of the image
+# [cap] Narrate the contents of the image with precision.
+# [cap] Summarize the visual content of the image.
 # [vqa] What is the main subject of the image?
 prompt = "[cap] Summarize the visual content of the image."
 image = Image.open("zebra.jpg")
@@ -170,10 +170,10 @@ Evaluating `uform-vl-english` model, one can expect the following numbers for se
 | Dataset   | Recall @ 1 | Recall @ 5 | Recall @ 10 |
 | :-------- | ---------: | ---------: | ----------: |
 | Flickr    |      0.727 |      0.915 |       0.949 |
-| MS-COCO ¹ |      0.510 |      0.761 |       0.838 |
+| MS-COCO¹ |      0.510 |      0.761 |       0.838 |
 
 
-For multilingual benchmarks, we've created the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) repository ².
+For multilingual benchmarks, we've created the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) repository².
 Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the following metrics for text-to-image search, compared against `xlm-roberta-base-ViT-B-32` [OpenCLIP](https://github.com/mlfoundations/open_clip) model.
 
 | Language  | OpenCLIP @ 1 | UForm @ 1 | OpenCLIP @ 5 | UForm @ 5 | OpenCLIP @ 10 | UForm @ 10 | Speakers |
@@ -220,12 +220,38 @@ Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the f
 | Meta NLLB            |     24.9±6.7 | __32.4±3.5__ |    47.5±10.3 | __58.9±4.5__ |     58.2±11.2 | __70.2±4.3__ |        - |
 
 </details>
+
+### Generative Models
+
+For captioning evaluation we mesaure CLIPScore and RefCLIPScore³.
+
+| Model                               | Size | Caption Length |  CLIPScore | RefCLIPScore |
+| :---------------------------------- | ---: | -------------: |  --------: | -----------: |
+| `llava-hf/llava-1.5-7b-hf`          |   7B |           Long |      0.878 |        0.529 |
+| `llava-hf/llava-1.5-7b-hf`          |   7B |          Short |      0.886 |        0.531 |
+|                                                                                         |
+| `Salesforce/instructblip-vicuna-7b` |   7B |           Long |      0.902 |        0.534 |
+| `Salesforce/instructblip-vicuna-7b` |   7B |          Short |      0.848 |        0.523 |
+|                                                                                         |
+| `unum-cloud/uform-gen`              | 1.5B |           Long |      0.847 |        0.523 |
+| `unum-cloud/uform-gen`              | 1.5B |          Short |      0.842 |        0.522 |
+|                                                                                         |
+| `unum-cloud/uform-gen-chat`         | 1.5B |           Long |      0.860 |        0.525 |
+| `unum-cloud/uform-gen-chat`         | 1.5B |          Short |      0.858 |        0.525 |
+
+Results for VQAv2 evaluation.
+
+| Model                               | Size | Accuracy |
+| :---------------------------------- | ---: | -------: |
+| `llava-hf/llava-1.5-7b-hf`          |   7B |     78.5 |
+| `Salesforce/instructblip-vicuna-7b` |   7B |        - |
+| `unum-cloud/uform-gen`              | 1.5B |     66.5 |
+
 <br/>
 
 > ¹ Train split was in training data. <br/>
-> ² Lacking a broad enough evaluation dataset, we translated the [COCO Karpathy test split](https://www.kaggle.com/datasets/shtvkumar/karpathy-splits) with multiple public and proprietary translation services, averaging the scores across all sets, and breaking them down in the bottom section.
-
-### Generative Models
+> ² Lacking a broad enough evaluation dataset, we translated the [COCO Karpathy test split](https://www.kaggle.com/datasets/shtvkumar/karpathy-splits) with multiple public and proprietary translation services, averaging the scores across all sets, and breaking them down in the bottom section. <br/>
+> ³ We used `apple/DFN5B-CLIP-ViT-H-14-378` CLIP model.
 
 ## Speed
 
