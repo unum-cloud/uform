@@ -12,9 +12,9 @@ EOS_TOKEN = 32001
 def parse_args():
     parser = ArgumentParser(description="Chat with UForm generative model")
 
-    parser.add_argument("--model", type=str)
-    parser.add_argument("--image_path", type=str)
-    parser.add_argument("--device", type=str)
+    parser.add_argument("--model", type=str, default="unum-cloud/uform-gen-chat")
+    parser.add_argument("--image_path", type=str, help="", required=True)
+    parser.add_argument("--device", type=str, required=True)
 
     return parser.parse_args()
 
