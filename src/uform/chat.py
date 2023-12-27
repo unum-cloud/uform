@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
 import torch
+import requests
 from PIL import Image
 from transformers import TextStreamer
 
@@ -15,7 +16,7 @@ def parse_args():
     parser.add_argument("--model", type=str, default="unum-cloud/uform-gen-chat")
     parser.add_argument("--image_path", type=str, help="", required=True)
     parser.add_argument("--device", type=str, required=True)
-    parser.add_argument("--fp16", action="store_true")
+    parser.add_argument("--fp16", action="store_true")  
 
     return parser.parse_args()
 
@@ -29,12 +30,22 @@ def run_chat(opts, model, processor):
 
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
     is_first_message = True
-    image = (
-        processor.image_processor(Image.open(opts.image_path))
-        .unsqueeze(0)
-        .to(torch.bfloat16 if opts.fp16 else torch.float32)
-        .to(opts.device)
-    )
+    if opts.image_path.startswith("http"):
+        image = (
+            processor.image_processor(
+                Image.open(requests.get(opts.image_path, stream=True).raw)
+            )
+            .unsqueeze(0)
+            .to(torch.bfloat16 if opts.fp16 else torch.float32)
+            .to(opts.device)
+        )
+    else:
+        image = (
+            processor.image_processor(Image.open(opts.image_path))
+            .unsqueeze(0)
+            .to(torch.bfloat16 if opts.fp16 else torch.float32)
+            .to(opts.device)
+        )
 
     while True:
         if messages[-1]["role"] in ("system", "assistant"):
