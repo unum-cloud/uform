@@ -41,9 +41,9 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 | Model                                    | Parameters | Languages |                                 Architecture |
 | :--------------------------------------- | ---------: | --------: | -------------------------------------------: |
-| [`uform-vl-english`][model-e]            |      143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
-| [`uform-vl-multilingual-v2`][model-m-v2] |      206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
-| [`uform-vl-multilingual`][model-m]       |      206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
+| [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
+| [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
+| [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
 
 [model-e]: https://huggingface.co/unum-cloud/uform-vl-english/
 [model-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/
@@ -53,8 +53,8 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 | Model                        | Parameters |               Purpose |         Architecture |
 | :--------------------------- | ---------: | --------------------: | -------------------: |
-| [`uform-gen`][model-g]       |      1.5B | Image Captioning, VQA | llama-1.3B, ViT-B/16 |
-| [`uform-gen-chat`][model-gc] |      1.5B |       Multimodal Chat | llama-1.3B, ViT-B/16 |
+| [`uform-gen`][model-g]       |       1.5B | Image Captioning, VQA | llama-1.3B, ViT-B/16 |
+| [`uform-gen-chat`][model-gc] |       1.5B |       Multimodal Chat | llama-1.3B, ViT-B/16 |
 
 [model-g]: https://huggingface.co/unum-cloud/uform-gen/
 [model-gc]: https://huggingface.co/unum-cloud/uform-gen-chat/
@@ -109,6 +109,8 @@ The generative model can be used to caption images, summarize their content, or 
 The exact behavior is controlled by prompts.
 
 ```python
+from uform.gen_model import VLMForCausalLM, VLMProcessor
+
 model = VLMForCausalLM.from_pretrained("unum-cloud/uform-gen")
 processor = VLMProcessor.from_pretrained("unum-cloud/uform-gen")
 
@@ -140,6 +142,7 @@ To use that feature, you can start with the following CLI command:
 
 ```bash
 uform-chat --model unum-cloud/uform-gen-chat --image_path=zebra.jpg
+uform-chat --model unum-cloud/uform-gen-chat --image_path=zebra.jpg --device="cuda:0" --fp16
 ```
 
 ### Multi-GPU
@@ -167,9 +170,9 @@ Few retrieval benchmarks exist for multimodal embeddings.
 The most famous ones for English are "MS-COCO" and "Flickr30k".
 Evaluating `uform-vl-english` model, one can expect the following numbers for search quality.
 
-| Dataset   | Recall @ 1 | Recall @ 5 | Recall @ 10 |
-| :-------- | ---------: | ---------: | ----------: |
-| Flickr    |      0.727 |      0.915 |       0.949 |
+| Dataset  | Recall @ 1 | Recall @ 5 | Recall @ 10 |
+| :------- | ---------: | ---------: | ----------: |
+| Flickr   |      0.727 |      0.915 |       0.949 |
 | MS-COCO¹ |      0.510 |      0.761 |       0.838 |
 
 
@@ -223,29 +226,28 @@ Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the f
 
 ### Generative Models
 
-For captioning evaluation we mesaure CLIPScore and RefCLIPScore³.
+For captioning evaluation we measure CLIPScore and RefCLIPScore³.
 
-| Model                               | Size | Caption Length |  CLIPScore | RefCLIPScore |
-| :---------------------------------- | ---: | -------------: |  --------: | -----------: |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |           Long |      0.878 |        0.529 |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |          Short |      0.886 |        0.531 |
-|                                                                                         |
-| `Salesforce/instructblip-vicuna-7b` |   7B |           Long |      0.902 |        0.534 |
-| `Salesforce/instructblip-vicuna-7b` |   7B |          Short |      0.848 |        0.523 |
-|                                                                                         |
-| `unum-cloud/uform-gen`              | 1.5B |           Long |      0.847 |        0.523 |
-| `unum-cloud/uform-gen`              | 1.5B |          Short |      0.842 |        0.522 |
-|                                                                                         |
-| `unum-cloud/uform-gen-chat`         | 1.5B |           Long |      0.860 |        0.525 |
-| `unum-cloud/uform-gen-chat`         | 1.5B |          Short |      0.858 |        0.525 |
+| Model                               | Size | Caption Length | CLIPScore | RefCLIPScore |
+| :---------------------------------- | ---: | -------------: | --------: | -----------: |
+| `llava-hf/llava-1.5-7b-hf`          |   7B |           Long |     0.878 |        0.529 |
+| `llava-hf/llava-1.5-7b-hf`          |   7B |          Short |     0.886 |        0.531 |
+|                                     |
+| `Salesforce/instructblip-vicuna-7b` |   7B |           Long |     0.902 |        0.534 |
+| `Salesforce/instructblip-vicuna-7b` |   7B |          Short |     0.848 |        0.523 |
+|                                     |
+| `unum-cloud/uform-gen`              | 1.5B |           Long |     0.847 |        0.523 |
+| `unum-cloud/uform-gen`              | 1.5B |          Short |     0.842 |        0.522 |
+|                                     |
+| `unum-cloud/uform-gen-chat`         | 1.5B |           Long |     0.860 |        0.525 |
+| `unum-cloud/uform-gen-chat`         | 1.5B |          Short |     0.858 |        0.525 |
 
 Results for VQAv2 evaluation.
 
-| Model                               | Size | Accuracy |
-| :---------------------------------- | ---: | -------: |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |     78.5 |
-| `Salesforce/instructblip-vicuna-7b` |   7B |        - |
-| `unum-cloud/uform-gen`              | 1.5B |     66.5 |
+| Model                      | Size | Accuracy |
+| :------------------------- | ---: | -------: |
+| `llava-hf/llava-1.5-7b-hf` |   7B |     78.5 |
+| `unum-cloud/uform-gen`     | 1.5B |     66.5 |
 
 <br/>
 
@@ -257,20 +259,20 @@ Results for VQAv2 evaluation.
 
 On RTX 3090, the following performance is expected on text encoding.
 
-| Model                                     | Multilingual |        Speed |    Speedup |
-| :---------------------------------------- | -----------: | -----------: | ---------: |
-| `bert-base-uncased`                       |           No | 1'612 seqs/s |            |
-| `distilbert-base-uncased`                 |           No | 3'174 seqs/s |     x 1.96 |
-| `sentence-transformers/all-MiniLM-L12-v2` |      __Yes__ | 3'604 seqs/s |     x 2.24 |
-| `unum-cloud/uform-vl-multilingual-v2`     |      __Yes__ | 6'809 seqs/s | __x 4.22__ |
+| Model                                     | Multilingual |                  Speed |    Speedup |
+| :---------------------------------------- | -----------: | ---------------------: | ---------: |
+| `bert-base-uncased`                       |           No | 1'612 sequences/second |            |
+| `distilbert-base-uncased`                 |           No | 3'174 sequences/second |     x 1.96 |
+| `sentence-transformers/all-MiniLM-L12-v2` |      __Yes__ | 3'604 sequences/second |     x 2.24 |
+| `unum-cloud/uform-vl-multilingual-v2`     |      __Yes__ | 6'809 sequences/second | __x 4.22__ |
 
-On RTX 3090, the following performance is expected on text token generation.
+On RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
 
-| Model                               | Size | Speed | Speedup |
-| :---------------------------------- | ---: | ----: | ------: |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |       |         |
-| `Salesforce/instructblip-vicuna-7b` |   7B |       |         |
-| `unum-cloud/uform-gen`              | 1.5B |       |         |
+| Model                               | Size |               Speed |   Speedup |
+| :---------------------------------- | ---: | ------------------: | --------: |
+| `llava-hf/llava-1.5-7b-hf`          |   7B |  ~ 40 tokens/second |           |
+| `Salesforce/instructblip-vicuna-7b` |   7B |  ~ 40 tokens/second |           |
+| `unum-cloud/uform-gen`              | 1.5B | ~ 140 tokens/second | __x 3.5__ |
 
 ## License
 

@@ -15,13 +15,16 @@ def parse_args():
     parser.add_argument("--model", type=str, default="unum-cloud/uform-gen-chat")
     parser.add_argument("--image_path", type=str, help="", required=True)
     parser.add_argument("--device", type=str, required=True)
+    parser.add_argument("--fp16", action="store_true")
 
     return parser.parse_args()
 
 
 def run_chat(opts, model, processor):
     streamer = TextStreamer(
-        processor.tokenizer, skip_prompt=True, skip_special_tokens=True
+        processor.tokenizer,
+        skip_prompt=True,
+        skip_special_tokens=True,
     )
 
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
@@ -29,6 +32,7 @@ def run_chat(opts, model, processor):
     image = (
         processor.image_processor(Image.open(opts.image_path))
         .unsqueeze(0)
+        .to(torch.bfloat16 if opts.fp16 else torch.float32)
         .to(opts.device)
     )
 
@@ -75,12 +79,24 @@ def run_chat(opts, model, processor):
 
 
 def main():
-    opts = parse_args()
+    try:
+        opts = parse_args()
 
-    model = VLMForCausalLM.from_pretrained(opts.model).eval().to(opts.device)
-    processor = VLMProcessor.from_pretrained(opts.model)
+        model = (
+            VLMForCausalLM.from_pretrained(
+                opts.model,
+                torch_dtype=torch.bfloat16 if opts.fp16 else torch.float32,
+            )
+            .eval()
+            .to(opts.device)
+        )
+        processor = VLMProcessor.from_pretrained(opts.model)
 
-    run_chat(opts, model, processor)
+        run_chat(opts, model, processor)
+
+    except KeyboardInterrupt:
+        print("Bye!")
+        pass
 
 
 if __name__ == "__main__":
