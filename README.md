@@ -41,9 +41,9 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 | Model                                    | Parameters | Languages |                                 Architecture |
 | :--------------------------------------- | ---------: | --------: | -------------------------------------------: |
-| [`uform-vl-english`][model-e]            |      143 M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
-| [`uform-vl-multilingual-v2`][model-m-v2] |      206 M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
-| [`uform-vl-multilingual`][model-m]       |      206 M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
+| [`uform-vl-english`][model-e]            |      143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
+| [`uform-vl-multilingual-v2`][model-m-v2] |      206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
+| [`uform-vl-multilingual`][model-m]       |      206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
 
 [model-e]: https://huggingface.co/unum-cloud/uform-vl-english/
 [model-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/
@@ -53,8 +53,8 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 | Model                        | Parameters |               Purpose |         Architecture |
 | :--------------------------- | ---------: | --------------------: | -------------------: |
-| [`uform-gen`][model-g]       |      1.5 B | Image Captioning, VQA | llama-1.3B, ViT-B/16 |
-| [`uform-gen-chat`][model-gc] |      1.5 B |       Multimodal Chat | llama-1.3B, ViT-B/16 |
+| [`uform-gen`][model-g]       |      1.5B | Image Captioning, VQA | llama-1.3B, ViT-B/16 |
+| [`uform-gen-chat`][model-gc] |      1.5B |       Multimodal Chat | llama-1.3B, ViT-B/16 |
 
 [model-g]: https://huggingface.co/unum-cloud/uform-gen/
 [model-gc]: https://huggingface.co/unum-cloud/uform-gen-chat/
@@ -118,7 +118,7 @@ processor = VLMProcessor.from_pretrained("unum-cloud/uform-gen")
 prompt = "[cap] Summarize the visual content of the image."
 image = Image.open("zebra.jpg")
 
-inputs = processor(text=[prompt], images=[image], return_tensors="pt")
+inputs = processor(texts=[prompt], images=[image], return_tensors="pt")
 with torch.inference_mode():
      output = model.generate(
         **inputs,
@@ -139,7 +139,7 @@ The generative models can be used for chat-like experiences, where the user can 
 To use that feature, you can start with the following CLI command:
 
 ```bash
-uform chat --model unum-cloud/uform-gen-chat --image_path=zebra.jpg
+uform-chat --model unum-cloud/uform-gen-chat --image_path=zebra.jpg
 ```
 
 ### Multi-GPU
