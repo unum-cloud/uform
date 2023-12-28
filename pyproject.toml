@@ -7,7 +7,7 @@ uform-chat = "uform.chat:main"
 
 [project]
 name = "uform"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   { name="Mikhail Kim", email="mike.kim@unum.cloud" },
   { name="Vladimir Orshulevich", email="vladimir.orshulevich@unum.cloud" },
