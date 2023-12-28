@@ -14,9 +14,9 @@ def parse_args():
     parser = ArgumentParser(description="Chat with UForm generative model")
 
     parser.add_argument("--model", type=str, default="unum-cloud/uform-gen-chat")
-    parser.add_argument("--image_path", type=str, help="", required=True)
+    parser.add_argument("--image", type=str, help="", required=True)
     parser.add_argument("--device", type=str, required=True)
-    parser.add_argument("--fp16", action="store_true")  
+    parser.add_argument("--fp16", action="store_true")
 
     return parser.parse_args()
 
@@ -30,10 +30,10 @@ def run_chat(opts, model, processor):
 
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
     is_first_message = True
-    if opts.image_path.startswith("http"):
+    if opts.image.startswith("http"):
         image = (
             processor.image_processor(
-                Image.open(requests.get(opts.image_path, stream=True).raw)
+                Image.open(requests.get(opts.image, stream=True).raw)
             )
             .unsqueeze(0)
             .to(torch.bfloat16 if opts.fp16 else torch.float32)
@@ -41,7 +41,7 @@ def run_chat(opts, model, processor):
         )
     else:
         image = (
-            processor.image_processor(Image.open(opts.image_path))
+            processor.image_processor(Image.open(opts.image))
             .unsqueeze(0)
             .to(torch.bfloat16 if opts.fp16 else torch.float32)
             .to(opts.device)

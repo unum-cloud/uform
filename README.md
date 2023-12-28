@@ -141,8 +141,8 @@ decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
 
 The generative models can be used for chat-like experiences, where the user can provide both text and images as input.
 To use that feature, you can start with the following CLI command:
-
-```bash
+image
+```bashimage
 uform-chat --model unum-cloud/uform-gen-chat --image_path=zebra.jpg
 uform-chat --model unum-cloud/uform-gen-chat --image_path=zebra.jpg --device="cuda:0" --fp16
 ```
