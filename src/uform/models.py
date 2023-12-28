@@ -1,22 +1,21 @@
-from os import PathLike
 from dataclasses import dataclass
-from typing import Optional, Dict, Tuple, Union, List
+from os import PathLike
+from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from PIL.Image import Image
+from tokenizers import Tokenizer
 from torch import Tensor
 from torchvision.transforms import (
-    Compose,
-    Resize,
     CenterCrop,
-    ToTensor,
-    Normalize,
+    Compose,
     InterpolationMode,
+    Normalize,
+    Resize,
+    ToTensor,
 )
-
-from tokenizers import Tokenizer
-from PIL.Image import Image
 
 
 # lambda is not pickable

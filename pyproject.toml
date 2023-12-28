@@ -2,6 +2,9 @@
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
+[project.scripts]
+uform-chat = "uform.chat:main"
+
 [project]
 name = "uform"
 version = "0.4.8"
@@ -17,6 +20,7 @@ dependencies = [
   "torch>=1.13.1",
   "tokenizers>=0.13.3",
   "huggingface_hub>=0.16.4",
+  "transformers>=4.36.2",
   "torchvision"
 ]
 description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
@@ -47,11 +51,3 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/unum-cloud/uform"
-
-[project.optional-dependencies]
-remote = [
-  "tritonclient[all]"
-]
-ipu = [
-  "poptorch"
-]

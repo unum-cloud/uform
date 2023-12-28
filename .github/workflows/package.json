@@ -23,6 +23,10 @@
               "release": "minor"
             },
             {
+              "tag": "Break",
+              "release": "major"
+            },
+            {
               "tag": "Improve",
               "release": "patch"
             },
@@ -45,6 +49,10 @@
             {
               "tag": "Add",
               "release": "minor"
+            },
+            {
+              "tag": "Break",
+              "release": "major"
             },
             {
               "tag": "Improve",

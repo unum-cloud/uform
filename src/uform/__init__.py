@@ -1,10 +1,10 @@
 from json import load
-from typing import Optional, Tuple, Mapping
+from typing import Mapping, Optional, Tuple
 
 import torch
 from huggingface_hub import snapshot_download
 
-from models import *
+from uform.models import *
 
 
 def get_checkpoint(model_name, token) -> Tuple[str, Mapping, str]:
