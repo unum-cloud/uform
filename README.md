@@ -19,6 +19,8 @@ For Content Understanding and Generation<br/>
 
 ---
 
+![](https://github.com/ashvardanian/usearch-images/blob/main/assets/uform-gen-preview.jpg?raw=true)
+
 Welcome to UForm, a __multimodal__ AI library that's as versatile as it is efficient.
 UForm [tiny embedding models](#encoder) will help you understand and search visual and textual content across various languages.
 UForm [small generative models](#decoder), on the other hand, don't only support conversational and chat use-cases, but are also capable of image captioning and Visual Question Answering (VQA).
@@ -27,8 +29,8 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 ## Features
 
 * __Throughput__: Thanks to the small size, the inference speed is [2-4x faster](#speed) than competitors.
-* __Tiny Embeddings__: With just 256 dimensions, our vectors are 2-3x quicker to [search][usearch] than from CLIP-like models.
-* __Quantization Aware__: Our embeddings can be downcasted from `f32` to `i8` without losing much recall.
+* __Tiny Embeddings__: 256-dimensional vectors are 2-3x quicker to [search][usearch] than from CLIP-like models.
+* __Quantization Aware__: Downcasted embeddings from `f32` to `i8` without losing much recall.
 * __Multilingual__: Trained on a balanced dataset, the recall is great across over [20 languages](#evaluation).
 * __Hardware Friendly__: Whether it's Apple's CoreML or ONNX, [we've got you covered][onnx].
 
