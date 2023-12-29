@@ -74,19 +74,31 @@ def bench_captions(
 
 
 def bench_image_embeddings(model, images):
-    total_duration, embeddings = duration(
-        lambda: model.encode_image(model.preprocess_image(images))
-    )
-    total_length = len(embeddings)
-    print(f"Throughput: {total_length/total_duration:.2f} images/s")
+    total_duration = 0
+    total_embeddings = 0
+    images *= 10
+    while total_duration < 10:
+        seconds, embeddings = duration(
+            lambda: model.encode_image(model.preprocess_image(images))
+        )
+        total_duration += seconds
+        total_embeddings += len(embeddings)
+
+    print(f"Throughput: {total_embeddings/total_duration:.2f} images/s")
 
 
 def bench_text_embeddings(model, texts):
-    total_duration, embeddings = duration(
-        lambda: model.encode_text(model.preprocess_text(texts))
-    )
-    total_length = len(embeddings)
-    print(f"Throughput: {total_length/total_duration:.2f} queries/s")
+    total_duration = 0
+    total_embeddings = 0
+    texts *= 10
+    while total_duration < 10:
+        seconds, embeddings = duration(
+            lambda: model.encode_text(model.preprocess_text(texts))
+        )
+        total_duration += seconds
+        total_embeddings += len(embeddings)
+
+    print(f"Throughput: {total_embeddings/total_duration:.2f} queries/s")
 
 
 if __name__ == "__main__":
