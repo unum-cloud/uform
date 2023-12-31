@@ -279,6 +279,15 @@ On RTX 3090, the following performance is expected on text token generation usin
 | `Salesforce/instructblip-vicuna-7b` |   7B |  ~ 40 tokens/second |           |
 | `unum-cloud/uform-gen`              | 1.5B | ~ 140 tokens/second | __x 3.5__ |
 
+On a Apple Silicon M2 we observed the following performance on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
+
+| Device                              |               Speed |   Power Consumption W |    
+| :---------------------------------- | ------------------: | --------: |
+| `Comparing with: RTX 3090`                         |  ~ 140 tokens/second |    350W       |  
+| `M2 Max plugged`                    |  ~ 56 tokens/second |  25W CPU / 89W Total |  
+| `M2 Max unplugged`                    |  ~ 38 tokens/second | 36W total |  
+| `M2 Pro unplugged`                    |  ~ 19 tokens/second | 20W total |  
+
 ## License
 
 All models come under the same license as the code - Apache 2.0.
