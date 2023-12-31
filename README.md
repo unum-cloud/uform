@@ -262,7 +262,7 @@ Results for VQAv2 evaluation.
 
 ## Speed
 
-On RTX 3090, the following performance is expected on text encoding.
+On Nvidia RTX 3090, the following performance is expected on text encoding.
 
 | Model                                     | Multilingual |                  Speed |    Speedup |
 | :---------------------------------------- | -----------: | ---------------------: | ---------: |
@@ -271,7 +271,7 @@ On RTX 3090, the following performance is expected on text encoding.
 | `sentence-transformers/all-MiniLM-L12-v2` |      __Yes__ | 3'604 sequences/second |     x 2.24 |
 | `unum-cloud/uform-vl-multilingual-v2`     |      __Yes__ | 6'809 sequences/second | __x 4.22__ |
 
-On RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
+On Nvidia RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
 
 | Model                               | Size |               Speed |   Speedup |
 | :---------------------------------- | ---: | ------------------: | --------: |
@@ -279,14 +279,18 @@ On RTX 3090, the following performance is expected on text token generation usin
 | `Salesforce/instructblip-vicuna-7b` |   7B |  ~ 40 tokens/second |           |
 | `unum-cloud/uform-gen`              | 1.5B | ~ 140 tokens/second | __x 3.5__ |
 
-On a Apple Silicon M2 we observed the following performance on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
+Given the small size of the model it also work well on mobile devices.
+On Apple M2 Arm chips the energy efficiency of inference can exceed that of the RTX 3090 GPU and other Ampere-generation cards.
 
-| Device                              |               Speed |   Power Consumption W |    
-| :---------------------------------- | ------------------: | --------: |
-| `Comparing with: RTX 3090`                         |  ~ 140 tokens/second |    350W       |  
-| `M2 Max plugged`                    |  ~ 56 tokens/second |  25W CPU / 89W Total |  
-| `M2 Max unplugged`                    |  ~ 38 tokens/second | 36W total |  
-| `M2 Pro unplugged`                    |  ~ 19 tokens/second | 20W total |  
+| Device                 |               Speed | Device TDP |        Efficiency |
+| :--------------------- | ------------------: | ---------: | ----------------: |
+| Nvidia RTX 3090        | ~ 140 tokens/second |     < 350W | 0.40 tokens/joule |
+| Apple M2 Pro unplugged |  ~ 19 tokens/second |      < 20W | 0.95 tokens/joule |
+| Apple M2 Max unplugged |  ~ 38 tokens/second |      < 36W | 1.06 tokens/joule |
+| Apple M2 Max plugged   |  ~ 56 tokens/second |      < 89W | 0.63 tokens/joule |
+
+> [!WARNING]
+> The above numbers are for reference only and are not guaranteed to be accurate.
 
 ## License
 
