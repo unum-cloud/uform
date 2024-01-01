@@ -1,14 +1,18 @@
-import requests
+from functools import partial
 from time import perf_counter
 from typing import List
 
-from PIL import Image
+import requests
 import torch
-
+from PIL import Image
+from transformers import (
+    AutoProcessor,
+    InstructBlipForConditionalGeneration,
+    InstructBlipProcessor,
+    LlavaForConditionalGeneration,
+)
 from uform import get_model
 from uform.gen_model import VLMForCausalLM, VLMProcessor
-from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
-from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 dtype = torch.bfloat16
 low_cpu_mem_usage = False
@@ -56,15 +60,12 @@ def bench_captions(
     total_duration = 0
     total_length = 0
     model = torch.compile(model)
+
+    def caption_image(image, model=model, processor=processor, prompt=prompt):
+        return caption(model=model, processor=processor, prompt=prompt, image=image)
+
     for image in images:
-        seconds, text = duration(
-            lambda: caption(
-                model=model,
-                processor=processor,
-                prompt=prompt,
-                image=image,
-            )
-        )
+        seconds, text = duration(partial(caption_image, image=image))
         total_duration += seconds
         total_length += len(text)
 
