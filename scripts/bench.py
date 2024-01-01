@@ -22,7 +22,7 @@ device = "cuda:0"
 def caption(model, processor, prompt: str, image: Image.Image) -> str:
     inputs = processor(prompt, image, return_tensors="pt")
     for possible_key in ["images", "pixel_values"]:
-        if not possible_key in inputs:
+        if possible_key not in inputs:
             continue
         inputs[possible_key] = inputs[possible_key].to(dtype)  # Downcast floats
     inputs = {k: v.to(device) for k, v in inputs.items()}  # Move to the right device
@@ -76,7 +76,7 @@ def bench_captions(
 
 def bench_image_embeddings(model, images):
     total_duration, embeddings = duration(
-        lambda: model.encode_image(model.preprocess_image(images))
+        lambda: model.encode_image(model.preprocess_image(images)),
     )
     total_length = len(embeddings)
     print(f"Throughput: {total_length/total_duration:.2f} images/s")
@@ -84,7 +84,7 @@ def bench_image_embeddings(model, images):
 
 def bench_text_embeddings(model, texts):
     total_duration, embeddings = duration(
-        lambda: model.encode_text(model.preprocess_text(texts))
+        lambda: model.encode_text(model.preprocess_text(texts)),
     )
     total_length = len(embeddings)
     print(f"Throughput: {total_length/total_duration:.2f} queries/s")

@@ -43,7 +43,7 @@ class TritonClient(VLM):
                     mean=(0.48145466, 0.4578275, 0.40821073),
                     std=(0.26862954, 0.26130258, 0.27577711),
                 ),
-            ]
+            ],
         )
 
     def encode_image(self, imgs: Tensor):
@@ -63,7 +63,9 @@ class TritonClient(VLM):
 
         # Querying the server
         results = self._triton_client.infer(
-            model_name="vit", inputs=inputs, outputs=outputs
+            model_name="vit",
+            inputs=inputs,
+            outputs=outputs,
         )
         output_data = torch.from_numpy(results.as_numpy("output"))
         return output_data
@@ -81,7 +83,7 @@ class TritonClient(VLM):
         input_ids = input_ids.type(dtype=torch.int32).cpu().detach().numpy()
         attention_mask = attention_mask.type(dtype=torch.int32).cpu().detach().numpy()
         inputs.append(
-            self._client.InferInput("attention_mask", attention_mask.shape, "INT32")
+            self._client.InferInput("attention_mask", attention_mask.shape, "INT32"),
         )
         inputs.append(self._client.InferInput("input_ids", input_ids.shape, "INT32"))
         inputs[0].set_data_from_numpy(attention_mask)
@@ -90,7 +92,9 @@ class TritonClient(VLM):
 
         # Querying the server
         results = self._triton_client.infer(
-            model_name="albef", inputs=inputs, outputs=[test_output]
+            model_name="albef",
+            inputs=inputs,
+            outputs=[test_output],
         )
         output_vec = torch.from_numpy(results.as_numpy("output"))
         return output_vec

@@ -27,7 +27,9 @@ class TextEncoder(nn.Module):
         super().__init__()
 
         self.word_embeddings = nn.Embedding(
-            self.vocab_size, self.dim, padding_idx=self.padding_idx
+            self.vocab_size,
+            self.dim,
+            padding_idx=self.padding_idx,
         )
         self.position_embeddings = nn.Embedding(self.max_position_embeddings, self.dim)
 
@@ -50,7 +52,7 @@ class TextEncoder(nn.Module):
                     layer_id in self.multimodal_layers_ids,
                 )
                 for layer_id in range(self.num_layers)
-            ]
+            ],
         )
 
         self.embedding_projection = nn.Linear(self.dim, self.embedding_dim, bias=False)
@@ -72,7 +74,10 @@ class TextEncoder(nn.Module):
         return x
 
     def forward_multimodal(
-        self, x: Tensor, attn_mask: Tensor, context: Tensor
+        self,
+        x: Tensor,
+        attn_mask: Tensor,
+        context: Tensor,
     ) -> Tensor:
         context = self.context_projection(context)
         expanded_attn_mask = self.get_attention_mask(attn_mask, x.dtype)

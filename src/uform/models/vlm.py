@@ -53,7 +53,7 @@ class VLM(nn.Module):
                     mean=(0.48145466, 0.4578275, 0.40821073),
                     std=(0.26862954, 0.26130258, 0.27577711),
                 ),
-            ]
+            ],
         )
 
     def encode_image(
@@ -87,10 +87,12 @@ class VLM(nn.Module):
         """
 
         features = self.text_encoder.forward_features(
-            texts["input_ids"], texts["attention_mask"]
+            texts["input_ids"],
+            texts["attention_mask"],
         )
         embeddings = self.text_encoder.forward_embedding(
-            features, texts["attention_mask"]
+            features,
+            texts["attention_mask"],
         )
 
         if return_features:
@@ -133,7 +135,8 @@ class VLM(nn.Module):
 
         if text_features is None:
             text_features = self.text_encoder.forward_features(
-                text["input_ids"], text["attention_mask"]
+                text["input_ids"],
+                text["attention_mask"],
             )
 
         return self.text_encoder.forward_multimodal(
@@ -165,14 +168,16 @@ class VLM(nn.Module):
         )
 
         attention_mask = torch.zeros(
-            len(texts), self.text_encoder.max_position_embeddings, dtype=torch.int32
+            len(texts),
+            self.text_encoder.max_position_embeddings,
+            dtype=torch.int32,
         )
         encoded = self._tokenizer.encode_batch(texts)
 
         for i, seq in enumerate(encoded):
             seq_len = min(len(seq), self.text_encoder.max_position_embeddings)
             input_ids[i, :seq_len] = torch.LongTensor(
-                seq.ids[: self.text_encoder.max_position_embeddings]
+                seq.ids[: self.text_encoder.max_position_embeddings],
             )
             attention_mask[i, :seq_len] = 1
 

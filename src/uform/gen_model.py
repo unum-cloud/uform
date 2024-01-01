@@ -57,13 +57,14 @@ class ImageFeaturesPooler(nn.Module):
             norm_first=True,
         )
         self.image_latents = nn.Parameter(
-            torch.randn(1, num_latents, hidden_size) * initializer_range**0.5
+            torch.randn(1, num_latents, hidden_size) * initializer_range**0.5,
         )
 
     def forward(self, features):
         features = self.projection(features)
         return self.pooler(
-            self.image_latents.expand(features.shape[0], -1, -1), features
+            self.image_latents.expand(features.shape[0], -1, -1),
+            features,
         )
 
 
@@ -150,10 +151,10 @@ class VLMForCausalLM(VLMPreTrainedModel):
         # replace models' layerscales because `transformers` automatically renames keys in state_dict
         for i in range(len(self.image_encoder.blocks)):
             self.image_encoder.blocks[i].ls1 = LayerScale(
-                self.image_encoder.blocks[i].ls1.dim
+                self.image_encoder.blocks[i].ls1.dim,
             )
             self.image_encoder.blocks[i].ls2 = LayerScale(
-                self.image_encoder.blocks[i].ls2.dim
+                self.image_encoder.blocks[i].ls2.dim,
             )
 
         self.image_pooler = ImageFeaturesPooler(
@@ -193,7 +194,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
                         word_embeddings[sample_idx, start_idx + 1 :],
                     ),
                     dim=0,
-                )
+                ),
             )
 
         return torch.stack(embeddings, dim=0)
@@ -230,7 +231,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
 
         if input_ids is not None and inputs_embeds is not None:
             raise ValueError(
-                "You cannot specify both input_ids and inputs_embeds at the same time"
+                "You cannot specify both input_ids and inputs_embeds at the same time",
             )
         elif input_ids is None and inputs_embeds is None:
             raise ValueError("You have to specify either input_is or inputs_embeds")
@@ -241,7 +242,9 @@ class VLMForCausalLM(VLMPreTrainedModel):
             if images is not None:
                 image_embeds = self.get_images_embeddings(images)
                 inputs_embeds = self.gather_continuous_embeddings(
-                    input_ids, inputs_embeds, image_embeds
+                    input_ids,
+                    inputs_embeds,
+                    image_embeds,
                 )
 
         if position_ids is None:
@@ -314,7 +317,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
                 "use_cache": kwargs.get("use_cache"),
                 "attention_mask": attention_mask,
                 "images": images if past_key_values is None else None,
-            }
+            },
         )
         return model_inputs
 
@@ -339,7 +342,7 @@ class VLMProcessor(ProcessorMixin):
                         mean=IMAGENET_MEAN,
                         std=IMAGENET_STD,
                     ),
-                ]
+                ],
             )
         else:
             self.image_processor = Compose(
@@ -355,11 +358,12 @@ class VLMProcessor(ProcessorMixin):
                         mean=IMAGENET_MEAN,
                         std=IMAGENET_STD,
                     ),
-                ]
+                ],
             )
 
         self.tokenizer = AutoTokenizer.from_pretrained(
-            config.tokenizer_name_or_path, additional_special_tokens=["<|im_end|>"]
+            config.tokenizer_name_or_path,
+            additional_special_tokens=["<|im_end|>"],
         )
         self.num_image_latents = config.image_pooler_num_latents
 
@@ -375,7 +379,9 @@ class VLMProcessor(ProcessorMixin):
                     {"role": "user", "content": f" <image> {text}"},
                 ]
                 tokenized_prompt = self.tokenizer.apply_chat_template(
-                    messages, add_generation_prompt=True, return_tensors=return_tensors
+                    messages,
+                    add_generation_prompt=True,
+                    return_tensors=return_tensors,
                 )
 
                 tokenized_texts.append(tokenized_prompt)
@@ -387,7 +393,9 @@ class VLMProcessor(ProcessorMixin):
                 dtype=torch.int64,
             )
             attention_mask = torch.full(
-                (len(tokenized_texts), max_len), fill_value=0, dtype=torch.int64
+                (len(tokenized_texts), max_len),
+                fill_value=0,
+                dtype=torch.int64,
             )
 
             for i, tokens in enumerate(tokenized_texts):
@@ -395,11 +403,13 @@ class VLMProcessor(ProcessorMixin):
                 attention_mask[i, -len(tokens[0]) :] = 1
 
             attention_mask = F.pad(
-                attention_mask, pad=(0, self.num_image_latents - 1), value=1
+                attention_mask,
+                pad=(0, self.num_image_latents - 1),
+                value=1,
             )
 
             encoding = BatchEncoding(
-                data={"input_ids": input_ids, "attention_mask": attention_mask}
+                data={"input_ids": input_ids, "attention_mask": attention_mask},
             )
 
         if images is not None:

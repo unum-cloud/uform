@@ -31,7 +31,7 @@ class VisualEncoder(nn.Module):
             *[
                 VisualEncoderBlock(self.dim, self.num_heads)
                 for _ in range(self.num_layers)
-            ]
+            ],
         )
 
         self.norm = nn.LayerNorm(self.dim, eps=1e-6)

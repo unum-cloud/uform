@@ -32,13 +32,16 @@ class TextEncoderBlock(nn.Module):
         self.dropout = nn.Dropout(self.dropout_prob)
 
     def forward(
-        self, x: Tensor, attn_mask: Tensor, context: Optional[Tensor] = None
+        self,
+        x: Tensor,
+        attn_mask: Tensor,
+        context: Optional[Tensor] = None,
     ) -> Tensor:
         x = self.norm_attn(x + self.dropout(self.attention(x, attn_mask)))
 
         if self.cross_attention and context is not None:
             x = self.norm_crossattn(
-                x + self.dropout(self.crossattn(x, context=context))
+                x + self.dropout(self.crossattn(x, context=context)),
             )
 
         return self.norm_mlp(x + self.dropout(self.mlp(x)))

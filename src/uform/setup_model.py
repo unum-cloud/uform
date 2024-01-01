@@ -18,7 +18,7 @@ def get_checkpoint(model_name, token) -> Tuple[str, Mapping, str]:
 
 def get_model(model_name: str, token: Optional[str] = None) -> VLM:
     config_path, state, tokenizer_path = get_checkpoint(model_name, token)
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         model = VLM(load(f), tokenizer_path)
     model.image_encoder.load_state_dict(state["image_encoder"])
     model.text_encoder.load_state_dict(state["text_encoder"])
@@ -31,14 +31,14 @@ def get_client(
     token: Optional[str] = None,
 ) -> TritonClient:
     config_path, _, tokenizer_path = get_checkpoint(model_name, token)
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         pad_token_idx = load(f)["text_encoder"]["padding_idx"]
     return TritonClient(tokenizer_path, pad_token_idx, url)
 
 
 def get_model_ipu(model_name: str, token: Optional[str] = None) -> VLM_IPU:
     config_path, state, tokenizer_path = get_checkpoint(model_name, token)
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         model = VLM_IPU(load(f), tokenizer_path)
     model.image_encoder.load_state_dict(state["image_encoder"])
     model.text_encoder.load_state_dict(state["text_encoder"])
