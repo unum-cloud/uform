@@ -1,11 +1,13 @@
 from argparse import ArgumentParser
 
-import torch
 import requests
+import torch
 from PIL import Image
 from transformers import TextStreamer
 
-from uform.gen_model import VLMForCausalLM, VLMProcessor
+from .gen_model import VLMForCausalLM, VLMProcessor
+
+__all__ = ["parse_args", "run_chat", "main"]
 
 EOS_TOKEN = 32001
 
