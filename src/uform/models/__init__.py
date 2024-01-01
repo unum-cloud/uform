@@ -1,6 +1,13 @@
-from .encoders import TextEncoder, TextEncoderBlock, VisualEncoder, VisualEncoderBlock
+from .encoders import (
+    MLP,
+    Attention,
+    LayerScale,
+    TextEncoder,
+    TextEncoderBlock,
+    VisualEncoder,
+    VisualEncoderBlock,
+)
 from .image_utils import convert_to_rgb
-from .network_layers import MLP, Attention, LayerScale
 from .triton import TritonClient
 from .vlm import VLM, VLM_IPU
 
