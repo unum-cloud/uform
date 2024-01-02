@@ -20,7 +20,12 @@ device = "cuda:0"
 
 
 def caption(model, processor, prompt: str, image: Image.Image) -> str:
-    inputs = processor(prompt, image, return_tensors="pt")
+    # Replace this once the VLMProcessor argument order is `texts, images`
+    # inputs = processor(prompt, image, return_tensors="pt")
+    var_names = processor.__call__.__func__.__code__.co_varnames
+    prompt_kwarg = next(kw for kw in iter(var_names) if kw.startswith("text"))
+    processor_kwargs = {prompt_kwarg: prompt, "images": image, "return_tensors": "pt"}
+    inputs = processor(**processor_kwargs)
     for possible_key in ["images", "pixel_values"]:
         if possible_key not in inputs:
             continue
@@ -90,7 +95,7 @@ def bench_text_embeddings(model, texts):
     print(f"Throughput: {total_length/total_duration:.2f} queries/s")
 
 
-if __name__ == "__main__":
+def run_benchmarks():
     image_urls = [
         "https://images.unsplash.com/photo-1697665666330-7acf230fa830?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         "https://images.unsplash.com/photo-1695653422543-7da6d6744364?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -156,3 +161,7 @@ if __name__ == "__main__":
     print("UForm-Multilingual")
     bench_image_embeddings(get_model("unum-cloud/uform-vl-multilingual-v2"), images)
     bench_text_embeddings(get_model("unum-cloud/uform-vl-multilingual-v2"), captions)
+
+
+if __name__ == "__main__":
+    run_benchmarks()
