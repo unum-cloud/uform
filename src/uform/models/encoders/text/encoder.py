@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,6 +10,7 @@ from .block import TextEncoderBlock
 __all__ = ["TextEncoder"]
 
 
+@dataclass(eq=False)
 class TextEncoder(nn.Module):
     model_type: str
     dim: int
