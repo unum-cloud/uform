@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
-from torch import nn
+from torch import Tensor, nn
 from torchvision.transforms import (
     CenterCrop,
     Compose,
@@ -36,11 +37,15 @@ __all__ = [
 ]
 
 
+@dataclass(eq=False)
 class LayerScale(nn.Module):
-    def __init__(self, dim, init_values: float = 1e-5, inplace: bool = False):
+    dim: int
+    init_values: float = 1e-5
+    inplace: bool = False
+
+    def __post_init__(self):
         super().__init__()
-        self.weight = nn.Parameter(init_values * torch.ones(dim))
-        self.inplace = inplace
+        self.weight = nn.Parameter(self.init_values * torch.ones(self.dim))
 
     def forward(self, x):
         return x.mul_(self.weight) if self.inplace else x * self.weight
