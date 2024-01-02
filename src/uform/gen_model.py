@@ -20,19 +20,30 @@ from transformers.models.auto.modeling_auto import AutoModel, AutoModelForCausal
 from transformers.processing_utils import ProcessorMixin
 from transformers.tokenization_utils_base import BatchEncoding
 
-from .models.encoders import LayerScale, VisualEncoder
+from .models.encoders import VisualEncoder
 from .models.image_utils import convert_to_rgb
 
 IMAGENET_MEAN = (0.48145466, 0.4578275, 0.40821073)
 IMAGENET_STD = (0.26862954, 0.26130258, 0.27577711)
 
 __all__ = [
+    "LayerScale",
     "ImageFeaturesPooler",
     "VLMConfig",
     "VLMPreTrainedModel",
     "VLMForCausalLM",
     "VLMProcessor",
 ]
+
+
+class LayerScale(nn.Module):
+    def __init__(self, dim, init_values: float = 1e-5, inplace: bool = False):
+        super().__init__()
+        self.weight = nn.Parameter(init_values * torch.ones(dim))
+        self.inplace = inplace
+
+    def forward(self, x):
+        return x.mul_(self.weight) if self.inplace else x * self.weight
 
 
 class ImageFeaturesPooler(nn.Module):
