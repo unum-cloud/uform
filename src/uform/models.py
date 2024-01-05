@@ -332,75 +332,6 @@ class VisualEncoder(nn.Module):
         return features, embeddings
 
 
-class PreProcessor:
-    def __init__(self, tokenizer_path: PathLike, max_position_embeddings: int, _pad_token_idx: int, _image_size: int=224) -> None:
-        self._image_size = _image_size
-        self._image_transform = Compose(
-            [
-                Resize(self._image_size, interpolation=InterpolationMode.BICUBIC),
-                convert_to_rgb,
-                CenterCrop(self._image_size),
-                ToTensor(),
-                Normalize(
-                    mean=(0.48145466, 0.4578275, 0.40821073),
-                    std=(0.26862954, 0.26130258, 0.27577711),
-                ),
-            ]
-        )
-
-        self._tokenizer = Tokenizer.from_file(tokenizer_path)
-        self._tokenizer.no_padding()
-        self.max_position_embeddings = max_position_embeddings
-        self._pad_token_idx = _pad_token_idx
-
-    def preprocess_image(self, images: Union[Image, List[Image]]) -> Tensor:
-        """Transforms one or more Pillow images into Torch Tensors.
-
-        :param images: image or list of images to preprocess
-        """
-
-        if isinstance(images, list):
-            batch_images = torch.empty(
-                (len(images), 3, self._image_size, self._image_size),
-                dtype=torch.float32,
-            )
-
-            for i, image in enumerate(images):
-                batch_images[i] = self._image_transform(image)
-
-            return batch_images
-        else:
-            return self._image_transform(images).unsqueeze(0)
-
-    def preprocess_text(self, texts: Union[str, List[str]]) -> Dict[str, Tensor]:
-        """Transforms one or more strings into dictionary with tokenized strings and attention masks.
-
-        :param texts: text of list of texts to tokenizer
-        """
-        if isinstance(texts, str):
-            texts = [texts]
-
-        input_ids = torch.full(
-            (len(texts), self.max_position_embeddings),
-            fill_value=self._pad_token_idx,
-            dtype=torch.int64,
-        )
-
-        attention_mask = torch.zeros(
-            len(texts), self.max_position_embeddings, dtype=torch.int32
-        )
-        encoded = self._tokenizer.encode_batch(texts)
-
-        for i, seq in enumerate(encoded):
-            seq_len = min(len(seq), self.max_position_embeddings)
-            input_ids[i, :seq_len] = torch.LongTensor(
-                seq.ids[: self.max_position_embeddings]
-            )
-            attention_mask[i, :seq_len] = 1
-
-        return {"input_ids": input_ids, "attention_mask": attention_mask}
-
-
 class VLM(nn.Module):
     """
     Vision-Language Model for multi-modal embeddings.
@@ -419,11 +350,22 @@ class VLM(nn.Module):
         self.text_encoder = TextEncoder(**config["text_encoder"])
         self.image_encoder = VisualEncoder(**config["image_encoder"])
 
-        self.preprocess = PreProcessor(tokenizer_path, self.text_encoder.max_position_embeddings, self.text_encoder.padding_idx, self._image_size)
+        self._tokenizer = Tokenizer.from_file(tokenizer_path)
+        self._tokenizer.no_padding()
+        self._pad_token_idx = self.text_encoder.padding_idx
 
-        self.preprocess_text = self.preprocess.preprocess_text
-        self.preprocess_image = self.preprocess.preprocess_image
-
+        self._image_transform = Compose(
+            [
+                Resize(self._image_size, interpolation=InterpolationMode.BICUBIC),
+                convert_to_rgb,
+                CenterCrop(self._image_size),
+                ToTensor(),
+                Normalize(
+                    mean=(0.48145466, 0.4578275, 0.40821073),
+                    std=(0.26862954, 0.26130258, 0.27577711),
+                ),
+            ]
+        )
 
     def encode_image(
         self,
@@ -519,6 +461,53 @@ class VLM(nn.Module):
 
         return self.text_encoder.forward_matching(embeddings)
 
+    def preprocess_text(self, texts: Union[str, List[str]]) -> Dict[str, Tensor]:
+        """Transforms one or more strings into dictionary with tokenized strings and attention masks.
+
+        :param texts: text of list of texts to tokenizer
+        """
+        if isinstance(texts, str):
+            texts = [texts]
+
+        input_ids = torch.full(
+            (len(texts), self.text_encoder.max_position_embeddings),
+            fill_value=self._pad_token_idx,
+            dtype=torch.int64,
+        )
+
+        attention_mask = torch.zeros(
+            len(texts), self.text_encoder.max_position_embeddings, dtype=torch.int32
+        )
+        encoded = self._tokenizer.encode_batch(texts)
+
+        for i, seq in enumerate(encoded):
+            seq_len = min(len(seq), self.text_encoder.max_position_embeddings)
+            input_ids[i, :seq_len] = torch.LongTensor(
+                seq.ids[: self.text_encoder.max_position_embeddings]
+            )
+            attention_mask[i, :seq_len] = 1
+
+        return {"input_ids": input_ids, "attention_mask": attention_mask}
+
+    def preprocess_image(self, images: Union[Image, List[Image]]) -> Tensor:
+        """Transforms one or more Pillow images into Torch Tensors.
+
+        :param images: image or list of images to preprocess
+        """
+
+        if isinstance(images, list):
+            batch_images = torch.empty(
+                (len(images), 3, self._image_size, self._image_size),
+                dtype=torch.float32,
+            )
+
+            for i, image in enumerate(images):
+                batch_images[i] = self._image_transform(image)
+
+            return batch_images
+        else:
+            return self._image_transform(images).unsqueeze(0)
+
     def forward(
         self,
         images: torch.Tensor,
@@ -569,11 +558,22 @@ class TritonClient(VLM):
         self._client = httpclient
         self._triton_client = self._client.InferenceServerClient(url=url)
 
-        self.preprocess = PreProcessor(tokenizer_path, self.text_encoder.max_position_embeddings, self.text_encoder.padding_idx, self._image_size)
+        self._tokenizer = Tokenizer.from_file(tokenizer_path)
+        self._tokenizer.no_padding()
+        self._pad_token_idx = pad_token_idx
 
-        self.preprocess_text = self.preprocess.preprocess_text
-        self.preprocess_image = self.preprocess.preprocess_image
-
+        self._image_transform = Compose(
+            [
+                Resize(self._image_size, interpolation=InterpolationMode.BICUBIC),
+                convert_to_rgb,
+                CenterCrop(self._image_size),
+                ToTensor(),
+                Normalize(
+                    mean=(0.48145466, 0.4578275, 0.40821073),
+                    std=(0.26862954, 0.26130258, 0.27577711),
+                ),
+            ]
+        )
 
     def encode_image(
         self,
