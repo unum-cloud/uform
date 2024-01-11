@@ -53,7 +53,7 @@ uform-chat = "uform.chat:main"
 [tool.ruff]
 ignore = ["C408", "C901", "E501", "E741"]
 ignore-init-module-imports = true
-select = ["C", "E", "F", "I", "W"]
+select = ["C", "E", "F", "I", "UP", "W"]
 
 [tool.ruff.isort]
 lines-after-imports = 2
