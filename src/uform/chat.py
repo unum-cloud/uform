@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
-import torch
 import requests
+import torch
 from PIL import Image
 from transformers import TextStreamer
 
