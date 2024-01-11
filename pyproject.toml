@@ -8,17 +8,17 @@ version = "1.0.3"
 authors = [
   {name = "Mikhail Kim", email = "mike.kim@unum.cloud"},
   {name = "Vladimir Orshulevich", email = "vladimir.orshulevich@unum.cloud"},
-  {name = "Ash Vardanian", email = "ash.vardanian@unum.cloud"}
+  {name = "Ash Vardanian", email = "ash.vardanian@unum.cloud"},
 ]
 maintainers = [
-  {name = "Unum Cloud", email = "info@unum.cloud"}
+  {name = "Unum Cloud", email = "info@unum.cloud"},
 ]
 dependencies = [
   "torch>=1.13.1",
   "tokenizers>=0.13.3",
   "huggingface_hub>=0.16.4",
   "transformers>=4.36.2",
-  "torchvision"
+  "torchvision",
 ]
 description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
 readme = "README.md"
@@ -41,7 +41,7 @@ classifiers = [
   "Natural Language :: Japanese",
   "Natural Language :: Russian",
   "Natural Language :: Turkish",
-  "Natural Language :: Chinese (Simplified)"
+  "Natural Language :: Chinese (Simplified)",
 ]
 
 [project.scripts]
