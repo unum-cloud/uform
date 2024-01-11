@@ -2,19 +2,16 @@
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
-[project.scripts]
-uform-chat = "uform.chat:main"
-
 [project]
 name = "uform"
 version = "1.0.3"
 authors = [
-  { name="Mikhail Kim", email="mike.kim@unum.cloud" },
-  { name="Vladimir Orshulevich", email="vladimir.orshulevich@unum.cloud" },
-  { name="Ash Vardanian", email="ash.vardanian@unum.cloud" },
+  {name = "Mikhail Kim", email = "mike.kim@unum.cloud"},
+  {name = "Vladimir Orshulevich", email = "vladimir.orshulevich@unum.cloud"},
+  {name = "Ash Vardanian", email = "ash.vardanian@unum.cloud"}
 ]
 maintainers = [
-  { name="Unum Cloud", email="info@unum.cloud" },
+  {name = "Unum Cloud", email = "info@unum.cloud"}
 ]
 dependencies = [
   "torch>=1.13.1",
@@ -27,27 +24,28 @@ description = "Multi-Modal Transformers library for Semantic Search and other Vi
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
-
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Scientific/Engineering :: Image Processing",
-    "Topic :: Scientific/Engineering :: Image Recognition",
-
-    "Natural Language :: English",
-    "Natural Language :: French",
-    "Natural Language :: Korean",
-    "Natural Language :: German",
-    "Natural Language :: Italian",
-    "Natural Language :: Polish",
-    "Natural Language :: Spanish",
-    "Natural Language :: Japanese",
-    "Natural Language :: Russian",
-    "Natural Language :: Turkish",
-    "Natural Language :: Chinese (Simplified)",
+  "Programming Language :: Python :: 3",
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Image Processing",
+  "Topic :: Scientific/Engineering :: Image Recognition",
+  "Natural Language :: English",
+  "Natural Language :: French",
+  "Natural Language :: Korean",
+  "Natural Language :: German",
+  "Natural Language :: Italian",
+  "Natural Language :: Polish",
+  "Natural Language :: Spanish",
+  "Natural Language :: Japanese",
+  "Natural Language :: Russian",
+  "Natural Language :: Turkish",
+  "Natural Language :: Chinese (Simplified)"
 ]
+
+[project.scripts]
+uform-chat = "uform.chat:main"
 
 [project.urls]
 "Homepage" = "https://github.com/unum-cloud/uform"
