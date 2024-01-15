@@ -1,16 +1,15 @@
 import os
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional
 
 import coremltools as ct
 import onnxruntime
 import torch
 import torch.nn.functional as F
+import json
 from PIL import Image
-from uform.models import PreProcessor
+from uform.models import PreProcessor, VLM
 from functools import partial
 import time
-
-import uform
 
 # export TOKENIZERS_PARALLELISM=true
 
@@ -32,6 +31,20 @@ def preprocess_data(func):
 
     return wrapper
 
+def get_local_model(model_name: str, token: Optional[str] = None) -> VLM:
+    config_path = f"{model_name}/torch_config.json"
+    state = torch.load(f"{model_name}/torch_weight.pt")
+
+    tokenizer_path = f"{model_name}/tokenizer.json"
+
+    with open(config_path, "r") as f:
+        model = VLM(json.load(f), tokenizer_path)
+
+    model.image_encoder.load_state_dict(state["image_encoder"])
+    model.text_encoder.load_state_dict(state["text_encoder"])
+
+    return model.eval()
+
 
 class MyModel:
     def __init__(self, method: str, model_fpath: str) -> None:
@@ -39,7 +52,7 @@ class MyModel:
         self.model_fpath = model_fpath
         max_position_embeddings = 50
         if method == "torch":
-            self.model = uform.get_model(model_fpath)
+            self.model = get_local_model(model_fpath)
             self.image_model = partial(self.model.encode_image, return_features=True)
             self.text_model = partial(self.model.encode_text, return_features=True)
         elif method == "onnx":
