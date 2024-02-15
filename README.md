@@ -113,8 +113,8 @@ The generative model can be used to caption images, answer questions about them.
 ```python
 from transformers import AutoModel, AutoProcessor
 
-model = AutoModel.from_pretrained("unum-cloud/uform-gen2-qwen-halfB", trust_remote_code=True)
-processor = AutoProcessor.from_pretrained("unum-cloud/uform-gen2-qwen-halfB", trust_remote_code=True)
+model = AutoModel.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
+processor = AutoProcessor.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
 
 prompt = "Question or Instruction"
 image = Image.open("image.jpg")
@@ -268,7 +268,7 @@ Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the f
 
 | Model                               | LLM Size |  SQA  |  MME   | MMBench  | Average¹ |
 | :---------------------------------- | -------: | -----:| ------:| --------:| --------:|
-| UForm-Gen2-Qwen-halfB               |   0.5B   | 45.5  | 880.1  |  42.0    |   29.31  |
+| UForm-Gen2-Qwen-500m                |   0.5B   | 45.5  | 880.1  |  42.0    |   29.31  |
 | MobileVLM v2                        |   1.4B   | 52.1  | 1302.8 |  57.7    |   36.81  |
 | LLaVA-Phi                           |   2.7B   | 68.4  | 1335.1 |  59.8    |   42.95  |
 
