@@ -276,6 +276,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
             inputs_embeds=inputs_embeds,
             input_ids=input_ids if past_key_values is not None else None,
             attention_mask=attention_mask,
+            labels=labels,
             position_ids=position_ids,
             past_key_values=past_key_values,
             output_attentions=output_attentions,
