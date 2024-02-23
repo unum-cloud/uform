@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
-import torch
 import requests
+import torch
 from PIL import Image
 from transformers import TextStreamer
 
@@ -33,7 +33,7 @@ def run_chat(opts, model, processor):
     if opts.image.startswith("http"):
         image = (
             processor.image_processor(
-                Image.open(requests.get(opts.image, stream=True).raw)
+                Image.open(requests.get(opts.image, stream=True).raw),
             )
             .unsqueeze(0)
             .to(torch.bfloat16 if opts.fp16 else torch.float32)
@@ -59,11 +59,14 @@ def run_chat(opts, model, processor):
 
         else:
             input_ids = processor.tokenizer.apply_chat_template(
-                messages, return_tensors="pt", add_generation_prompt=True
+                messages,
+                return_tensors="pt",
+                add_generation_prompt=True,
             ).to(opts.device)
 
             attention_mask = torch.ones(
-                1, input_ids.shape[1] + processor.num_image_latents - 1
+                1,
+                input_ids.shape[1] + processor.num_image_latents - 1,
             ).to(opts.device)
             x = {
                 "input_ids": input_ids,
