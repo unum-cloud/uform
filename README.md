@@ -53,13 +53,13 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 ### Generative Models
 
-| Model                        | Parameters |               Purpose |         Architecture |
-| :--------------------------- | ---------: | --------------------: | -------------------: |
-| [`uform-gen`][model-g]       |       1.5B | Image Captioning, VQA | llama-1.3B, ViT-B/16 |
-| [`uform-gen-chat`][model-gc] |       1.5B |       Multimodal Chat | llama-1.3B, ViT-B/16 |
+| Model                              | Parameters |            Purpose          |     Architecture      |
+| :--------------------------------- | ---------: | --------------------------: | --------------------: |
+| [`uform-gen2-qwen-500m`][model-g2] |    1.2B    | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14|
+| [`uform-gen`][model-g1]             |    1.5B    | Image Captioning, VQA       | llama-1.3B, ViT-B/16  |
 
-[model-g]: https://huggingface.co/unum-cloud/uform-gen/
-[model-gc]: https://huggingface.co/unum-cloud/uform-gen-chat/
+[model-g2]: https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/
+[model-g1]: https://huggingface.co/unum-cloud/uform-gen/
 
 
 ## Quick Start
@@ -105,7 +105,42 @@ joint_embedding = model.encode_multimodal(
 score = model.get_matching_scores(joint_embedding)
 ```
 
+### Chat, Image Captioning and Question Answering
+
+The generative model can be used to caption images, answer questions about them. Also it is suitable for a multimodal chat.
+
+
+```python
+from transformers import AutoModel, AutoProcessor
+
+model = AutoModel.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
+processor = AutoProcessor.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
+
+prompt = "Question or Instruction"
+image = Image.open("image.jpg")
+
+inputs = processor(text=[prompt], images=[image], return_tensors="pt")
+
+with torch.inference_mode():
+     output = model.generate(
+        **inputs,
+        do_sample=False,
+        use_cache=True,
+        max_new_tokens=256,
+        eos_token_id=151645,
+        pad_token_id=processor.tokenizer.pad_token_id
+    )
+prompt_len = inputs["input_ids"].shape[1]
+decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
+```
+
+You can check examples of different prompts in our [demo space](https://huggingface.co/spaces/unum-cloud/uform-gen2-qwen-500m-demo)
+
+
 ### Image Captioning and Question Answering
+
+__It is the instruction for the first version of UForm-Gen model. We highly recommend you use the new model, instructions for which you can find above.__
+
 
 The generative model can be used to caption images, summarize their content, or answer questions about them.
 The exact behavior is controlled by prompts.
@@ -230,6 +265,12 @@ Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the f
 </details>
 
 ### Generative Models
+
+| Model                               | LLM Size |  SQA  |  MME   | MMBench  | Average¹ |
+| :---------------------------------- | -------: | -----:| ------:| --------:| --------:|
+| UForm-Gen2-Qwen-500m                |   0.5B   | 45.5  | 880.1  |  42.0    |   29.31  |
+| MobileVLM v2                        |   1.4B   | 52.1  | 1302.8 |  57.7    |   36.81  |
+| LLaVA-Phi                           |   2.7B   | 68.4  | 1335.1 |  59.8    |   42.95  |
 
 For captioning evaluation we measure CLIPScore and RefCLIPScore³.
 
