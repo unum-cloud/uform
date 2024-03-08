@@ -1,14 +1,19 @@
-import requests
+from functools import partial
 from time import perf_counter
 from typing import List
 
-from PIL import Image
+import requests
 import torch
+from PIL import Image
+from transformers import (
+    AutoProcessor,
+    InstructBlipForConditionalGeneration,
+    InstructBlipProcessor,
+    LlavaForConditionalGeneration,
+)
 
 from uform import get_model
 from uform.gen_model import VLMForCausalLM, VLMProcessor
-from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
-from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 dtype = torch.bfloat16
 low_cpu_mem_usage = False
@@ -18,7 +23,7 @@ device = "cuda:0"
 def caption(model, processor, prompt: str, image: Image.Image) -> str:
     inputs = processor(prompt, image, return_tensors="pt")
     for possible_key in ["images", "pixel_values"]:
-        if not possible_key in inputs:
+        if possible_key not in inputs:
             continue
         inputs[possible_key] = inputs[possible_key].to(dtype)  # Downcast floats
     inputs = {k: v.to(device) for k, v in inputs.items()}  # Move to the right device
@@ -56,15 +61,12 @@ def bench_captions(
     total_duration = 0
     total_length = 0
     model = torch.compile(model)
+
+    def caption_image(image, model=model, processor=processor, prompt=prompt):
+        return caption(model=model, processor=processor, prompt=prompt, image=image)
+
     for image in images:
-        seconds, text = duration(
-            lambda: caption(
-                model=model,
-                processor=processor,
-                prompt=prompt,
-                image=image,
-            )
-        )
+        seconds, text = duration(partial(caption_image, image=image))
         total_duration += seconds
         total_length += len(text)
 
@@ -74,19 +76,31 @@ def bench_captions(
 
 
 def bench_image_embeddings(model, images):
-    total_duration, embeddings = duration(
-        lambda: model.encode_image(model.preprocess_image(images))
-    )
-    total_length = len(embeddings)
-    print(f"Throughput: {total_length/total_duration:.2f} images/s")
+    total_duration = 0
+    total_embeddings = 0
+    images *= 10
+    while total_duration < 10:
+        seconds, embeddings = duration(
+            lambda: model.encode_image(model.preprocess_image(images))
+        )
+        total_duration += seconds
+        total_embeddings += len(embeddings)
+
+    print(f"Throughput: {total_embeddings/total_duration:.2f} images/s")
 
 
 def bench_text_embeddings(model, texts):
-    total_duration, embeddings = duration(
-        lambda: model.encode_text(model.preprocess_text(texts))
-    )
-    total_length = len(embeddings)
-    print(f"Throughput: {total_length/total_duration:.2f} queries/s")
+    total_duration = 0
+    total_embeddings = 0
+    texts *= 10
+    while total_duration < 10:
+        seconds, embeddings = duration(
+            lambda: model.encode_text(model.preprocess_text(texts))
+        )
+        total_duration += seconds
+        total_embeddings += len(embeddings)
+
+    print(f"Throughput: {total_embeddings/total_duration:.2f} queries/s")
 
 
 if __name__ == "__main__":

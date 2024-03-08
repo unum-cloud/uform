@@ -3,7 +3,7 @@ Overview
 ==========
 .. mdinclude:: ../README.md
 
-.. toctree:: 
+.. toctree::
    :hidden:
 
    self
