@@ -284,7 +284,7 @@ class TextEncoder(nn.Module):
         x = self.word_embeddings(x) + positional_embedding
         return self.dropout(self.layer_norm(x))
 
-    def forward(self, x: dict) -> torch.Tensor:
+    def forward(self, x: dict) -> Tensor:
         features = self.forward_features(x["input_ids"], x["attention_mask"])
         embeddings = self.forward_embedding(features, x["attention_mask"])
         return features, embeddings
@@ -299,6 +299,7 @@ class VisualEncoder(nn.Module):
     num_heads: int
     embedding_dim: int
     pooling: str
+    num_reg_tokens: int = 0
 
     def __post_init__(self):
         super().__init__()
@@ -307,6 +308,9 @@ class VisualEncoder(nn.Module):
         self.patch_embed = nn.Conv2d(3, self.dim, self.patch_size, self.patch_size)
         self.pos_embed = nn.Parameter(torch.randn(1, seq_len, self.dim) * 0.02)
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self.dim))
+
+        if self.num_reg_tokens > 0:
+            self.reg_token = nn.Parameter(torch.zeros(1, self.num_reg_tokens, self.dim))
 
         self.blocks = nn.Sequential(
             *[
@@ -321,7 +325,14 @@ class VisualEncoder(nn.Module):
     def forward_features(self, x: Tensor) -> Tensor:
         x = self.patch_embed(x).flatten(start_dim=2).transpose(2, 1)
         x = x + self.pos_embed
-        x = torch.cat((self.cls_token.expand(x.shape[0], -1, -1), x), dim=1)
+
+        special_tokens = [self.cls_token.expand(x.shape[0], -1, -1)]
+
+        if self.num_reg_tokens > 0:
+            special_tokens.append(self.reg_token.expand(x.shape[0], -1, -1))
+
+        x = torch.cat(special_tokens + [x], dim=1)
+
         x = self.blocks(x)
 
         return self.norm(x)
@@ -334,7 +345,7 @@ class VisualEncoder(nn.Module):
 
         return self.embedding_projection(x)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         features = self.forward_features(x)
         embeddings = self.forward_embedding(features)
         return features, embeddings
