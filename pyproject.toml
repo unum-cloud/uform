@@ -34,6 +34,9 @@ dependencies = [
     "torch>=1.13.1",
     "torchvision",
     "transformers>=4.36.2",
+    "onnx>=1.15.0",
+    "onnxruntime>=1.17.1",
+    "onnxruntime-gpu>=1.17.1"
 ]
 description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
 maintainers = [

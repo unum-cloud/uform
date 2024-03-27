@@ -3,20 +3,15 @@ from typing import List, Optional, Tuple, Union
 import torch
 import torch.nn.functional as F
 from torch import nn
-from torchvision.transforms import (
-    CenterCrop,
-    Compose,
-    InterpolationMode,
-    Normalize,
-    RandomResizedCrop,
-    Resize,
-    ToTensor,
-)
+from torchvision.transforms import (CenterCrop, Compose, InterpolationMode,
+                                    Normalize, RandomResizedCrop, Resize,
+                                    ToTensor)
 from transformers import AutoConfig, AutoTokenizer
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.modeling_utils import PreTrainedModel
-from transformers.models.auto.modeling_auto import AutoModel, AutoModelForCausalLM
+from transformers.models.auto.modeling_auto import (AutoModel,
+                                                    AutoModelForCausalLM)
 from transformers.processing_utils import ProcessorMixin
 from transformers.tokenization_utils_base import BatchEncoding
 

@@ -43,10 +43,12 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 | Model                                    | Parameters | Languages |                                 Architecture |
 | :--------------------------------------- | ---------: | --------: | -------------------------------------------: |
+| [`uform-vl-english-large`][model-e-l]    |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
 | [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
 | [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
 | [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
 
+[model-e-l]: https://huggingface.co/unum-cloud/uform-vl-english-large/
 [model-e]: https://huggingface.co/unum-cloud/uform-vl-english/
 [model-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/
 [model-m-v2]: https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/
@@ -69,8 +71,13 @@ Once you `pip install uform`, fetching the models is as easy as:
 ```python
 import uform
 
-model = uform.get_model('unum-cloud/uform-vl-english') # Just English
-model = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
+# PyTorch Runtime
+model, processor = uform.get_model('unum-cloud/uform-vl-english-large') # Just English
+model, processor = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
+
+# ONNX Runtime
+model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-large', "cpu", "fp32") # Available combinations: cpu & fp32, gpu & fp32, gpu & fp16
+
 ```
 
 ### Producing Embeddings
@@ -82,13 +89,24 @@ import torch.nn.functional as F
 text = 'a small red panda in a zoo'
 image = Image.open('red_panda.jpg')
 
-image_data = model.preprocess_image(image)
-text_data = model.preprocess_text(text)
+image_data = processor.preprocess_image(image)
+text_data = processor.preprocess_text(text)
 
 image_features, image_embedding = model.encode_image(image_data, return_features=True)
 text_features, text_embedding = model.encode_text(text_data, return_features=True)
 
+# For PyTorch
 similarity = F.cosine_similarity(image_embedding, text_embedding)
+
+# For ONNX
+import numpy as np
+
+image_embedding = image_embedding / np.linalg.norm(image_embedding, keepdims=True, axis=1)
+
+text_embedding = text_embedding / np.linalg.norm(text_embedding, keepdims=True, axis=1)
+
+similarity = (image_embedding * text_embedding).sum(axis=1)
+
 ```
 
 To search for similar items, the embeddings can be compared using cosine similarity.
@@ -97,12 +115,22 @@ Once the list of nearest neighbors (best matches) is obtained, the joint multimo
 The model can calculate a "matching score" that falls within the range of `[0, 1]`, where `1` indicates a high likelihood of a match.
 
 ```python
+
+# For PyTorch
 joint_embedding = model.encode_multimodal(
     image_features=image_features,
     text_features=text_features,
     attention_mask=text_data['attention_mask']
 )
 score = model.get_matching_scores(joint_embedding)
+
+# For ONNX
+score, joint_embedding = model.encode_multimodal(
+    image_features=image_features,
+    text_features=text_features,
+    attention_mask=text_data['attention_mask'],
+    return_scores=True
+)
 ```
 
 ### Chat, Image Captioning and Question Answering

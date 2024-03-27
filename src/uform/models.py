@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from os import PathLike
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -8,19 +8,10 @@ import torch.nn.functional as F
 from PIL.Image import Image
 from tokenizers import Tokenizer
 from torch import Tensor
-from torchvision.transforms import (
-    CenterCrop,
-    Compose,
-    InterpolationMode,
-    Normalize,
-    Resize,
-    ToTensor,
-)
+from torchvision.transforms import (CenterCrop, Compose, InterpolationMode,
+                                    Normalize, Resize, ToTensor)
 
-
-# lambda is not pickable
-def convert_to_rgb(image):
-    return image.convert("RGB")
+from uform.preprocessing import convert_to_rgb
 
 
 @dataclass(eq=False)
@@ -362,29 +353,10 @@ class VLM(nn.Module):
         """
 
         super().__init__()
-        self._max_seq_len = config["text_encoder"]["max_position_embeddings"]
         self._embedding_dim = config["text_encoder"]["embedding_dim"]
-        self._image_size = config["image_encoder"]["image_size"]
 
         self.text_encoder = TextEncoder(**config["text_encoder"])
         self.image_encoder = VisualEncoder(**config["image_encoder"])
-
-        self._tokenizer = Tokenizer.from_file(tokenizer_path)
-        self._tokenizer.no_padding()
-        self._pad_token_idx = self.text_encoder.padding_idx
-
-        self._image_transform = Compose(
-            [
-                Resize(self._image_size, interpolation=InterpolationMode.BICUBIC),
-                convert_to_rgb,
-                CenterCrop(self._image_size),
-                ToTensor(),
-                Normalize(
-                    mean=(0.48145466, 0.4578275, 0.40821073),
-                    std=(0.26862954, 0.26130258, 0.27577711),
-                ),
-            ],
-        )
 
     def encode_image(
         self,
@@ -483,69 +455,20 @@ class VLM(nn.Module):
 
         return self.text_encoder.forward_matching(embeddings)
 
-    def preprocess_text(self, texts: Union[str, List[str]]) -> Dict[str, Tensor]:
-        """Transforms one or more strings into dictionary with tokenized strings and attention masks.
-
-        :param texts: text of list of texts to tokenizer
-        """
-        if isinstance(texts, str):
-            texts = [texts]
-
-        input_ids = torch.full(
-            (len(texts), self.text_encoder.max_position_embeddings),
-            fill_value=self._pad_token_idx,
-            dtype=torch.int64,
-        )
-
-        attention_mask = torch.zeros(
-            len(texts),
-            self.text_encoder.max_position_embeddings,
-            dtype=torch.int32,
-        )
-        encoded = self._tokenizer.encode_batch(texts)
-
-        for i, seq in enumerate(encoded):
-            seq_len = min(len(seq), self.text_encoder.max_position_embeddings)
-            input_ids[i, :seq_len] = torch.LongTensor(
-                seq.ids[: self.text_encoder.max_position_embeddings],
-            )
-            attention_mask[i, :seq_len] = 1
-
-        return {"input_ids": input_ids, "attention_mask": attention_mask}
-
-    def preprocess_image(self, images: Union[Image, List[Image]]) -> Tensor:
-        """Transforms one or more Pillow images into Torch Tensors.
-
-        :param images: image or list of images to preprocess
-        """
-
-        if isinstance(images, list):
-            batch_images = torch.empty(
-                (len(images), 3, self._image_size, self._image_size),
-                dtype=torch.float32,
-            )
-
-            for i, image in enumerate(images):
-                batch_images[i] = self._image_transform(image)
-
-            return batch_images
-        else:
-            return self._image_transform(images).unsqueeze(0)
-
     def forward(
         self,
-        images: torch.Tensor,
-        texts: dict,
-    ):
+        images: Tensor,
+        texts: Dict[str, Tensor],
+    ) -> Union[Tensor, Tensor]:
         """Inference forward method
 
         :param images: Preprocessed images
         :param texts: Preprocessed texts
         :return: embeddings for images and texts
         """
-        _, embs_imgs = self.image_encoder(images)
-        _, embs_txts = self.text_encoder(texts)
-        return embs_imgs, embs_txts
+        _, image_embeddings = self.image_encoder(images)
+        _, text_embeddings = self.text_encoder(texts)
+        return image_embeddings, text_embeddings
 
     @property
     def text_features_dim(self) -> int:
