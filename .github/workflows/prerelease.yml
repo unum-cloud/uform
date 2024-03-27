@@ -16,7 +16,6 @@ permissions:
   contents: read
 
 jobs:
-jobs:
   test_python:
     name: Test Python
     runs-on: ubuntu-latest
@@ -33,6 +32,7 @@ jobs:
         run: |
           python -m pip install --no-cache-dir --upgrade pip
           pip install -e .
+          pip install pytest
 
       - name: Test with PyTest
         run: pytest scripts/ -s -x -Wd -v
