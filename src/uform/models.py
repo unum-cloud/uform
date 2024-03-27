@@ -353,7 +353,7 @@ class VisualEncoder(nn.Module):
 
 class VLM(nn.Module):
     """
-    Vision-Language Model for multi-modal embeddings.
+    Vision-Language Model for Multimodal embeddings.
     """
 
     def __init__(self, config: Dict, tokenizer_path: PathLike):
