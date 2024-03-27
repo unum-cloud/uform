@@ -76,8 +76,8 @@ model, processor = uform.get_model('unum-cloud/uform-vl-english-large') # Just E
 model, processor = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
 
 # ONNX Runtime
-model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-large', "cpu", "fp32") # Available combinations: cpu & fp32, gpu & fp32, gpu & fp16
-
+model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-large', "cpu", "fp32")
+# Available combinations: cpu & fp32, gpu & fp32, gpu & fp16
 ```
 
 ### Producing Embeddings
