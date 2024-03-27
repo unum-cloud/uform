@@ -1,53 +1,72 @@
 [build-system]
-requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
+requires = ["setuptools>=42"]
+
+[project]
+authors = [
+    {email = "ash.vardanian@unum.cloud", name = "Ash Vardanian"},
+    {email = "mike.kim@unum.cloud", name = "Mikhail Kim"},
+    {email = "vladimir.orshulevich@unum.cloud", name = "Vladimir Orshulevich"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: Chinese (Simplified)",
+    "Natural Language :: English",
+    "Natural Language :: French",
+    "Natural Language :: German",
+    "Natural Language :: Italian",
+    "Natural Language :: Japanese",
+    "Natural Language :: Korean",
+    "Natural Language :: Polish",
+    "Natural Language :: Russian",
+    "Natural Language :: Spanish",
+    "Natural Language :: Turkish",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+]
+dependencies = [
+    "huggingface_hub>=0.16.4",
+    "tokenizers>=0.13.3",
+    "torch>=1.13.1",
+    "torchvision",
+    "transformers>=4.36.2",
+]
+description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
+maintainers = [
+    {email = "info@unum.cloud", name = "Unum Cloud"},
+]
+name = "uform"
+readme = "README.md"
+requires-python = ">=3.7"
+version = "1.1.1"
 
 [project.scripts]
 uform-chat = "uform.chat:main"
 
-[project]
-name = "uform"
-version = "1.0.3"
-authors = [
-  { name="Mikhail Kim", email="mike.kim@unum.cloud" },
-  { name="Vladimir Orshulevich", email="vladimir.orshulevich@unum.cloud" },
-  { name="Ash Vardanian", email="ash.vardanian@unum.cloud" },
-]
-maintainers = [
-  { name="Unum Cloud", email="info@unum.cloud" },
-]
-dependencies = [
-  "torch>=1.13.1",
-  "tokenizers>=0.13.3",
-  "huggingface_hub>=0.16.4",
-  "transformers>=4.36.2",
-  "torchvision"
-]
-description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
-readme = "README.md"
-requires-python = ">=3.7"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
-
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Scientific/Engineering :: Image Processing",
-    "Topic :: Scientific/Engineering :: Image Recognition",
-
-    "Natural Language :: English",
-    "Natural Language :: French",
-    "Natural Language :: Korean",
-    "Natural Language :: German",
-    "Natural Language :: Italian",
-    "Natural Language :: Polish",
-    "Natural Language :: Spanish",
-    "Natural Language :: Japanese",
-    "Natural Language :: Russian",
-    "Natural Language :: Turkish",
-    "Natural Language :: Chinese (Simplified)",
-]
-
 [project.urls]
 "Homepage" = "https://github.com/unum-cloud/uform"
+
+[tool.ruff]
+ignore = ["C408", "C901", "E501", "E741"]
+ignore-init-module-imports = true
+select = ["C", "E", "F", "I", "UP", "W"]
+
+[tool.ruff.isort]
+lines-after-imports = 2
+
+[tool.ruff.lint.isort]
+known-first-party = ["uform"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["E401"]
+
+[tool.tomlsort]
+all = true
+in_place = true
+spaces_before_inline_comment = 2
+spaces_indent_inline_array = 4
+trailing_comma_inline_array = true

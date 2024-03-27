@@ -7,13 +7,13 @@ For Content Understanding and Generation<br/>
 
 <p align="center">
 <a href="https://discord.gg/jsMURnSFM2"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/discord.svg" alt="Discord"></a>
-&nbsp; &nbsp; &nbsp; 
+&nbsp; &nbsp; &nbsp;
 <a href="https://www.linkedin.com/company/unum-cloud/"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/linkedin.svg" alt="LinkedIn"></a>
-&nbsp; &nbsp; &nbsp; 
+&nbsp; &nbsp; &nbsp;
 <a href="https://twitter.com/unum_cloud"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/twitter.svg" alt="Twitter"></a>
-&nbsp; &nbsp; &nbsp; 
+&nbsp; &nbsp; &nbsp;
 <a href="https://unum.cloud/post"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/blog.svg" alt="Blog"></a>
-&nbsp; &nbsp; &nbsp; 
+&nbsp; &nbsp; &nbsp;
 <a href="https://github.com/unum-cloud/uform"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/github.svg" alt="GitHub"></a>
 </p>
 
@@ -53,13 +53,13 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 ### Generative Models
 
-| Model                        | Parameters |               Purpose |         Architecture |
-| :--------------------------- | ---------: | --------------------: | -------------------: |
-| [`uform-gen`][model-g]       |       1.5B | Image Captioning, VQA | llama-1.3B, ViT-B/16 |
-| [`uform-gen-chat`][model-gc] |       1.5B |       Multimodal Chat | llama-1.3B, ViT-B/16 |
+| Model                              | Parameters |            Purpose          |     Architecture      |
+| :--------------------------------- | ---------: | --------------------------: | --------------------: |
+| [`uform-gen2-qwen-500m`][model-g2] |    1.2B    | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14|
+| [`uform-gen`][model-g1]             |    1.5B    | Image Captioning, VQA       | llama-1.3B, ViT-B/16  |
 
-[model-g]: https://huggingface.co/unum-cloud/uform-gen/
-[model-gc]: https://huggingface.co/unum-cloud/uform-gen-chat/
+[model-g2]: https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/
+[model-g1]: https://huggingface.co/unum-cloud/uform-gen/
 
 
 ## Quick Start
@@ -92,7 +92,7 @@ similarity = F.cosine_similarity(image_embedding, text_embedding)
 ```
 
 To search for similar items, the embeddings can be compared using cosine similarity.
-The resulting value will fall within the range of `-1` to `1`, where `1` indicates a high likelihood of a match. 
+The resulting value will fall within the range of `-1` to `1`, where `1` indicates a high likelihood of a match.
 Once the list of nearest neighbors (best matches) is obtained, the joint multimodal embeddings, created from both text and image features, can be used to better rerank (reorder) the list.
 The model can calculate a "matching score" that falls within the range of `[0, 1]`, where `1` indicates a high likelihood of a match.
 
@@ -105,7 +105,42 @@ joint_embedding = model.encode_multimodal(
 score = model.get_matching_scores(joint_embedding)
 ```
 
+### Chat, Image Captioning and Question Answering
+
+The generative model can be used to caption images, answer questions about them. Also it is suitable for a multimodal chat.
+
+
+```python
+from transformers import AutoModel, AutoProcessor
+
+model = AutoModel.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
+processor = AutoProcessor.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
+
+prompt = "Question or Instruction"
+image = Image.open("image.jpg")
+
+inputs = processor(text=[prompt], images=[image], return_tensors="pt")
+
+with torch.inference_mode():
+     output = model.generate(
+        **inputs,
+        do_sample=False,
+        use_cache=True,
+        max_new_tokens=256,
+        eos_token_id=151645,
+        pad_token_id=processor.tokenizer.pad_token_id
+    )
+prompt_len = inputs["input_ids"].shape[1]
+decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
+```
+
+You can check examples of different prompts in our [demo space](https://huggingface.co/spaces/unum-cloud/uform-gen2-qwen-500m-demo)
+
+
 ### Image Captioning and Question Answering
+
+__It is the instruction for the first version of UForm-Gen model. We highly recommend you use the new model, instructions for which you can find above.__
+
 
 The generative model can be used to caption images, summarize their content, or answer questions about them.
 The exact behavior is controlled by prompts.
@@ -231,6 +266,12 @@ Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the f
 
 ### Generative Models
 
+| Model                               | LLM Size |  SQA  |  MME   | MMBench  | Average¹ |
+| :---------------------------------- | -------: | -----:| ------:| --------:| --------:|
+| UForm-Gen2-Qwen-500m                |   0.5B   | 45.5  | 880.1  |  42.0    |   29.31  |
+| MobileVLM v2                        |   1.4B   | 52.1  | 1302.8 |  57.7    |   36.81  |
+| LLaVA-Phi                           |   2.7B   | 68.4  | 1335.1 |  59.8    |   42.95  |
+
 For captioning evaluation we measure CLIPScore and RefCLIPScore³.
 
 | Model                               | Size | Caption Length | CLIPScore | RefCLIPScore |
@@ -262,7 +303,7 @@ Results for VQAv2 evaluation.
 
 ## Speed
 
-On RTX 3090, the following performance is expected on text encoding.
+On Nvidia RTX 3090, the following performance is expected on text encoding.
 
 | Model                                     | Multilingual |                  Speed |    Speedup |
 | :---------------------------------------- | -----------: | ---------------------: | ---------: |
@@ -271,13 +312,26 @@ On RTX 3090, the following performance is expected on text encoding.
 | `sentence-transformers/all-MiniLM-L12-v2` |      __Yes__ | 3'604 sequences/second |     x 2.24 |
 | `unum-cloud/uform-vl-multilingual-v2`     |      __Yes__ | 6'809 sequences/second | __x 4.22__ |
 
-On RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
+On Nvidia RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
 
 | Model                               | Size |               Speed |   Speedup |
 | :---------------------------------- | ---: | ------------------: | --------: |
 | `llava-hf/llava-1.5-7b-hf`          |   7B |  ~ 40 tokens/second |           |
 | `Salesforce/instructblip-vicuna-7b` |   7B |  ~ 40 tokens/second |           |
 | `unum-cloud/uform-gen`              | 1.5B | ~ 140 tokens/second | __x 3.5__ |
+
+Given the small size of the model it also work well on mobile devices.
+On Apple M2 Arm chips the energy efficiency of inference can exceed that of the RTX 3090 GPU and other Ampere-generation cards.
+
+| Device                 |               Speed | Device TDP |        Efficiency |
+| :--------------------- | ------------------: | ---------: | ----------------: |
+| Nvidia RTX 3090        | ~ 140 tokens/second |     < 350W | 0.40 tokens/joule |
+| Apple M2 Pro unplugged |  ~ 19 tokens/second |      < 20W | 0.95 tokens/joule |
+| Apple M2 Max unplugged |  ~ 38 tokens/second |      < 36W | 1.06 tokens/joule |
+| Apple M2 Max plugged   |  ~ 56 tokens/second |      < 89W | 0.63 tokens/joule |
+
+> [!WARNING]
+> The above numbers are for reference only and are not guaranteed to be accurate.
 
 ## License
 

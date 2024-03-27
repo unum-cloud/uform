@@ -6,4 +6,4 @@ src/test.py
 build/
 package-lock.json
 *.egg-info
-*.oonx
+*.onnx

@@ -131,13 +131,16 @@ class TextEncoderBlock(nn.Module):
         self.dropout = nn.Dropout(self.dropout_prob)
 
     def forward(
-        self, x: Tensor, attn_mask: Tensor, context: Optional[Tensor] = None
+        self,
+        x: Tensor,
+        attn_mask: Tensor,
+        context: Optional[Tensor] = None,
     ) -> Tensor:
         x = self.norm_attn(x + self.dropout(self.attention(x, attn_mask)))
 
         if self.cross_attention and context is not None:
             x = self.norm_crossattn(
-                x + self.dropout(self.crossattn(x, context=context))
+                x + self.dropout(self.crossattn(x, context=context)),
             )
 
         return self.norm_mlp(x + self.dropout(self.mlp(x)))
@@ -184,7 +187,9 @@ class TextEncoder(nn.Module):
         super().__init__()
 
         self.word_embeddings = nn.Embedding(
-            self.vocab_size, self.dim, padding_idx=self.padding_idx
+            self.vocab_size,
+            self.dim,
+            padding_idx=self.padding_idx,
         )
         self.position_embeddings = nn.Embedding(self.max_position_embeddings, self.dim)
 
@@ -207,7 +212,7 @@ class TextEncoder(nn.Module):
                     layer_id in self.multimodal_layers_ids,
                 )
                 for layer_id in range(self.num_layers)
-            ]
+            ],
         )
 
         self.embedding_projection = nn.Linear(self.dim, self.embedding_dim, bias=False)
@@ -229,7 +234,10 @@ class TextEncoder(nn.Module):
         return x
 
     def forward_multimodal(
-        self, x: Tensor, attn_mask: Tensor, context: Tensor
+        self,
+        x: Tensor,
+        attn_mask: Tensor,
+        context: Tensor,
     ) -> Tensor:
         context = self.context_projection(context)
         expanded_attn_mask = self.get_attention_mask(attn_mask, x.dtype)
@@ -276,7 +284,7 @@ class TextEncoder(nn.Module):
         x = self.word_embeddings(x) + positional_embedding
         return self.dropout(self.layer_norm(x))
 
-    def forward(self, x: dict) -> torch.Tensor:
+    def forward(self, x: dict) -> Tensor:
         features = self.forward_features(x["input_ids"], x["attention_mask"])
         embeddings = self.forward_embedding(features, x["attention_mask"])
         return features, embeddings
@@ -291,6 +299,7 @@ class VisualEncoder(nn.Module):
     num_heads: int
     embedding_dim: int
     pooling: str
+    num_reg_tokens: int = 0
 
     def __post_init__(self):
         super().__init__()
@@ -300,11 +309,14 @@ class VisualEncoder(nn.Module):
         self.pos_embed = nn.Parameter(torch.randn(1, seq_len, self.dim) * 0.02)
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self.dim))
 
+        if self.num_reg_tokens > 0:
+            self.reg_token = nn.Parameter(torch.zeros(1, self.num_reg_tokens, self.dim))
+
         self.blocks = nn.Sequential(
             *[
                 VisualEncoderBlock(self.dim, self.num_heads)
                 for _ in range(self.num_layers)
-            ]
+            ],
         )
 
         self.norm = nn.LayerNorm(self.dim, eps=1e-6)
@@ -313,7 +325,14 @@ class VisualEncoder(nn.Module):
     def forward_features(self, x: Tensor) -> Tensor:
         x = self.patch_embed(x).flatten(start_dim=2).transpose(2, 1)
         x = x + self.pos_embed
-        x = torch.cat((self.cls_token.expand(x.shape[0], -1, -1), x), dim=1)
+
+        special_tokens = [self.cls_token.expand(x.shape[0], -1, -1)]
+
+        if self.num_reg_tokens > 0:
+            special_tokens.append(self.reg_token.expand(x.shape[0], -1, -1))
+
+        x = torch.cat(special_tokens + [x], dim=1)
+
         x = self.blocks(x)
 
         return self.norm(x)
@@ -326,7 +345,7 @@ class VisualEncoder(nn.Module):
 
         return self.embedding_projection(x)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         features = self.forward_features(x)
         embeddings = self.forward_embedding(features)
         return features, embeddings
@@ -364,7 +383,7 @@ class VLM(nn.Module):
                     mean=(0.48145466, 0.4578275, 0.40821073),
                     std=(0.26862954, 0.26130258, 0.27577711),
                 ),
-            ]
+            ],
         )
 
     def encode_image(
@@ -398,10 +417,12 @@ class VLM(nn.Module):
         """
 
         features = self.text_encoder.forward_features(
-            texts["input_ids"], texts["attention_mask"]
+            texts["input_ids"],
+            texts["attention_mask"],
         )
         embeddings = self.text_encoder.forward_embedding(
-            features, texts["attention_mask"]
+            features,
+            texts["attention_mask"],
         )
 
         if return_features:
@@ -444,7 +465,8 @@ class VLM(nn.Module):
 
         if text_features is None:
             text_features = self.text_encoder.forward_features(
-                text["input_ids"], text["attention_mask"]
+                text["input_ids"],
+                text["attention_mask"],
             )
 
         return self.text_encoder.forward_multimodal(
@@ -476,14 +498,16 @@ class VLM(nn.Module):
         )
 
         attention_mask = torch.zeros(
-            len(texts), self.text_encoder.max_position_embeddings, dtype=torch.int32
+            len(texts),
+            self.text_encoder.max_position_embeddings,
+            dtype=torch.int32,
         )
         encoded = self._tokenizer.encode_batch(texts)
 
         for i, seq in enumerate(encoded):
             seq_len = min(len(seq), self.text_encoder.max_position_embeddings)
             input_ids[i, :seq_len] = torch.LongTensor(
-                seq.ids[: self.text_encoder.max_position_embeddings]
+                seq.ids[: self.text_encoder.max_position_embeddings],
             )
             attention_mask[i, :seq_len] = 1
 
@@ -572,7 +596,7 @@ class TritonClient(VLM):
                     mean=(0.48145466, 0.4578275, 0.40821073),
                     std=(0.26862954, 0.26130258, 0.27577711),
                 ),
-            ]
+            ],
         )
 
     def encode_image(
@@ -595,7 +619,9 @@ class TritonClient(VLM):
 
         # Querying the server
         results = self._triton_client.infer(
-            model_name="vit", inputs=inputs, outputs=outputs
+            model_name="vit",
+            inputs=inputs,
+            outputs=outputs,
         )
         output_data = torch.from_numpy(results.as_numpy("output"))
         return output_data
@@ -616,7 +642,7 @@ class TritonClient(VLM):
         input_ids = input_ids.type(dtype=torch.int32).cpu().detach().numpy()
         attention_mask = attention_mask.type(dtype=torch.int32).cpu().detach().numpy()
         inputs.append(
-            self._client.InferInput("attention_mask", attention_mask.shape, "INT32")
+            self._client.InferInput("attention_mask", attention_mask.shape, "INT32"),
         )
         inputs.append(self._client.InferInput("input_ids", input_ids.shape, "INT32"))
         inputs[0].set_data_from_numpy(attention_mask)
@@ -625,7 +651,9 @@ class TritonClient(VLM):
 
         # Querying the server
         results = self._triton_client.infer(
-            model_name="albef", inputs=inputs, outputs=[test_output]
+            model_name="albef",
+            inputs=inputs,
+            outputs=[test_output],
         )
         output_vec = torch.from_numpy(results.as_numpy("output"))
         return output_vec
