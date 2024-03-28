@@ -1,26 +1,11 @@
 from dataclasses import dataclass
 from os import PathLike
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from PIL.Image import Image
-from tokenizers import Tokenizer
 from torch import Tensor
-from torchvision.transforms import (
-    CenterCrop,
-    Compose,
-    InterpolationMode,
-    Normalize,
-    Resize,
-    ToTensor,
-)
-
-
-# lambda is not pickable
-def convert_to_rgb(image):
-    return image.convert("RGB")
 
 
 @dataclass(eq=False)
@@ -273,9 +258,7 @@ class TextEncoder(nn.Module):
     def get_position_ids(self, x: Tensor) -> Tensor:
         if self.model_type == "roberta":
             mask = x.ne(self.padding_idx).int()
-            return (
-                torch.cumsum(mask, dim=1).type_as(mask) * mask
-            ).long() + self.padding_idx
+            return (torch.cumsum(mask, dim=1).type_as(mask) * mask).long() + self.padding_idx
 
         return self.position_ids[:, : x.shape[1]]
 
@@ -284,7 +267,7 @@ class TextEncoder(nn.Module):
         x = self.word_embeddings(x) + positional_embedding
         return self.dropout(self.layer_norm(x))
 
-    def forward(self, x: dict) -> torch.Tensor:
+    def forward(self, x: dict) -> Tensor:
         features = self.forward_features(x["input_ids"], x["attention_mask"])
         embeddings = self.forward_embedding(features, x["attention_mask"])
         return features, embeddings
@@ -299,6 +282,7 @@ class VisualEncoder(nn.Module):
     num_heads: int
     embedding_dim: int
     pooling: str
+    num_reg_tokens: int = 0
 
     def __post_init__(self):
         super().__init__()
@@ -308,11 +292,11 @@ class VisualEncoder(nn.Module):
         self.pos_embed = nn.Parameter(torch.randn(1, seq_len, self.dim) * 0.02)
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self.dim))
 
+        if self.num_reg_tokens > 0:
+            self.reg_token = nn.Parameter(torch.zeros(1, self.num_reg_tokens, self.dim))
+
         self.blocks = nn.Sequential(
-            *[
-                VisualEncoderBlock(self.dim, self.num_heads)
-                for _ in range(self.num_layers)
-            ],
+            *[VisualEncoderBlock(self.dim, self.num_heads) for _ in range(self.num_layers)],
         )
 
         self.norm = nn.LayerNorm(self.dim, eps=1e-6)
@@ -321,7 +305,14 @@ class VisualEncoder(nn.Module):
     def forward_features(self, x: Tensor) -> Tensor:
         x = self.patch_embed(x).flatten(start_dim=2).transpose(2, 1)
         x = x + self.pos_embed
-        x = torch.cat((self.cls_token.expand(x.shape[0], -1, -1), x), dim=1)
+
+        special_tokens = [self.cls_token.expand(x.shape[0], -1, -1)]
+
+        if self.num_reg_tokens > 0:
+            special_tokens.append(self.reg_token.expand(x.shape[0], -1, -1))
+
+        x = torch.cat(special_tokens + [x], dim=1)
+
         x = self.blocks(x)
 
         return self.norm(x)
@@ -334,7 +325,7 @@ class VisualEncoder(nn.Module):
 
         return self.embedding_projection(x)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         features = self.forward_features(x)
         embeddings = self.forward_embedding(features)
         return features, embeddings
@@ -342,7 +333,7 @@ class VisualEncoder(nn.Module):
 
 class VLM(nn.Module):
     """
-    Vision-Language Model for multi-modal embeddings.
+    Vision-Language Model for Multimodal embeddings.
     """
 
     def __init__(self, config: Dict, tokenizer_path: PathLike):
@@ -351,29 +342,10 @@ class VLM(nn.Module):
         """
 
         super().__init__()
-        self._max_seq_len = config["text_encoder"]["max_position_embeddings"]
         self._embedding_dim = config["text_encoder"]["embedding_dim"]
-        self._image_size = config["image_encoder"]["image_size"]
 
         self.text_encoder = TextEncoder(**config["text_encoder"])
         self.image_encoder = VisualEncoder(**config["image_encoder"])
-
-        self._tokenizer = Tokenizer.from_file(tokenizer_path)
-        self._tokenizer.no_padding()
-        self._pad_token_idx = self.text_encoder.padding_idx
-
-        self._image_transform = Compose(
-            [
-                Resize(self._image_size, interpolation=InterpolationMode.BICUBIC),
-                convert_to_rgb,
-                CenterCrop(self._image_size),
-                ToTensor(),
-                Normalize(
-                    mean=(0.48145466, 0.4578275, 0.40821073),
-                    std=(0.26862954, 0.26130258, 0.27577711),
-                ),
-            ],
-        )
 
     def encode_image(
         self,
@@ -426,28 +398,23 @@ class VLM(nn.Module):
         image_features: Optional[Tensor] = None,
         text_features: Optional[Tensor] = None,
         attention_mask: Optional[Tensor] = None,
-    ) -> Tensor:
+        return_scores: bool = False,
+    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
         """Passes preprocessed texts (or precomputed texts features) and
             preprocessed images (or precomputed images features) through multimodal encoded to produce multimodal joint embeddings.
 
         :param image: Preprocessed images
-        :param text: Preprocesses texts
+        :param text: Preprocessed texts
         :param image_features: Precomputed images features
         :param text_features: Precomputed text features
         :param attention_mask: Attention masks, not required if pass `text` instead of text_features
         """
 
-        assert (
-            image is not None or image_features is not None
-        ), "Either `image` or `image_features` should be non None"
-        assert (
-            text is not None or text_features is not None
-        ), "Either `text_data` or `text_features` should be non None"
+        assert image is not None or image_features is not None, "Either `image` or `image_features` should be non None"
+        assert text is not None or text_features is not None, "Either `text_data` or `text_features` should be non None"
 
         if text_features is not None:
-            assert (
-                attention_mask is not None
-            ), "if `text_features` is not None, then you should pass `attention_mask`"
+            assert attention_mask is not None, "if `text_features` is not None, then you should pass `attention_mask`"
 
         if image_features is None:
             image_features = self.image_encoder.forward_features(image)
@@ -458,11 +425,16 @@ class VLM(nn.Module):
                 text["attention_mask"],
             )
 
-        return self.text_encoder.forward_multimodal(
+        embeddings = self.text_encoder.forward_multimodal(
             text_features,
             attention_mask if attention_mask is not None else text["attention_mask"],
             image_features,
         )
+        
+        if return_scores:
+            return self.get_matching_scores(embeddings), embeddings
+
+        return embeddings
 
     def get_matching_scores(self, embeddings: Tensor) -> Tensor:
         """Computes the probability that there is a match between images and texts based on their multimodal embeddings
@@ -472,69 +444,20 @@ class VLM(nn.Module):
 
         return self.text_encoder.forward_matching(embeddings)
 
-    def preprocess_text(self, texts: Union[str, List[str]]) -> Dict[str, Tensor]:
-        """Transforms one or more strings into dictionary with tokenized strings and attention masks.
-
-        :param texts: text of list of texts to tokenizer
-        """
-        if isinstance(texts, str):
-            texts = [texts]
-
-        input_ids = torch.full(
-            (len(texts), self.text_encoder.max_position_embeddings),
-            fill_value=self._pad_token_idx,
-            dtype=torch.int64,
-        )
-
-        attention_mask = torch.zeros(
-            len(texts),
-            self.text_encoder.max_position_embeddings,
-            dtype=torch.int32,
-        )
-        encoded = self._tokenizer.encode_batch(texts)
-
-        for i, seq in enumerate(encoded):
-            seq_len = min(len(seq), self.text_encoder.max_position_embeddings)
-            input_ids[i, :seq_len] = torch.LongTensor(
-                seq.ids[: self.text_encoder.max_position_embeddings],
-            )
-            attention_mask[i, :seq_len] = 1
-
-        return {"input_ids": input_ids, "attention_mask": attention_mask}
-
-    def preprocess_image(self, images: Union[Image, List[Image]]) -> Tensor:
-        """Transforms one or more Pillow images into Torch Tensors.
-
-        :param images: image or list of images to preprocess
-        """
-
-        if isinstance(images, list):
-            batch_images = torch.empty(
-                (len(images), 3, self._image_size, self._image_size),
-                dtype=torch.float32,
-            )
-
-            for i, image in enumerate(images):
-                batch_images[i] = self._image_transform(image)
-
-            return batch_images
-        else:
-            return self._image_transform(images).unsqueeze(0)
-
     def forward(
         self,
-        images: torch.Tensor,
-        texts: dict,
-    ):
+        images: Tensor,
+        texts: Dict[str, Tensor],
+    ) -> Union[Tensor, Tensor]:
         """Inference forward method
 
         :param images: Preprocessed images
         :param texts: Preprocessed texts
         :return: embeddings for images and texts
         """
-        _, embs_imgs = self.image_encoder(images)
-        _, embs_txts = self.text_encoder(texts)
-        return embs_imgs, embs_txts
+        _, image_embeddings = self.image_encoder(images)
+        _, text_embeddings = self.text_encoder(texts)
+        return image_embeddings, text_embeddings
 
     @property
     def text_features_dim(self) -> int:
@@ -558,168 +481,3 @@ class VLM(nn.Module):
     def multimodal_embedding_dim(self) -> int:
         """Dimensionality of multimodal joint embedding."""
         return self.text_encoder.dim
-
-
-class TritonClient(VLM):
-    """
-    Nvidia Triton client to connect to the remote VLM inference server.
-    """
-
-    def __init__(self, tokenizer_path, pad_token_idx, url: str = "localhost:7001"):
-        import tritonclient.http as httpclient
-
-        self._client = httpclient
-        self._triton_client = self._client.InferenceServerClient(url=url)
-
-        self._tokenizer = Tokenizer.from_file(tokenizer_path)
-        self._tokenizer.no_padding()
-        self._pad_token_idx = pad_token_idx
-
-        self._image_transform = Compose(
-            [
-                Resize(self._image_size, interpolation=InterpolationMode.BICUBIC),
-                convert_to_rgb,
-                CenterCrop(self._image_size),
-                ToTensor(),
-                Normalize(
-                    mean=(0.48145466, 0.4578275, 0.40821073),
-                    std=(0.26862954, 0.26130258, 0.27577711),
-                ),
-            ],
-        )
-
-    def encode_image(
-        self,
-        imgs: Tensor,
-    ):
-        """
-        Passes the pre-processed images through `image_encoder` to produce image embeddings.
-
-        :param imgs: Preprocessed image
-        """
-
-        # images prep
-        inputs = []
-        outputs = []
-        imgs = imgs.cpu().detach().numpy()
-        inputs.append(self._client.InferInput("inputs", imgs.shape, "FP32"))
-        inputs[0].set_data_from_numpy(imgs)
-        outputs.append(self._client.InferRequestedOutput("output"))
-
-        # Querying the server
-        results = self._triton_client.infer(
-            model_name="vit",
-            inputs=inputs,
-            outputs=outputs,
-        )
-        output_data = torch.from_numpy(results.as_numpy("output"))
-        return output_data
-
-    def encode_text(
-        self,
-        text: Dict[str, Tensor],
-    ):
-        """
-        Passes the pre-processed texts through `text_encoder` to produce texts embeddings.
-
-        :param text: Dictionary with tokenized texts and attention masks
-        """
-
-        # texts prep
-        inputs = []
-        input_ids, attention_mask = text["input_ids"], text["attention_mask"]
-        input_ids = input_ids.type(dtype=torch.int32).cpu().detach().numpy()
-        attention_mask = attention_mask.type(dtype=torch.int32).cpu().detach().numpy()
-        inputs.append(
-            self._client.InferInput("attention_mask", attention_mask.shape, "INT32"),
-        )
-        inputs.append(self._client.InferInput("input_ids", input_ids.shape, "INT32"))
-        inputs[0].set_data_from_numpy(attention_mask)
-        inputs[1].set_data_from_numpy(input_ids)
-        test_output = self._client.InferRequestedOutput("output")
-
-        # Querying the server
-        results = self._triton_client.infer(
-            model_name="albef",
-            inputs=inputs,
-            outputs=[test_output],
-        )
-        output_vec = torch.from_numpy(results.as_numpy("output"))
-        return output_vec
-
-    def encode_multimodal(self, *args, **kwargs):
-        raise NotImplementedError("Multimodal encodings coming soon!")
-
-
-class VLM_IPU(VLM):
-    """
-    Code for GraphCore IPUs.
-    Please read User Guide if you want UForm to work on GraphCore hardware.
-    (https://docs.graphcore.ai/projects/poptorch-user-guide/en/latest/intro.html)
-    """
-
-    def __init__(self, config: Dict, tokenizer_path: PathLike):
-        import poptorch
-
-        self.poptorch = poptorch
-        super().__init__(config, tokenizer_path)
-
-    def recomputation_checkpoint(self, module):
-        """
-        Annotates the output of a module to be checkpointed instead of recomputed
-        """
-
-        def recompute_outputs(module, inputs, outputs):
-            if type(outputs) is tuple:
-                return tuple(self.poptorch.recomputationCheckpoint(y) for y in outputs)
-            else:
-                return self.poptorch.recomputationCheckpoint(outputs)
-
-        module.register_forward_hook(recompute_outputs)
-
-    def parallelize(self):
-        """
-        Splits the model layers between IPU devices.
-        """
-        print("---------- Device Allocation -----------")
-        print("image_encoder 0 ~ 6--> IPU 0")
-        for index in range(4):
-            layer = self.image_encoder.blocks[index]
-            self.recomputation_checkpoint(layer)
-            self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
-                layer,
-                f"image_encoder_layer{index}",
-                ipu_id=0,
-            )
-
-        print("image_encoder 4 ~ 8 --> IPU 1")
-        for index in range(4, 8):
-            layer = self.image_encoder.blocks[index]
-            self.recomputation_checkpoint(layer)
-            self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
-                layer,
-                f"image_encoder_layer{index}",
-                ipu_id=1,
-            )
-
-        print("image_encoder 8 ~ 12 --> IPU 2")
-        for index in range(8, 12):
-            layer = self.image_encoder.blocks[index]
-            self.recomputation_checkpoint(layer)
-            self.image_encoder.blocks[index] = self.poptorch.BeginBlock(
-                layer,
-                f"image_encoder_layer{index}",
-                ipu_id=2,
-            )
-
-        print("text_enocder 0 ~ 4 --> IPU 3")
-        for index in range(0, 4):
-            layer = self.text_encoder.blocks[index]
-            self.recomputation_checkpoint(layer)
-            self.text_encoder.blocks[index] = self.poptorch.BeginBlock(
-                layer,
-                f"text_encoder_layer{index}",
-                ipu_id=3,
-            )
-
-        return self
