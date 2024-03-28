@@ -10,13 +10,13 @@ torch_models = [
 
 @pytest.mark.parametrize("model_name", torch_models)
 def test_one_embedding(model_name: str):
-    model = uform.get_model(model_name)
+    model, processor = uform.get_model(model_name)
     text = "a small red panda in a zoo"
     image_path = "assets/unum.png"
 
     image = Image.open(image_path)
-    image_data = model.preprocess_image(image)
-    text_data = model.preprocess_text(text)
+    image_data = processor.preprocess_image(image)
+    text_data = processor.preprocess_text(text)
 
     _, image_embedding = model.encode_image(image_data, return_features=True)
     _, text_embedding = model.encode_text(text_data, return_features=True)
@@ -28,13 +28,13 @@ def test_one_embedding(model_name: str):
 @pytest.mark.parametrize("model_name", torch_models)
 @pytest.mark.parametrize("batch_size", [1, 2])
 def test_many_embeddings(model_name: str, batch_size: int):
-    model = uform.get_model(model_name)
+    model, processor = uform.get_model(model_name)
     texts = ["a small red panda in a zoo"] * batch_size
     image_paths = ["assets/unum.png"] * batch_size
 
     images = [Image.open(path) for path in image_paths]
-    image_data = model.preprocess_image(images)
-    text_data = model.preprocess_text(texts)
+    image_data = processor.preprocess_image(images)
+    text_data = processor.preprocess_text(texts)
 
     image_embeddings = model.encode_image(image_data, return_features=False)
     text_embeddings = model.encode_text(text_data, return_features=False)

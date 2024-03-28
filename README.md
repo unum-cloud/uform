@@ -227,7 +227,7 @@ For that pick the encoder of the model you want to run in parallel (`text_encode
 ```python
 import uform
 
-model = uform.get_model('unum-cloud/uform-vl-english')
+model, processor = uform.get_model('unum-cloud/uform-vl-english')
 model_image = nn.DataParallel(model.image_encoder)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

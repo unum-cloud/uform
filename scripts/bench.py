@@ -5,8 +5,12 @@ from typing import List
 import requests
 import torch
 from PIL import Image
-from transformers import (AutoProcessor, InstructBlipForConditionalGeneration,
-                          InstructBlipProcessor, LlavaForConditionalGeneration)
+from transformers import (
+    AutoProcessor,
+    InstructBlipForConditionalGeneration,
+    InstructBlipProcessor,
+    LlavaForConditionalGeneration,
+)
 
 from uform import get_model
 from uform.gen_model import VLMForCausalLM, VLMProcessor
@@ -76,9 +80,7 @@ def bench_image_embeddings(model, images):
     total_embeddings = 0
     images *= 10
     while total_duration < 10:
-        seconds, embeddings = duration(
-            lambda: model.encode_image(model.preprocess_image(images))
-        )
+        seconds, embeddings = duration(lambda: model.encode_image(processor.preprocess_image(images)))
         total_duration += seconds
         total_embeddings += len(embeddings)
 
@@ -90,9 +92,7 @@ def bench_text_embeddings(model, texts):
     total_embeddings = 0
     texts *= 10
     while total_duration < 10:
-        seconds, embeddings = duration(
-            lambda: model.encode_text(model.preprocess_text(texts))
-        )
+        seconds, embeddings = duration(lambda: model.encode_text(processor.preprocess_text(texts)))
         total_duration += seconds
         total_embeddings += len(embeddings)
 
