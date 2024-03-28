@@ -102,13 +102,13 @@ class VLM_ONNX:
         self._image_encoder_dim = config["image_encoder"]["dim"]
 
         self.text_encoder = TextEncoderONNX(
-            join(checkpoint_path, f"text_encoder_{device}_{dtype}.onnx"),
-            join(checkpoint_path, f"reranker_{device}_{dtype}.onnx"),
+            join(checkpoint_path, f"text_encoder.onnx"),
+            join(checkpoint_path, f"reranker.onnx"),
             device,
         )
 
         self.image_encoder = VisualEncoderONNX(
-            join(checkpoint_path, f"image_encoder_{device}_{dtype}.onnx"), device
+            join(checkpoint_path, f"image_encoder.onnx"), device
         )
 
     def encode_image(

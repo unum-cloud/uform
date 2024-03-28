@@ -31,12 +31,7 @@ classifiers = [
 dependencies = [
     "huggingface_hub>=0.16.4",
     "tokenizers>=0.13.3",
-    "torch>=1.13.1",
-    "torchvision",
-    "transformers>=4.36.2",
-    "onnx>=1.15.0",
-    "onnxruntime>=1.17.1",
-    "onnxruntime-gpu>=1.17.1"
+    "pillow"
 ]
 description = "Multi-Modal Transformers library for Semantic Search and other Vision-Language tasks"
 maintainers = [
@@ -49,6 +44,11 @@ version = "1.1.1"
 
 [project.scripts]
 uform-chat = "uform.chat:main"
+
+[project.optional-dependencies]
+torch = ["torch>=1.13.1", "torchvision", "transformers>=4.36.2"]
+onnx = ["onnx>=1.15.0", "onnxruntime>=1.17.1", "numpy"]
+onnx-gpu = ["onnx>=1.15.0", "onnxruntime-gpu>=1.17.1", "numpy"]
 
 [project.urls]
 "Homepage" = "https://github.com/unum-cloud/uform"

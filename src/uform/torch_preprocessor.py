@@ -5,8 +5,14 @@ import torch
 from PIL import Image
 from tokenizers import Tokenizer
 from torch import Tensor
-from torchvision.transforms import (CenterCrop, Compose, InterpolationMode,
-                                    Normalize, Resize, ToTensor)
+from torchvision.transforms import (
+    CenterCrop,
+    Compose,
+    InterpolationMode,
+    Normalize,
+    Resize,
+    ToTensor,
+)
 
 
 # lambda is not pickable
@@ -14,23 +20,19 @@ def convert_to_rgb(image):
     return image.convert("RGB")
 
 
-class Processor:
-    def __init__(self, config: Dict, tokenizer_path: PathLike, tensor_type: str = "pt"):
+class TorchProcessor:
+    def __init__(self, config: Dict, tokenizer_path: PathLike):
         """
         :param config: model config
         :param tokenizer_path: path to tokenizer file
         :param tensor_type: which tensors to return, either pt (PyTorch) or np (NumPy)
         """
 
-        assert tensor_type in ("pt", "np"), "`tensor_type` must be either `pt` or `np`"
-
         self._image_size = config["image_encoder"]["image_size"]
         self._max_seq_len = config["text_encoder"]["max_position_embeddings"]
         self._tokenizer = Tokenizer.from_file(tokenizer_path)
         self._tokenizer.no_padding()
         self._pad_token_idx = config["text_encoder"]["padding_idx"]
-
-        self.tensor_type = tensor_type
 
         self._image_transform = Compose(
             [
@@ -69,15 +71,9 @@ class Processor:
         for i, seq in enumerate(encoded):
             seq_len = min(len(seq), self._max_seq_len)
             input_ids[i, :seq_len] = torch.LongTensor(
-                seq.ids[: self._max_seq_len],
+                seq.ids[:seq_len],
             )
             attention_mask[i, :seq_len] = 1
-
-        if self.tensor_type == "np":
-            return {
-                "input_ids": input_ids.numpy(),
-                "attention_mask": attention_mask.numpy(),
-            }
 
         return {"input_ids": input_ids, "attention_mask": attention_mask}
 
@@ -98,8 +94,5 @@ class Processor:
 
         else:
             batch_images = self._image_transform(images).unsqueeze(0)
-
-        if self.tensor_type == "np":
-            return batch_images.numpy()
 
         return batch_images

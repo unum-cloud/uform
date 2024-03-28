@@ -41,14 +41,16 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 ### Embedding Models
 
-| Model                                    | Parameters | Languages |                                 Architecture |
-| :--------------------------------------- | ---------: | --------: | -------------------------------------------: |
-| [`uform-vl-english-large`][model-e-l]    |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
-| [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
-| [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
-| [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
+| Model                                    | Parameters | Languages |                                 Architecture | Embedding size    |
+| :--------------------------------------- | ---------: | --------: | -------------------------------------------: | :---------------- |
+| [`uform-vl-english-large`][model-e-l]    |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers | 64, 256, 512, 768 |
+| [`uform-vl-english-small`][model-e-s]    |       79M  |         1 | 2 text layers, ViT-S/16, 2 multimodal layers | 256               |
+| [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers | 256               |
+| [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers | 256               |
+| [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers | 256               |
 
 [model-e-l]: https://huggingface.co/unum-cloud/uform-vl-english-large/
+[model-e-s]: https://huggingface.co/unum-cloud/uform-vl-english-small/
 [model-e]: https://huggingface.co/unum-cloud/uform-vl-english/
 [model-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/
 [model-m-v2]: https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/
@@ -58,7 +60,7 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 | Model                              | Parameters |            Purpose          |     Architecture      |
 | :--------------------------------- | ---------: | --------------------------: | --------------------: |
 | [`uform-gen2-qwen-500m`][model-g2] |    1.2B    | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14|
-| [`uform-gen`][model-g1]             |    1.5B    | Image Captioning, VQA       | llama-1.3B, ViT-B/16  |
+| [`uform-gen`][model-g1]            |    1.5B    | Image Captioning, VQA       | llama-1.3B, ViT-B/16  |
 
 [model-g2]: https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/
 [model-g1]: https://huggingface.co/unum-cloud/uform-gen/
@@ -76,7 +78,7 @@ model, processor = uform.get_model('unum-cloud/uform-vl-english-large') # Just E
 model, processor = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
 
 # ONNX Runtime
-model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-large', "cpu", "fp32")
+model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-large-onnx', "cpu", "fp32")
 # Available combinations: cpu & fp32, gpu & fp32, gpu & fp16
 ```
 
