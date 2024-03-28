@@ -10,15 +10,17 @@ class ExecutionProviderError(Exception):
 
 
 def available_providers(device: str) -> Tuple[str, ...]:
+    gpu_providers = ("CUDAExecutionProvider", "TensorrtExecutionProvider")
+    cpu_providers = ("OpenVINOExecutionProvider", "CoreMLExecutionProvider", "CPUExecutionProvider")
     available = ort.get_available_providers()
     if device == "gpu":
-        if "CUDAExecutionProvider" not in available:
+        if all(provider not in available for provider in gpu_providers):
             raise ExecutionProviderError(
-                "CUDAExecutionProvider is not available, consider installing `onnxruntime-gpu` and make sure the CUDA is available on your system."
+                f"GPU providers are not available, consider installing `onnxruntime-gpu` and make sure the CUDA is available on your system. Currently installed: {available}"
             )
-        return ("CUDAExecutionProvider",)
+        return gpu_providers
 
-    return ("CPUExecutionProvider", "CoreMLExecutionProvider")
+    return cpu_providers
 
 
 class VisualEncoderONNX:
