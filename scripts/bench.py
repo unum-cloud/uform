@@ -5,12 +5,8 @@ from typing import List
 import requests
 import torch
 from PIL import Image
-from transformers import (
-    AutoProcessor,
-    InstructBlipForConditionalGeneration,
-    InstructBlipProcessor,
-    LlavaForConditionalGeneration,
-)
+from transformers import (AutoProcessor, InstructBlipForConditionalGeneration,
+                          InstructBlipProcessor, LlavaForConditionalGeneration)
 
 from uform import get_model
 from uform.gen_model import VLMForCausalLM, VLMProcessor
