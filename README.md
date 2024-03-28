@@ -51,9 +51,9 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 | Model                                    | Parameters | Languages |                                 Architecture |
 | :--------------------------------------- | ---------: | --------: | -------------------------------------------: |
-| [`uform-vl-english-large`][model-e-l]    |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
+| [`uform-vl-english-large`][model-e-l] 🆕  |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
 | [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
-| [`uform-vl-english-small`][model-e-s]    |        79M |         1 | 2 text layers, ViT-S/16, 2 multimodal layers |
+| [`uform-vl-english-small`][model-e-s] 🆕  |        79M |         1 | 2 text layers, ViT-S/16, 2 multimodal layers |
 | [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
 | [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
 
@@ -67,7 +67,7 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 | Model                              | Parameters |                     Purpose |           Architecture |
 | :--------------------------------- | ---------: | --------------------------: | ---------------------: |
-| [`uform-gen2-dpo`][model-g2]       |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
+| [`uform-gen2-dpo`][model-g2] 🆕     |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
 | [`uform-gen2-qwen-500m`][model-g2] |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
 | [`uform-gen`][model-g1]            |       1.5B |       Image Captioning, VQA |   llama-1.3B, ViT-B/16 |
 
@@ -105,20 +105,27 @@ text_data = processor.preprocess_text(text)
 
 image_features, image_embedding = model.encode_image(image_data, return_features=True)
 text_features, text_embedding = model.encode_text(text_data, return_features=True)
+```
 
-# For PyTorch
+To search for similar items, the embeddings can be compared using cosine similarity.
+The resulting value will fall within the range of `-1` to `1`, where `1` indicates a high likelihood of a match.
+PyTorch provides a built-in function for calculating cosine similarity, while for ONNX, you can use NumPy.
+
+```python
+import torch.nn.functional as F
+
 similarity = F.cosine_similarity(image_embedding, text_embedding)
+```
 
-# For ONNX
+ONNX has no such function, but you can calculate the cosine similarity using [SimSIMD](https://github.com/ashvardanian/simsimd) or manually, with NumPy:
+
+```python
 import numpy as np
 
 image_embedding = image_embedding / np.linalg.norm(image_embedding, keepdims=True, axis=1)
 text_embedding = text_embedding / np.linalg.norm(text_embedding, keepdims=True, axis=1)
 similarity = (image_embedding * text_embedding).sum(axis=1)
 ```
-
-To search for similar items, the embeddings can be compared using cosine similarity.
-The resulting value will fall within the range of `-1` to `1`, where `1` indicates a high likelihood of a match.
 
 ### Reranking
 
@@ -161,7 +168,7 @@ tiny_embedding: np.ndarray = large_embedding[:, :64]
 ```
 
 Both approaches are natively supported by the [USearch][github-usearch] vector-search engine and the [SimSIMD][github-simsimd] numerics libraries.
-When dealing with small collections (up to millions of entries) and looking for low-latency cosine distance calculations, you can [achieve 5x-2500x performance improvement over Torch, NumPy, SciPy, and vanilla Python using SimSIMD][report-simsimd].
+When dealing with small collections (up to millions of entries) and looking for low-latency cosine distance calculations, you can [achieve 5x-2500x performance improvement][report-simsimd] over Torch, NumPy, SciPy, and vanilla Python using SimSIMD.
 
 ```python
 from simsimd import cosine, hamming
@@ -172,7 +179,7 @@ distance: float = cosine(i8_embedding, i8_embedding) # 133x SciPy performance on
 distance: float = hamming(b1_embedding, b1_embedding) # 17x SciPy performance on Apple M2 CPU
 ```
 
-Similarly, when dealing with large collections (up to billions of entries per server) and looking for high-throughput search, you can [achieve 100x performance improvement over FAISS and other vector-search solutions using USearch][report-usearch].
+Similarly, when dealing with large collections (up to billions of entries per server) and looking for high-throughput search, you can [achieve 100x performance improvement][report-usearch] over FAISS and other vector-search solutions using USearch.
 Here are a couple of examples:
 
 ```python
