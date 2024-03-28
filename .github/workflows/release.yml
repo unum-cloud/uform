@@ -65,7 +65,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[torch,onnx]"
+          pip install -e ".[onnx]"
           pip install pytest
 
       - name: Run PyTest

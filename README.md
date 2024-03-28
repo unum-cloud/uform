@@ -224,7 +224,7 @@ pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.
 export CUDA_PATH="/usr/local/cuda-12/bin"
 export PATH="/usr/local/cuda-12/bin${PATH:+:${PATH}}"
 export LD_LIBRARY_PATH="/usr/local/cuda-12/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-pytest python/scripts/test_embeddings.py -s -x -Wd -v
+pytest python/scripts/ -s -x -Wd -v -k onnx
 ```
 
 [install-nvidia-toolkit]: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#network-repo-installation-for-ubuntu
