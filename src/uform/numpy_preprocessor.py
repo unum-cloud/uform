@@ -1,7 +1,7 @@
 from os import PathLike
 from typing import Dict, List, Union
 
-from PIL import Image
+from PIL.Image import Image, BICUBIC
 from tokenizers import Tokenizer
 import numpy as np
 
@@ -20,12 +20,8 @@ class NumpyProcessor:
         self._tokenizer.no_padding()
         self._pad_token_idx = config["text_encoder"]["padding_idx"]
 
-        self.image_mean = np.array(
-            [0.48145466, 0.4578275, 0.40821073], dtype=np.float32
-        )[None, None]
-        self.image_std = np.array(
-            [0.26862954, 0.26130258, 0.27577711], dtype=np.float32
-        )[None, None]
+        self.image_mean = np.array([0.48145466, 0.4578275, 0.40821073], dtype=np.float32)[None, None]
+        self.image_std = np.array([0.26862954, 0.26130258, 0.27577711], dtype=np.float32)[None, None]
 
     def preprocess_text(self, texts: Union[str, List[str]]) -> Dict[str, np.ndarray]:
         """Transforms one or more strings into dictionary with tokenized strings and attention masks.
@@ -85,7 +81,7 @@ class NumpyProcessor:
             width = int(width / height * self._image_size)
             height = self._image_size
 
-        image = image.resize((width, height), resample=Image.BICUBIC)
+        image = image.resize((width, height), resample=BICUBIC)
 
         left = (width - self._image_size) / 2
         top = (height - self._image_size) / 2
@@ -93,8 +89,6 @@ class NumpyProcessor:
         bottom = (height + self._image_size) / 2
 
         image = image.convert("RGB").crop((left, top, right, bottom))
-        image = (
-            np.array(image).astype(np.float32) / 255.0 - self.image_mean
-        ) / self.image_std
+        image = (np.array(image).astype(np.float32) / 255.0 - self.image_mean) / self.image_std
 
         return np.transpose(image, (2, 0, 1))

@@ -2,7 +2,7 @@ from os import PathLike
 from typing import Dict, List, Union
 
 import torch
-from PIL import Image
+from PIL.Image import Image
 from tokenizers import Tokenizer
 from torch import Tensor
 from torchvision.transforms import (
