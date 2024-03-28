@@ -398,7 +398,8 @@ class VLM(nn.Module):
         image_features: Optional[Tensor] = None,
         text_features: Optional[Tensor] = None,
         attention_mask: Optional[Tensor] = None,
-    ) -> Tensor:
+        return_scores: bool = False,
+    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
         """Passes preprocessed texts (or precomputed texts features) and
             preprocessed images (or precomputed images features) through multimodal encoded to produce multimodal joint embeddings.
 
@@ -424,11 +425,16 @@ class VLM(nn.Module):
                 text["attention_mask"],
             )
 
-        return self.text_encoder.forward_multimodal(
+        embeddings = self.text_encoder.forward_multimodal(
             text_features,
             attention_mask if attention_mask is not None else text["attention_mask"],
             image_features,
         )
+        
+        if return_scores:
+            return self.get_matching_scores(embeddings), embeddings
+
+        return embeddings
 
     def get_matching_scores(self, embeddings: Tensor) -> Tensor:
         """Computes the probability that there is a match between images and texts based on their multimodal embeddings

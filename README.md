@@ -36,13 +36,14 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 ## Features
 
-- __Tiny Embeddings__: 64-dimensional Matryoshaka-style embeddings for extremely fast [search][usearch].
+- __Tiny Embeddings__: 64-dimensional [Matryoshaka][matryoshka]-style embeddings for extremely fast [search][usearch].
 - __Throughput__: Thanks to the small size, the inference speed is [2-4x faster](#speed) than competitors.
 - __Portable__: Models come with native ONNX support, making them easy to deploy on any platform.
-- __Quantization Aware__: Downcasted embeddings from `f32` to `i8` without losing much recall.
+- __Quantization Aware__: Down-cast embeddings from `f32` to `i8` without losing much recall.
 - __Multilingual__: Trained on a balanced dataset, the recall is great across over [20 languages](#evaluation).
 
 [usearch]: https://github.com/unum-cloud/usearch
+[matryoshka]: https://arxiv.org/abs/2205.13147
 
 ## Models
 
@@ -118,26 +119,115 @@ similarity = (image_embedding * text_embedding).sum(axis=1)
 
 To search for similar items, the embeddings can be compared using cosine similarity.
 The resulting value will fall within the range of `-1` to `1`, where `1` indicates a high likelihood of a match.
+
+### Reranking
+
 Once the list of nearest neighbors (best matches) is obtained, the joint multimodal embeddings, created from both text and image features, can be used to better rerank (reorder) the list.
 The model can calculate a "matching score" that falls within the range of `[0, 1]`, where `1` indicates a high likelihood of a match.
 
 ```python
-# For PyTorch
-joint_embedding = model.encode_multimodal(
-    image_features=image_features,
-    text_features=text_features,
-    attention_mask=text_data['attention_mask']
-)
-score = model.get_matching_scores(joint_embedding)
-
-# For ONNX
 score, joint_embedding = model.encode_multimodal(
     image_features=image_features,
     text_features=text_features,
     attention_mask=text_data['attention_mask'],
-    return_scores=True
+    return_scores=True,
 )
 ```
+
+### Down-casting, Quantization, Matryoshka, and Slicing
+
+Depending on the application, the embeddings can be down-casted to smaller numeric representations without losing much recall.
+Switching from `f32` to `f16` is recommended in almost all cases, unless you are running on very old hardware without half-precision support.
+Switching to `i8` with linear scaling is also possible, but will be noticeable in the recall on larger collections with millions of searchable entries.
+Similarly, for higher-dimensional embeddings (512 or 768), a common strategy is to quantize them into single-bit representations for faster search.
+
+```python
+import numpy as np
+
+f32_embedding: np.ndarray = model.encode_text(text_data, return_features=False).detach().cpu().numpy()
+f16_embedding: np.ndarray = f32_embedding.astype(np.float16)
+i8_embedding: np.ndarray = (f32_embedding * 127).astype(np.int8)
+b1_embedding: np.ndarray = np.packbits((f32_embedding > 0).astype(np.uint8))
+```
+
+Alternative approach to quantization is to use the Matryoshka embeddings, where the embeddings are sliced into smaller parts, and the search is performed in a hierarchical manner.
+
+```python
+import numpy as np
+
+large_embedding: np.ndarray = model.encode_text(text_data, return_features=False).detach().cpu().numpy()
+small_embedding: np.ndarray = large_embedding[:, :256]
+tiny_embedding: np.ndarray = large_embedding[:, :64]
+```
+
+Both approaches are natively supported by the [USearch][github-usearch] vector-search engine and the [SimSIMD][github-simsimd] numerics libraries.
+When dealing with small collections (up to millions of entries) and looking for low-latency cosine distance calculations, you can [achieve 5x-2500x performance improvement over Torch, NumPy, SciPy, and vanilla Python using SimSIMD][report-simsimd].
+
+```python
+from simsimd import cosine, hamming
+
+distance: float = cosine(f32_embedding, f32_embedding) # 32x SciPy performance on Apple M2 CPU
+distance: float = cosine(f16_embedding, f16_embedding) # 79x SciPy performance on Apple M2 CPU
+distance: float = cosine(i8_embedding, i8_embedding) # 133x SciPy performance on Apple M2 CPU
+distance: float = hamming(b1_embedding, b1_embedding) # 17x SciPy performance on Apple M2 CPU
+```
+
+Similarly, when dealing with large collections (up to billions of entries per server) and looking for high-throughput search, you can [achieve 100x performance improvement over FAISS and other vector-search solutions using USearch][report-usearch].
+Here are a couple of examples:
+
+```python
+from usearch.index import Index
+
+f32_index = Index(ndim=64, metric='cos', dtype='f32') # for Matryoshka embeddings
+f16_index = Index(ndim=64, metric='cos', dtype='f16') # for Matryoshka embeddings
+i8_index = Index(ndim=256, metric='cos', dtype='i8') # for quantized embeddings
+b1_index = Index(ndim=768, metric='hamming', dtype='b1') # for binary embeddings
+```
+
+[github-usearch]: https://github.com/unum-cloud/usearch
+[github-simsimd]: https://github.com/ashvardanian/simsimd
+[report-usearch]: https://www.unum.cloud/blog/2023-11-07-scaling-vector-search-with-intel
+[report-simsimd]: https://ashvardanian.com/posts/python-c-assembly-comparison/
+
+### Compact Packaging
+
+PyTorch is a heavy dependency to carry, especially if you run on Edge or IoT devices.
+Using vanilla ONNX runtime, one can significantly reduce memory consumption and deployment latency.
+
+```sh
+$ conda create -n uform_torch python=3.10 -y
+$ conda create -n uform_onnx python=3.10 -y
+$ conda activate uform_torch && pip install -e ".[torch]" && conda deactivate
+$ conda activate uform_onnx && pip install -e ".[onnx]" && conda deactivate
+$ du -sh $(conda info --envs | grep 'uform_torch' | awk '{print $2}')
+> 5.2G    ~/conda/envs/uform_torch
+$ du -sh $(conda info --envs | grep 'uform_onnx' | awk '{print $2}')
+> 461M    ~/conda/envs/uform_onnx
+```
+
+Most of that weight can be further reduced down to 100 MB for both the model and the runtime.
+You can pick one of many supported [ONNX execution providers][onnx-providers], which includes XNNPACK, CUDA and TensorRT for Nvidia GPUs, OpenVINO on Intel, DirectML on Windows, ROCm on AMD, CoreML on Apple devices, and more to come.
+
+[onnx-providers]: https://onnxruntime.ai/docs/execution-providers/
+
+---
+
+The configuration process may include a few additional steps, depending on the environment.
+When using the CUDA and TensorRT backends with CUDA 12 or newer make sure to [install the Nvidia toolkit][install-nvidia-toolkit] and the `onnxruntime-gpu` package from the custom repository.
+
+```sh
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda-toolkit-12
+pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
+export CUDA_PATH="/usr/local/cuda-12/bin"
+export PATH="/usr/local/cuda-12/bin${PATH:+:${PATH}}"
+export LD_LIBRARY_PATH="/usr/local/cuda-12/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+pytest python/scripts/test_embeddings.py -s -x -Wd -v
+```
+
+[install-nvidia-toolkit]: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#network-repo-installation-for-ubuntu
 
 ## Chat, Image Captioning and Question Answering
 
@@ -334,20 +424,6 @@ Results for VQAv2 evaluation.
 > ¹ Train split was in training data. <br/>
 > ² Lacking a broad enough evaluation dataset, we translated the [COCO Karpathy test split](https://www.kaggle.com/datasets/shtvkumar/karpathy-splits) with multiple public and proprietary translation services, averaging the scores across all sets, and breaking them down in the bottom section. <br/>
 > ³ We used `apple/DFN5B-CLIP-ViT-H-14-378` CLIP model.
-
-## Size
-
-Torch is a heavy dependency and most models are too large to run on edge and on IoT devices.
-Using the ONNX runtime, one can significantly reduce memory consumption and deployment latency.
-
-```sh
-$ conda create -n env_torch python=3.10 -y
-$ conda create -n env_onnx python=3.10 -y
-$ conda activate env_torch && pip install -e ".[torch]" && conda deactivate
-$ conda activate env_onnx && pip install -e ".[onnx-gpu]" && conda deactivate
-du -sh $(conda info --envs | grep 'env_torch' | awk '{print $2}')
-du -sh $(conda info --envs | grep 'env_onnx' | awk '{print $2}')
-```
 
 ## Speed
 

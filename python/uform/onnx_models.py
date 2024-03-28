@@ -155,7 +155,7 @@ class VLM_ONNX:
         text_features: Optional[ndarray] = None,
         attention_mask: Optional[ndarray] = None,
         return_scores: bool = False,
-    ) -> ndarray:
+    ) -> Union[ndarray, Tuple[ndarray, ndarray]]:
         """Passes preprocessed texts (or precomputed texts features) and
             preprocessed images (or precomputed images features) through multimodal encoded to produce matching scores and optionally multimodal joint embeddings.
 

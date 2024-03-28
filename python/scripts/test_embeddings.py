@@ -21,17 +21,17 @@ except:
     onnx_available = False
 
 torch_models = [
-    # "unum-cloud/uform-vl-english",
-    # "unum-cloud/uform-vl-multilingual-v2",
+    "unum-cloud/uform-vl-english",
+    "unum-cloud/uform-vl-multilingual-v2",
 ]
 
 onnx_models_and_providers = [
-    # ("unum-cloud/uform-vl-english-large", "cpu", "fp32"),
-    # ("unum-cloud/uform-vl-english-small", "cpu", "fp32"),
-    # ("unum-cloud/uform-vl-english-large", "gpu", "fp32"),
-    # ("unum-cloud/uform-vl-english-small", "gpu", "fp32"),
-    ("unum-cloud/uform-vl-english-large", "gpu", "fp16"),
+    ("unum-cloud/uform-vl-english-small", "cpu", "fp32"),
+    ("unum-cloud/uform-vl-english-large", "cpu", "fp32"),
+    ("unum-cloud/uform-vl-english-small", "gpu", "fp32"),
+    ("unum-cloud/uform-vl-english-large", "gpu", "fp32"),
     ("unum-cloud/uform-vl-english-small", "gpu", "fp16"),
+    ("unum-cloud/uform-vl-english-large", "gpu", "fp16"),
 ]
 
 @pytest.mark.skipif(not torch_available, reason="PyTorch is not installed")
@@ -52,11 +52,14 @@ def test_torch_one_embedding(model_name: str):
     assert text_embedding.shape[0] == 1, "Text embedding batch size is not 1"
 
     # Test reranking
-    joint_embedding = model.encode_multimodal(
-        image_features=image_features, text_features=text_features, attention_mask=text_data["attention_mask"]
+    score, joint_embedding = model.encode_multimodal(
+        image_features=image_features,
+        text_features=text_features,
+        attention_mask=text_data["attention_mask"],
+        return_scores=True,
     )
-    score = model.get_matching_scores(joint_embedding)
     assert score.shape[0] == 1, "Matching score batch size is not 1"
+    assert joint_embedding.shape[0] == 1, "Joint embedding batch size is not 1"
 
 
 @pytest.mark.skipif(not torch_available, reason="PyTorch is not installed")
