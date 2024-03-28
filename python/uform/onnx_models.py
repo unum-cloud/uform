@@ -1,8 +1,24 @@
 from os.path import join
 from typing import Dict, Optional, Tuple, Union
 
-import onnxruntime
+import onnxruntime as ort
 from numpy import ndarray
+
+
+class ExecutionProviderError(Exception):
+    """Exception raised when a requested execution provider is not available."""
+
+
+def available_providers(device: str) -> Tuple[str, ...]:
+    available = ort.get_available_providers()
+    if device == "gpu":
+        if "CUDAExecutionProvider" not in available:
+            raise ExecutionProviderError(
+                "CUDAExecutionProvider is not available, consider installing `onnxruntime-gpu` and make sure the CUDA is available on your system."
+            )
+        return ("CUDAExecutionProvider",)
+
+    return ("CPUExecutionProvider", "CoreMLExecutionProvider")
 
 
 class VisualEncoderONNX:
@@ -12,17 +28,13 @@ class VisualEncoderONNX:
         :param device: Device name, either cpu or gpu
         """
 
-        sess_options = onnxruntime.SessionOptions()
-        sess_options.graph_optimization_level = (
-            onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
-        )
+        session_options = ort.SessionOptions()
+        session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
-        self.session = onnxruntime.InferenceSession(
+        self.session = ort.InferenceSession(
             model_path,
-            sess_options=sess_options,
-            providers=[
-                "CUDAExecutionProvider" if device == "gpu" else "CPUExecutionProvider"
-            ],
+            sess_options=session_options,
+            providers=available_providers(device),
         )
 
     def __call__(self, images: ndarray) -> Tuple[ndarray, ndarray]:
@@ -37,33 +49,23 @@ class TextEncoderONNX:
         :param device: Device name, either cpu or gpu
         """
 
-        sess_options = onnxruntime.SessionOptions()
-        sess_options.graph_optimization_level = (
-            onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
-        )
+        session_options = ort.SessionOptions()
+        session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
-        self.text_encoder_session = onnxruntime.InferenceSession(
+        self.text_encoder_session = ort.InferenceSession(
             text_encoder_path,
-            sess_options=sess_options,
-            providers=[
-                "CUDAExecutionProvider" if device == "gpu" else "CPUExecutionProvider"
-            ],
+            sess_options=session_options,
+            providers=available_providers(device),
         )
 
-        self.reranker_session = onnxruntime.InferenceSession(
+        self.reranker_session = ort.InferenceSession(
             reranker_path,
-            sess_options=sess_options,
-            providers=[
-                "CUDAExecutionProvider" if device == "gpu" else "CPUExecutionProvider"
-            ],
+            sess_options=session_options,
+            providers=available_providers(device),
         )
 
-    def __call__(
-        self, input_ids: ndarray, attention_mask: ndarray
-    ) -> Tuple[ndarray, ndarray]:
-        return self.text_encoder_session.run(
-            None, {"input_ids": input_ids, "attention_mask": attention_mask}
-        )
+    def __call__(self, input_ids: ndarray, attention_mask: ndarray) -> Tuple[ndarray, ndarray]:
+        return self.text_encoder_session.run(None, {"input_ids": input_ids, "attention_mask": attention_mask})
 
     def forward_multimodal(
         self, text_features: ndarray, attention_mask: ndarray, image_features: ndarray
@@ -90,9 +92,7 @@ class VLM_ONNX:
         ), f"Invalid `dtype`: {dtype}. Must be either `fp32` or `fp16` (only for gpu)"
         assert (
             device == "cpu" and dtype == "fp32"
-        ) or device == "gpu", (
-            "Combination `device`=`cpu` & `dtype=fp16` is not supported"
-        )
+        ) or device == "gpu", "Combination `device`=`cpu` & `dtype=fp16` is not supported"
 
         self.device = device
         self.dtype = dtype
@@ -107,9 +107,7 @@ class VLM_ONNX:
             device,
         )
 
-        self.image_encoder = VisualEncoderONNX(
-            join(checkpoint_path, f"image_encoder.onnx"), device
-        )
+        self.image_encoder = VisualEncoderONNX(join(checkpoint_path, f"image_encoder.onnx"), device)
 
     def encode_image(
         self,
@@ -160,23 +158,17 @@ class VLM_ONNX:
             preprocessed images (or precomputed images features) through multimodal encoded to produce matching scores and optionally multimodal joint embeddings.
 
         :param image: Preprocessed images
-        :param text: Preprocesses texts
+        :param text: Preprocessed texts
         :param image_features: Precomputed images features
         :param text_features: Precomputed text features
         :param attention_mask: Attention masks, not required if pass `text` instead of text_features
         """
 
-        assert (
-            image is not None or image_features is not None
-        ), "Either `image` or `image_features` should be non None"
-        assert (
-            text is not None or text_features is not None
-        ), "Either `text_data` or `text_features` should be non None"
+        assert image is not None or image_features is not None, "Either `image` or `image_features` should be non None"
+        assert text is not None or text_features is not None, "Either `text_data` or `text_features` should be non None"
 
         if text_features is not None:
-            assert (
-                attention_mask is not None
-            ), "if `text_features` is not None, then you should pass `attention_mask`"
+            assert attention_mask is not None, "if `text_features` is not None, then you should pass `attention_mask`"
 
         if image_features is None:
             image_features = self.image_encoder(image)

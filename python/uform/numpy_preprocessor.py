@@ -6,7 +6,7 @@ from tokenizers import Tokenizer
 import numpy as np
 
 
-class NumpyProcessor:
+class NumPyProcessor:
     def __init__(self, config: Dict, tokenizer_path: PathLike):
         """
         :param config: model config

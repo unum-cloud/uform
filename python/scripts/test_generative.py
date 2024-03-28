@@ -11,6 +11,7 @@ except:
 
 torch_hf_models = [
     "unum-cloud/uform-gen2-qwen-500m",
+    "unum-cloud/uform-gen2-dpo",
 ]
 
 

@@ -34,7 +34,7 @@ def get_model(model_name: str, token: Optional[str] = None):
 
 def get_model_onnx(model_name: str, device: str, dtype: str, token: Optional[str] = None):
     from uform.onnx_models import VLM_ONNX
-    from uform.numpy_preprocessor import NumpyProcessor
+    from uform.numpy_preprocessor import NumPyProcessor
 
     assert device in (
         "cpu",
@@ -54,6 +54,6 @@ def get_model_onnx(model_name: str, device: str, dtype: str, token: Optional[str
         config = load(f)
 
     model = VLM_ONNX(model_path, config, device, dtype)
-    processor = NumpyProcessor(config, join(model_path, "tokenizer.json"))
+    processor = NumPyProcessor(config, join(model_path, "tokenizer.json"))
 
     return model, processor

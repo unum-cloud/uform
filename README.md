@@ -335,6 +335,20 @@ Results for VQAv2 evaluation.
 > ² Lacking a broad enough evaluation dataset, we translated the [COCO Karpathy test split](https://www.kaggle.com/datasets/shtvkumar/karpathy-splits) with multiple public and proprietary translation services, averaging the scores across all sets, and breaking them down in the bottom section. <br/>
 > ³ We used `apple/DFN5B-CLIP-ViT-H-14-378` CLIP model.
 
+## Size
+
+Torch is a heavy dependency and most models are too large to run on edge and on IoT devices.
+Using the ONNX runtime, one can significantly reduce memory consumption and deployment latency.
+
+```sh
+$ conda create -n env_torch python=3.10 -y
+$ conda create -n env_onnx python=3.10 -y
+$ conda activate env_torch && pip install -e ".[torch]" && conda deactivate
+$ conda activate env_onnx && pip install -e ".[onnx-gpu]" && conda deactivate
+du -sh $(conda info --envs | grep 'env_torch' | awk '{print $2}')
+du -sh $(conda info --envs | grep 'env_onnx' | awk '{print $2}')
+```
+
 ## Speed
 
 On Nvidia RTX 3090, the following performance is expected on text encoding.
