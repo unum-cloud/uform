@@ -83,11 +83,11 @@ pip install uform
 ```
 
 Then, you can use the following code to get embeddings for text and images.
+You can do that either with the PyTorch reference model or the lighter cross-platform ONNX weights.
 
 ```python
 import uform
 from PIL import Image
-import torch.nn.functional as F
 
 # If you want to use the PyTorch model
 model, processor = uform.get_model('unum-cloud/uform-vl-english-large') # Just English
@@ -95,7 +95,9 @@ model, processor = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 L
 
 # If you want to use the light-weight portable ONNX model
 # Available combinations: cpu & fp32, gpu & fp32, gpu & fp16
-model, processor = uform.get_model_onnx("unum-cloud/uform-vl-english-large", "cpu", "fp32")
+# Check out Unum's Hugging Face space for more details: https://huggingface.co/unum-cloud
+model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-small', 'cpu', 'fp32')
+model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-large', 'gpu', 'fp16')
 
 text = 'a small red panda in a zoo'
 image = Image.open('red_panda.jpg')
@@ -244,13 +246,13 @@ Those models can be used to caption images or power multimodal chat experiences.
 ```python
 from transformers import AutoModel, AutoProcessor
 
-model = AutoModel.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
-processor = AutoProcessor.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
+model = AutoModel.from_pretrained('unum-cloud/uform-gen2-qwen-500m', trust_remote_code=True)
+processor = AutoProcessor.from_pretrained('unum-cloud/uform-gen2-qwen-500m', trust_remote_code=True)
 
-prompt = "Question or Instruction"
-image = Image.open("image.jpg")
+prompt = 'Question or Instruction'
+image = Image.open('image.jpg')
 
-inputs = processor(text=[prompt], images=[image], return_tensors="pt")
+inputs = processor(text=[prompt], images=[image], return_tensors='pt')
 
 with torch.inference_mode():
      output = model.generate(
@@ -261,7 +263,7 @@ with torch.inference_mode():
         eos_token_id=151645,
         pad_token_id=processor.tokenizer.pad_token_id
     )
-prompt_len = inputs["input_ids"].shape[1]
+prompt_len = inputs['input_ids'].shape[1]
 decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
 ```
 
@@ -279,16 +281,16 @@ The exact behavior is controlled by prompts.
 ```python
 from uform.gen_model import VLMForCausalLM, VLMProcessor
 
-model = VLMForCausalLM.from_pretrained("unum-cloud/uform-gen")
-processor = VLMProcessor.from_pretrained("unum-cloud/uform-gen")
+model = VLMForCausalLM.from_pretrained('unum-cloud/uform-gen')
+processor = VLMProcessor.from_pretrained('unum-cloud/uform-gen')
 
 # [cap] Narrate the contents of the image with precision.
 # [cap] Summarize the visual content of the image.
 # [vqa] What is the main subject of the image?
-prompt = "[cap] Summarize the visual content of the image."
-image = Image.open("zebra.jpg")
+prompt = '[cap] Summarize the visual content of the image.'
+image = Image.open('zebra.jpg')
 
-inputs = processor(texts=[prompt], images=[image], return_tensors="pt")
+inputs = processor(texts=[prompt], images=[image], return_tensors='pt')
 with torch.inference_mode():
      output = model.generate(
         **inputs,
@@ -299,7 +301,7 @@ with torch.inference_mode():
         pad_token_id=processor.tokenizer.pad_token_id
     )
 
-prompt_len = inputs["input_ids"].shape[1]
+prompt_len = inputs['input_ids'].shape[1]
 decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
 ```
 
@@ -327,7 +329,7 @@ import uform
 model, processor = uform.get_model('unum-cloud/uform-vl-english')
 model_image = nn.DataParallel(model.image_encoder)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model_image.to(device)
 
 _, res = model_image(images, 0)

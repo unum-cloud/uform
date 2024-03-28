@@ -5,6 +5,7 @@
         "huggingface",
         "keepdim",
         "logits",
+        "Matryoshka",
         "multimodal",
         "ndarray",
         "numpy",
