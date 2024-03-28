@@ -9,5 +9,5 @@ pip install -e ".[torch]"       # For PyTorch
 pip install -e ".[onnx]"        # For ONNX on CPU
 pip install -e ".[onnx-gpu]"    # For ONNX on GPU, available for some platforms
 pip install -e ".[torch,onnx]"  # For PyTorch and ONNX Python tests
-pytest scripts/ -s -x -Wd -v
+pytest python/scripts/ -s -x -Wd -v
 ```

@@ -69,7 +69,7 @@ jobs:
           pip install pytest
 
       - name: Run PyTest
-        run: pytest scripts/
+        run: pytest python/scripts/
 
   pypi_publish:
     name: Publish Python

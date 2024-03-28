@@ -53,6 +53,11 @@ onnx-gpu = ["onnx>=1.15.0", "onnxruntime-gpu>=1.17.1", "numpy"]
 [project.urls]
 "Homepage" = "https://github.com/unum-cloud/uform"
 
+[tool.setuptools.packages.find]
+where = ["python"]
+include = ["uform"]
+namespaces = false
+
 [tool.ruff]
 ignore = ["C408", "C901", "E501", "E741"]
 ignore-init-module-imports = true

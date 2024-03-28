@@ -35,4 +35,4 @@ jobs:
           pip install pytest
 
       - name: Test with PyTest
-        run: pytest scripts/ -s -x -Wd -v
+        run: pytest python/scripts/ -s -x -Wd -v

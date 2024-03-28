@@ -7,6 +7,11 @@ torch_models = [
     "unum-cloud/uform-vl-multilingual-v2",
 ]
 
+onnx_models_and_providers = [
+    ("unum-cloud/uform-vl-english", "cpu"),
+    ("unum-cloud/uform-vl-multilingual-v2", "cpu"),
+]
+
 
 @pytest.mark.parametrize("model_name", torch_models)
 def test_one_embedding(model_name: str):
