@@ -4,21 +4,37 @@ import pytest
 from PIL import Image
 import uform
 
+# PyTorch is a very heavy dependency, so we may want to skip these tests if it's not installed
+try:
+    import torch
+
+    torch_available = True
+except:
+    torch_available = False
+    
+# ONNX is not a very light dependency either
+try:
+    import onnx
+
+    onnx_available = True
+except:
+    onnx_available = False
+
 torch_models = [
-    "unum-cloud/uform-vl-english",
-    "unum-cloud/uform-vl-multilingual-v2",
+    # "unum-cloud/uform-vl-english",
+    # "unum-cloud/uform-vl-multilingual-v2",
 ]
 
 onnx_models_and_providers = [
-    ("unum-cloud/uform-vl-english-large", "cpu", "fp32"),
-    ("unum-cloud/uform-vl-english-small", "cpu", "fp32"),
-    ("unum-cloud/uform-vl-english-large", "gpu", "fp32"),
-    ("unum-cloud/uform-vl-english-small", "gpu", "fp32"),
+    # ("unum-cloud/uform-vl-english-large", "cpu", "fp32"),
+    # ("unum-cloud/uform-vl-english-small", "cpu", "fp32"),
+    # ("unum-cloud/uform-vl-english-large", "gpu", "fp32"),
+    # ("unum-cloud/uform-vl-english-small", "gpu", "fp32"),
     ("unum-cloud/uform-vl-english-large", "gpu", "fp16"),
     ("unum-cloud/uform-vl-english-small", "gpu", "fp16"),
 ]
 
-
+@pytest.mark.skipif(not torch_available, reason="PyTorch is not installed")
 @pytest.mark.parametrize("model_name", torch_models)
 def test_torch_one_embedding(model_name: str):
     model, processor = uform.get_model(model_name)
@@ -43,6 +59,7 @@ def test_torch_one_embedding(model_name: str):
     assert score.shape[0] == 1, "Matching score batch size is not 1"
 
 
+@pytest.mark.skipif(not torch_available, reason="PyTorch is not installed")
 @pytest.mark.parametrize("model_name", torch_models)
 @pytest.mark.parametrize("batch_size", [1, 2])
 def test_torch_many_embeddings(model_name: str, batch_size: int):
@@ -61,6 +78,7 @@ def test_torch_many_embeddings(model_name: str, batch_size: int):
     assert text_embeddings.shape[0] == batch_size, "Text embedding is unexpected"
 
 
+@pytest.mark.skipif(not onnx_available, reason="ONNX is not installed")
 @pytest.mark.parametrize("model_specs", onnx_models_and_providers)
 def test_onnx_one_embedding(model_specs: Tuple[str, str, str]):
 
@@ -95,6 +113,7 @@ def test_onnx_one_embedding(model_specs: Tuple[str, str, str]):
         pytest.skip(f"Execution provider error: {e}")
 
 
+@pytest.mark.skipif(not onnx_available, reason="ONNX is not installed")
 @pytest.mark.parametrize("model_specs", onnx_models_and_providers)
 @pytest.mark.parametrize("batch_size", [1, 2])
 def test_onnx_many_embeddings(model_specs: Tuple[str, str, str], batch_size: int):
