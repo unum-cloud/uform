@@ -17,6 +17,14 @@ For Content Understanding and Generation<br/>
 <a href="https://github.com/unum-cloud/uform"><img height="25" src="https://github.com/unum-cloud/.github/raw/main/assets/github.svg" alt="GitHub"></a>
 </p>
 
+<p align="center">
+Multimodal Embeddings from 64 to 768 Dimensions • 1B Parameter Chat
+<br/>
+Short Texts • Images • 🔜 Video Clips
+<br/>
+PyTorch • ONNX
+</p>
+
 ---
 
 ![](https://github.com/ashvardanian/usearch-images/blob/main/assets/uform-gen-preview.jpg?raw=true)
@@ -28,65 +36,65 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 ## Features
 
-* __Throughput__: Thanks to the small size, the inference speed is [2-4x faster](#speed) than competitors.
-* __Tiny Embeddings__: 256-dimensional vectors are 2-3x quicker to [search][usearch] than from CLIP-like models.
-* __Quantization Aware__: Downcasted embeddings from `f32` to `i8` without losing much recall.
-* __Multilingual__: Trained on a balanced dataset, the recall is great across over [20 languages](#evaluation).
-* __Hardware Friendly__: Whether it's Apple's CoreML or ONNX, [we've got you covered][onnx].
+- __Tiny Embeddings__: 64-dimensional Matryoshaka-style embeddings for extremely fast [search][usearch].
+- __Throughput__: Thanks to the small size, the inference speed is [2-4x faster](#speed) than competitors.
+- __Portable__: Models come with native ONNX support, making them easy to deploy on any platform.
+- __Quantization Aware__: Downcasted embeddings from `f32` to `i8` without losing much recall.
+- __Multilingual__: Trained on a balanced dataset, the recall is great across over [20 languages](#evaluation).
 
 [usearch]: https://github.com/unum-cloud/usearch
-[onnx]: https://huggingface.co/unum-cloud/uform-coreml-onnx
 
 ## Models
 
 ### Embedding Models
 
-| Model                                    | Parameters | Languages |                                 Architecture | Embedding size    |
-| :--------------------------------------- | ---------: | --------: | -------------------------------------------: | :---------------- |
-| [`uform-vl-english-large`][model-e-l]    |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers | 64, 256, 512, 768 |
-| [`uform-vl-english-small`][model-e-s]    |       79M  |         1 | 2 text layers, ViT-S/16, 2 multimodal layers | 256               |
-| [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers | 256               |
-| [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers | 256               |
-| [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers | 256               |
+| Model                                    | Parameters | Languages |                                 Architecture |
+| :--------------------------------------- | ---------: | --------: | -------------------------------------------: |
+| [`uform-vl-english-large`][model-e-l]    |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
+| [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
+| [`uform-vl-english-small`][model-e-s]    |        79M |         1 | 2 text layers, ViT-S/16, 2 multimodal layers |
+| [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
+| [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
 
 [model-e-l]: https://huggingface.co/unum-cloud/uform-vl-english-large/
-[model-e-s]: https://huggingface.co/unum-cloud/uform-vl-english-small/
 [model-e]: https://huggingface.co/unum-cloud/uform-vl-english/
+[model-e-s]: https://huggingface.co/unum-cloud/uform-vl-english-small/
 [model-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/
 [model-m-v2]: https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/
 
 ### Generative Models
 
-| Model                              | Parameters |            Purpose          |     Architecture      |
-| :--------------------------------- | ---------: | --------------------------: | --------------------: |
-| [`uform-gen2-qwen-500m`][model-g2] |    1.2B    | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14|
-| [`uform-gen`][model-g1]            |    1.5B    | Image Captioning, VQA       | llama-1.3B, ViT-B/16  |
+| Model                              | Parameters |                     Purpose |           Architecture |
+| :--------------------------------- | ---------: | --------------------------: | ---------------------: |
+| [`uform-gen2-dpo`][model-g2]       |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
+| [`uform-gen2-qwen-500m`][model-g2] |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
+| [`uform-gen`][model-g1]            |       1.5B |       Image Captioning, VQA |   llama-1.3B, ViT-B/16 |
 
 [model-g2]: https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/
 [model-g1]: https://huggingface.co/unum-cloud/uform-gen/
 
+## Producing Embeddings
 
-## Quick Start
+Add UForm to your dependencies list, or just install it locally:
 
-Once you `pip install uform`, fetching the models is as easy as:
+```bash
+pip install uform
+```
+
+Then, you can use the following code to get embeddings for text and images.
 
 ```python
 import uform
+from PIL import Image
+import torch.nn.functional as F
 
-# PyTorch Runtime
+# If you want to use the PyTorch model
 model, processor = uform.get_model('unum-cloud/uform-vl-english-large') # Just English
 model, processor = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
 
-# ONNX Runtime
-model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-large-onnx', "cpu", "fp32")
+# If you want to use the light-weight portable ONNX model
 # Available combinations: cpu & fp32, gpu & fp32, gpu & fp16
-```
-
-### Producing Embeddings
-
-```python
-from PIL import Image
-import torch.nn.functional as F
+model, processor = uform.get_model_onnx("unum-cloud/uform-vl-english-large", "cpu", "fp32")
 
 text = 'a small red panda in a zoo'
 image = Image.open('red_panda.jpg')
@@ -104,11 +112,8 @@ similarity = F.cosine_similarity(image_embedding, text_embedding)
 import numpy as np
 
 image_embedding = image_embedding / np.linalg.norm(image_embedding, keepdims=True, axis=1)
-
 text_embedding = text_embedding / np.linalg.norm(text_embedding, keepdims=True, axis=1)
-
 similarity = (image_embedding * text_embedding).sum(axis=1)
-
 ```
 
 To search for similar items, the embeddings can be compared using cosine similarity.
@@ -117,7 +122,6 @@ Once the list of nearest neighbors (best matches) is obtained, the joint multimo
 The model can calculate a "matching score" that falls within the range of `[0, 1]`, where `1` indicates a high likelihood of a match.
 
 ```python
-
 # For PyTorch
 joint_embedding = model.encode_multimodal(
     image_features=image_features,
@@ -135,10 +139,10 @@ score, joint_embedding = model.encode_multimodal(
 )
 ```
 
-### Chat, Image Captioning and Question Answering
+## Chat, Image Captioning and Question Answering
 
-The generative model can be used to caption images, answer questions about them. Also it is suitable for a multimodal chat.
-
+UForm generative models are fully compatible with the Hugging Face Transformers library, and can be used without installing the UForm library.
+Those models can be used to caption images or power multimodal chat experiences.
 
 ```python
 from transformers import AutoModel, AutoProcessor
@@ -296,11 +300,11 @@ Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the f
 
 ### Generative Models
 
-| Model                               | LLM Size |  SQA  |  MME   | MMBench  | Average¹ |
-| :---------------------------------- | -------: | -----:| ------:| --------:| --------:|
-| UForm-Gen2-Qwen-500m                |   0.5B   | 45.5  | 880.1  |  42.0    |   29.31  |
-| MobileVLM v2                        |   1.4B   | 52.1  | 1302.8 |  57.7    |   36.81  |
-| LLaVA-Phi                           |   2.7B   | 68.4  | 1335.1 |  59.8    |   42.95  |
+| Model                | LLM Size |  SQA |    MME | MMBench | Average¹ |
+| :------------------- | -------: | ---: | -----: | ------: | -------: |
+| UForm-Gen2-Qwen-500m |     0.5B | 45.5 |  880.1 |    42.0 |    29.31 |
+| MobileVLM v2         |     1.4B | 52.1 | 1302.8 |    57.7 |    36.81 |
+| LLaVA-Phi            |     2.7B | 68.4 | 1335.1 |    59.8 |    42.95 |
 
 For captioning evaluation we measure CLIPScore and RefCLIPScore³.
 

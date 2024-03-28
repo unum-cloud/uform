@@ -32,9 +32,7 @@ def get_model(model_name: str, token: Optional[str] = None):
     return model.eval(), processor
 
 
-def get_model_onnx(
-    model_name: str, device: str, dtype: str, token: Optional[str] = None
-):
+def get_model_onnx(model_name: str, device: str, dtype: str, token: Optional[str] = None):
     from uform.onnx_models import VLM_ONNX
     from uform.numpy_preprocessor import NumpyProcessor
 
@@ -50,9 +48,7 @@ def get_model_onnx(
         device == "cpu" and dtype == "fp32"
     ) or device == "gpu", "Combination `device`=`cpu` & `dtype=fp16` is not supported"
 
-    model_path = snapshot_download(
-        repo_id=f"{model_name}-{device}-{dtype}", token=token
-    )
+    model_path = snapshot_download(repo_id=f"{model_name}-{device}-{dtype}", token=token)
 
     with open(join(model_path, "config.json")) as f:
         config = load(f)

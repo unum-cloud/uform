@@ -258,9 +258,7 @@ class TextEncoder(nn.Module):
     def get_position_ids(self, x: Tensor) -> Tensor:
         if self.model_type == "roberta":
             mask = x.ne(self.padding_idx).int()
-            return (
-                torch.cumsum(mask, dim=1).type_as(mask) * mask
-            ).long() + self.padding_idx
+            return (torch.cumsum(mask, dim=1).type_as(mask) * mask).long() + self.padding_idx
 
         return self.position_ids[:, : x.shape[1]]
 
@@ -298,10 +296,7 @@ class VisualEncoder(nn.Module):
             self.reg_token = nn.Parameter(torch.zeros(1, self.num_reg_tokens, self.dim))
 
         self.blocks = nn.Sequential(
-            *[
-                VisualEncoderBlock(self.dim, self.num_heads)
-                for _ in range(self.num_layers)
-            ],
+            *[VisualEncoderBlock(self.dim, self.num_heads) for _ in range(self.num_layers)],
         )
 
         self.norm = nn.LayerNorm(self.dim, eps=1e-6)
@@ -338,7 +333,7 @@ class VisualEncoder(nn.Module):
 
 class VLM(nn.Module):
     """
-    Vision-Language Model for multi-modal embeddings.
+    Vision-Language Model for Multimodal embeddings.
     """
 
     def __init__(self, config: Dict, tokenizer_path: PathLike):
@@ -408,23 +403,17 @@ class VLM(nn.Module):
             preprocessed images (or precomputed images features) through multimodal encoded to produce multimodal joint embeddings.
 
         :param image: Preprocessed images
-        :param text: Preprocesses texts
+        :param text: Preprocessed texts
         :param image_features: Precomputed images features
         :param text_features: Precomputed text features
         :param attention_mask: Attention masks, not required if pass `text` instead of text_features
         """
 
-        assert (
-            image is not None or image_features is not None
-        ), "Either `image` or `image_features` should be non None"
-        assert (
-            text is not None or text_features is not None
-        ), "Either `text_data` or `text_features` should be non None"
+        assert image is not None or image_features is not None, "Either `image` or `image_features` should be non None"
+        assert text is not None or text_features is not None, "Either `text_data` or `text_features` should be non None"
 
         if text_features is not None:
-            assert (
-                attention_mask is not None
-            ), "if `text_features` is not None, then you should pass `attention_mask`"
+            assert attention_mask is not None, "if `text_features` is not None, then you should pass `attention_mask`"
 
         if image_features is None:
             image_features = self.image_encoder.forward_features(image)
