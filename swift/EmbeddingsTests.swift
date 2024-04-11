@@ -1,12 +1,10 @@
-import UForm
-
-import XCTest
 import CoreGraphics
 import ImageIO
+import UForm
+import XCTest
 
 final class TokenizerTests: XCTestCase {
-    
-    
+
     func cosineSimilarity<T: FloatingPoint>(between vectorA: [T], and vectorB: [T]) -> T {
         guard vectorA.count == vectorB.count else {
             fatalError("Vectors must be of the same length.")
@@ -24,43 +22,64 @@ final class TokenizerTests: XCTestCase {
         return dotProduct / (magnitudeA * magnitudeB)
     }
 
-    
     func testTextEmbeddings() async throws {
-        let model = try TextEncoder(
-            modelPath: "uform/uform-vl-english-small-text.mlpackage",
-            configPath: "uform/config.json",
-            tokenizerPath: "uform/tokenizer.json"
+
+        let root = "/uform/"
+        let textModel = try TextEncoder(
+            modelPath: root + "uform-vl-english-large-text.mlpackage",
+            configPath: root + "uform-vl-english-large-text.json",
+            tokenizerPath: root + "uform-vl-english-large-text.tokenizer.json"
         )
-        
+
         let texts = [
             "sunny beach with clear blue water",
             "crowded sandbeach under the bright sun",
             "dense forest with tall green trees",
-            "quiet park in the morning light"
+            "quiet park in the morning light",
         ]
-        
-        var embeddings: [[Float32]] = []
+
+        var textEmbeddings: [[Float32]] = []
         for text in texts {
-            let embedding: [Float32] = try model.forward(with: text)
-            embeddings.append(embedding)
+            let embedding: [Float32] = try textModel.forward(with: text)
+            textEmbeddings.append(embedding)
         }
-        
-        // Now let's compute the cosine similarity between the embeddings
-        let similarityBeach = cosineSimilarity(between: embeddings[0], and: embeddings[1])
-        let similarityForest = cosineSimilarity(between: embeddings[2], and: embeddings[3])
-        let dissimilarityBetweenScenes = cosineSimilarity(between: embeddings[0], and: embeddings[2])
-        
+
+        // Now let's compute the cosine similarity between the textEmbeddings
+        let similarityBeach = cosineSimilarity(between: textEmbeddings[0], and: textEmbeddings[1])
+        let similarityForest = cosineSimilarity(between: textEmbeddings[2], and: textEmbeddings[3])
+        let dissimilarityBetweenScenes = cosineSimilarity(between: textEmbeddings[0], and: textEmbeddings[2])
+
         // Assert that similar texts have higher similarity scores
-        XCTAssertTrue(similarityBeach > dissimilarityBetweenScenes, "Beach texts should be more similar to each other than to forest texts.")
-        XCTAssertTrue(similarityForest > dissimilarityBetweenScenes, "Forest texts should be more similar to each other than to beach texts.")
-    }
-    
-    func testImageEmbeddings() async throws {
-        let model = try ImageEncoder(
-            modelPath: "uform/uform-vl-english-small-image.mlpackage",
-            configPath: "uform/config_image.json"
+        XCTAssertTrue(
+            similarityBeach > dissimilarityBetweenScenes,
+            "Beach texts should be more similar to each other than to forest texts."
         )
-        
+        XCTAssertTrue(
+            similarityForest > dissimilarityBetweenScenes,
+            "Forest texts should be more similar to each other than to beach texts."
+        )
+    }
+
+    func testImageEmbeddings() async throws {
+
+        let root = "/uform/"
+        let textModel = try TextEncoder(
+            modelPath: root + "uform-vl-english-large-text.mlpackage",
+            configPath: root + "uform-vl-english-large-text.json",
+            tokenizerPath: root + "uform-vl-english-large-text.tokenizer.json"
+        )
+        let imageModel = try ImageEncoder(
+            modelPath: root + "uform-vl-english-large-image.mlpackage",
+            configPath: root + "uform-vl-english-large-image.json"
+        )
+
+        let texts = [
+            "A group of friends enjoy a barbecue on a sandy beach, with one person grilling over a large black grill, while the other sits nearby, laughing and enjoying the camaraderie.",
+            "A white and orange cat stands on its hind legs, reaching towards a wicker basket filled with red raspberries on a wooden table in a garden, surrounded by orange flowers and a white teapot, creating a serene and whimsical scene.",
+            "A young girl in a yellow dress stands in a grassy field, holding an umbrella and looking at the camera, amidst rain.",
+            "This serene bedroom features a white bed with a black canopy, a gray armchair, a black dresser with a mirror, a vase with a plant, a window with white curtains, a rug, and a wooden floor, creating a tranquil and elegant atmosphere.",
+            "The image captures the iconic Louvre Museum in Paris, illuminated by warm lights against a dark sky, with the iconic glass pyramid in the center, surrounded by ornate buildings and a large courtyard, showcasing the museum's grandeur and historical significance.",
+        ]
         let imageURLs = [
             "https://github.com/ashvardanian/ashvardanian/blob/master/demos/bbq-on-beach.jpg?raw=true",
             "https://github.com/ashvardanian/ashvardanian/blob/master/demos/cat-in-garden.jpg?raw=true",
@@ -69,27 +88,46 @@ final class TokenizerTests: XCTestCase {
             "https://github.com/ashvardanian/ashvardanian/blob/master/demos/louvre-at-night.jpg?raw=true",
         ]
 
-        var embeddings: [[Float32]] = []
-        for imageURL in imageURLs {
+        var textEmbeddings: [[Float32]] = []
+        var imageEmbeddings: [[Float32]] = []
+        for (text, imageURL) in zip(texts, imageURLs) {
             guard let url = URL(string: imageURL),
-                  let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),
-                  let cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil) else {
-                throw NSError(domain: "ImageError", code: 100, userInfo: [NSLocalizedDescriptionKey: "Could not load image from URL: \(imageURL)"])
+                let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),
+                let cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+            else {
+                throw NSError(
+                    domain: "ImageError",
+                    code: 100,
+                    userInfo: [NSLocalizedDescriptionKey: "Could not load image from URL: \(imageURL)"]
+                )
             }
-            
-            let embedding: [Float32] = try model.forward(with: cgImage)
-            embeddings.append(embedding)
+
+            let textEmbedding: [Float32] = try textModel.forward(with: text)
+            textEmbeddings.append(textEmbedding)
+            let imageEmbedding: [Float32] = try imageModel.forward(with: cgImage)
+            imageEmbeddings.append(imageEmbedding)
         }
 
-        // Now let's compute the cosine similarity between the embeddings
-        let similarityGirlAndBeach = cosineSimilarity(between: embeddings[2], and: embeddings[0])
-        let similarityGirlAndLouvre = cosineSimilarity(between: embeddings[2], and: embeddings[4])
-        let similarityBeachAndLouvre = cosineSimilarity(between: embeddings[0], and: embeddings[4])
+        // Now let's make sure that the cosine distance between image and respective text embeddings is low.
+        // Make sure that the similarity between image and text at index `i` is higher than with other texts and images.
+        for i in 0 ..< texts.count {
+            let pairSimilarity = cosineSimilarity(between: textEmbeddings[i], and: imageEmbeddings[i])
+            let otherTextSimilarities = (0 ..< texts.count).filter { $0 != i }.map {
+                cosineSimilarity(between: textEmbeddings[$0], and: imageEmbeddings[i])
+            }
+            let otherImageSimilarities = (0 ..< texts.count).filter { $0 != i }.map {
+                cosineSimilarity(between: textEmbeddings[i], and: imageEmbeddings[$0])
+            }
 
-        // Assert that similar images have higher similarity scores
-        XCTAssertTrue(similarityGirlAndBeach > similarityGirlAndLouvre, "");
-        XCTAssertTrue(similarityGirlAndBeach > similarityBeachAndLouvre, "");
+            XCTAssertTrue(
+                pairSimilarity > otherTextSimilarities.max()!,
+                "Text should be more similar to its corresponding image than to other images."
+            )
+            XCTAssertTrue(
+                pairSimilarity > otherImageSimilarities.max()!,
+                "Text should be more similar to its corresponding image than to other texts."
+            )
+        }
     }
-    
-    
+
 }

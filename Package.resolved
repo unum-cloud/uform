@@ -14,7 +14,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ashvardanian/swift-transformers",
       "state" : {
-        "revision" : "4060e8ff7c959b89afa7f672cb0a479e87add284"
+        "revision" : "9ef46a51eca46978b62773f8887926dfe72b0ab4"
       }
     }
   ],
