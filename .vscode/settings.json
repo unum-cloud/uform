@@ -1,16 +1,22 @@
 {
     "cSpell.words": [
+        "coreml",
         "dtype",
         "embs",
         "huggingface",
         "keepdim",
+        "linalg",
         "logits",
         "Matryoshka",
+        "mlmodel",
+        "mlpackage",
+        "mlprogram",
         "multimodal",
         "ndarray",
         "numpy",
         "ONNX",
         "onnxruntime",
+        "packbits",
         "preprocess",
         "pretrained",
         "probs",
@@ -18,11 +24,13 @@
         "rerank",
         "reranker",
         "reranking",
+        "SIMD",
         "softmax",
         "transfromers",
         "uform",
         "unimodal",
-        "unsqueeze"
+        "unsqueeze",
+        "Vardanian"
     ],
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"

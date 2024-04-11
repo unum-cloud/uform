@@ -1,0 +1,22 @@
+{
+  "pins" : [
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser.git",
+      "state" : {
+        "revision" : "c8ed701b513cf5177118a175d85fbbbcd707ab41",
+        "version" : "1.3.0"
+      }
+    },
+    {
+      "identity" : "swift-transformers",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ashvardanian/swift-transformers",
+      "state" : {
+        "revision" : "4060e8ff7c959b89afa7f672cb0a479e87add284"
+      }
+    }
+  ],
+  "version" : 2
+}

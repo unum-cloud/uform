@@ -207,6 +207,7 @@ class TextEncoder(nn.Module):
             self.context_projection = nn.Linear(self.context_dim, self.dim, bias=False)
         else:
             self.context_projection = nn.Identity()
+        self.return_features = False
 
     def forward_features(self, x: Tensor, attn_mask: Tensor) -> Tensor:
         x = self.embed_text(x)
@@ -267,10 +268,27 @@ class TextEncoder(nn.Module):
         x = self.word_embeddings(x) + positional_embedding
         return self.dropout(self.layer_norm(x))
 
-    def forward(self, x: dict) -> Tensor:
-        features = self.forward_features(x["input_ids"], x["attention_mask"])
-        embeddings = self.forward_embedding(features, x["attention_mask"])
-        return features, embeddings
+    def forward(
+        self,
+        x: Union[Tensor, dict],
+        attention_mask: Optional[Tensor] = None,
+        return_features: Optional[bool] = None,
+    ) -> Tensor:
+        if isinstance(x, dict):
+            assert attention_mask is None, "If `x` is a dictionary, then `attention_mask` should be None"
+            attention_mask = x["attention_mask"]
+            x = x["input_ids"]
+        elif attention_mask is None:
+            # If no attention mask is provided - create one with all ones
+            attention_mask = torch.ones_like(x)
+
+        features = self.forward_features(x, attention_mask)
+        embeddings = self.forward_embedding(features, attention_mask)
+
+        return_features = return_features if return_features is not None else self.return_features
+        if return_features:
+            return features, embeddings
+        return embeddings
 
 
 @dataclass(eq=False)
@@ -301,6 +319,7 @@ class VisualEncoder(nn.Module):
 
         self.norm = nn.LayerNorm(self.dim, eps=1e-6)
         self.embedding_projection = nn.Linear(self.dim, self.embedding_dim, bias=False)
+        self.return_features = False
 
     def forward_features(self, x: Tensor) -> Tensor:
         x = self.patch_embed(x).flatten(start_dim=2).transpose(2, 1)
@@ -325,10 +344,13 @@ class VisualEncoder(nn.Module):
 
         return self.embedding_projection(x)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor, return_features: Optional[bool] = None) -> Tensor:
         features = self.forward_features(x)
         embeddings = self.forward_embedding(features)
-        return features, embeddings
+        return_features = return_features if return_features is not None else self.return_features
+        if return_features:
+            return features, embeddings
+        return embeddings
 
 
 class VLM(nn.Module):
@@ -430,7 +452,7 @@ class VLM(nn.Module):
             attention_mask if attention_mask is not None else text["attention_mask"],
             image_features,
         )
-        
+
         if return_scores:
             return self.get_matching_scores(embeddings), embeddings
 
