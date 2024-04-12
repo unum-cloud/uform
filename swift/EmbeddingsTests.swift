@@ -40,7 +40,7 @@ final class TokenizerTests: XCTestCase {
 
         var textEmbeddings: [[Float32]] = []
         for text in texts {
-            let embedding: [Float32] = try textModel.forward(with: text)
+            let embedding: [Float32] = try textModel.forward(with: text).asFloats()
             textEmbeddings.append(embedding)
         }
 
@@ -102,9 +102,9 @@ final class TokenizerTests: XCTestCase {
                 )
             }
 
-            let textEmbedding: [Float32] = try textModel.forward(with: text)
+            let textEmbedding: [Float32] = try textModel.forward(with: text).asFloats()
             textEmbeddings.append(textEmbedding)
-            let imageEmbedding: [Float32] = try imageModel.forward(with: cgImage)
+            let imageEmbedding: [Float32] = try imageModel.forward(with: cgImage).asFloats()
             imageEmbeddings.append(imageEmbedding)
         }
 

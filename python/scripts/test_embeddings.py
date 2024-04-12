@@ -11,7 +11,7 @@ try:
     torch_available = True
 except:
     torch_available = False
-    
+
 # ONNX is not a very light dependency either
 try:
     import onnx
@@ -33,6 +33,7 @@ onnx_models_and_providers = [
     ("unum-cloud/uform-vl-english-small", "gpu", "fp16"),
     ("unum-cloud/uform-vl-english-large", "gpu", "fp16"),
 ]
+
 
 @pytest.mark.skipif(not torch_available, reason="PyTorch is not installed")
 @pytest.mark.parametrize("model_name", torch_models)
@@ -141,3 +142,7 @@ def test_onnx_many_embeddings(model_specs: Tuple[str, str, str], batch_size: int
 
     except ExecutionProviderError as e:
         pytest.skip(f"Execution provider error: {e}")
+
+
+if __name__ == "__main__":
+    pytest.main(["-s", "-x", __file__])

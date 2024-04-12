@@ -11,6 +11,69 @@ import Foundation
 import Hub  // `Config`
 import Tokenizers  // `AutoTokenizer`
 
+public enum Embedding {
+    case i32s([Int32])
+    case f16s([Float16])
+    case f32s([Float32])
+    case f64s([Float64])
+
+    init?(from multiArray: MLMultiArray) {
+        switch multiArray.dataType {
+        case .float64:
+            self = .f64s(
+                Array(
+                    UnsafeBufferPointer(
+                        start: multiArray.dataPointer.assumingMemoryBound(to: Float64.self),
+                        count: Int(truncating: multiArray.shape[1])
+                    )
+                )
+            )
+        case .float32:
+            self = .f32s(
+                Array(
+                    UnsafeBufferPointer(
+                        start: multiArray.dataPointer.assumingMemoryBound(to: Float32.self),
+                        count: Int(truncating: multiArray.shape[1])
+                    )
+                )
+            )
+        case .float16:
+            self = .f16s(
+                Array(
+                    UnsafeBufferPointer(
+                        start: multiArray.dataPointer.assumingMemoryBound(to: Float16.self),
+                        count: Int(truncating: multiArray.shape[1])
+                    )
+                )
+            )
+        case .int32:
+            self = .i32s(
+                Array(
+                    UnsafeBufferPointer(
+                        start: multiArray.dataPointer.assumingMemoryBound(to: Int32.self),
+                        count: Int(truncating: multiArray.shape[1])
+                    )
+                )
+            )
+        @unknown default:
+            return nil  // return nil for unsupported data types
+        }
+    }
+
+    public func asFloats() -> [Float] {
+        switch self {
+        case .f32s(let array):
+            return array
+        case .i32s(let array):
+            return array.map { Float($0) }
+        case .f16s(let array):
+            return array.map { Float($0) }
+        case .f64s(let array):
+            return array.map { Float($0) }
+        }
+    }
+}
+
 // MARK: - Helpers
 
 func readConfig(fromPath path: String) throws -> [String: Any] {
@@ -39,18 +102,20 @@ public class TextEncoder {
         self.processor = try TextProcessor(configPath: configPath, tokenizerPath: tokenizerPath, model: self.model)
     }
 
-    public func forward(with text: String) throws -> [Float32] {
+    public func forward(with text: String) throws -> Embedding {
         let inputFeatureProvider = try self.processor.preprocess(text)
         let prediction = try self.model.prediction(from: inputFeatureProvider)
-        let predictionFeature = prediction.featureValue(for: "embeddings")
-        // The `predictionFeature` is an MLMultiArray, which can be converted to an array of Float32
-        let output = predictionFeature!.multiArrayValue!
-        return Array(
-            UnsafeBufferPointer(
-                start: output.dataPointer.assumingMemoryBound(to: Float32.self),
-                count: Int(truncating: output.shape[1])
+        guard let predictionFeature = prediction.featureValue(for: "embeddings"),
+            let output = predictionFeature.multiArrayValue,
+            let embedding = Embedding(from: output)
+        else {
+            throw NSError(
+                domain: "TextEncoder",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Failed to extract embeddings or unsupported data type."]
             )
-        )
+        }
+        return embedding
     }
 }
 
@@ -63,20 +128,21 @@ public class ImageEncoder {
         self.processor = try ImageProcessor(configPath: configPath)
     }
 
-    public func forward(with image: CGImage) throws -> [Float32] {
+    public func forward(with image: CGImage) throws -> Embedding {
         let inputFeatureProvider = try self.processor.preprocess(image)
         let prediction = try self.model.prediction(from: inputFeatureProvider)
-        let predictionFeature = prediction.featureValue(for: "embeddings")
-        // The `predictionFeature` is an MLMultiArray, which can be converted to an array of Float32
-        let output = predictionFeature!.multiArrayValue!
-        return Array(
-            UnsafeBufferPointer(
-                start: output.dataPointer.assumingMemoryBound(to: Float32.self),
-                count: Int(truncating: output.shape[1])
+        guard let predictionFeature = prediction.featureValue(for: "embeddings"),
+            let output = predictionFeature.multiArrayValue,
+            let embedding = Embedding(from: output)
+        else {
+            throw NSError(
+                domain: "ImageEncoder",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Failed to extract embeddings or unsupported data type."]
             )
-        )
+        }
+        return embedding
     }
-
 }
 
 // MARK: - Processors
@@ -147,6 +213,7 @@ class ImageProcessor {
         let originalWidth = CGFloat(image.width)
         let originalHeight = CGFloat(image.height)
 
+        // Calculate new size preserving the aspect ratio
         let widthRatio = CGFloat(imageSize) / originalWidth
         let heightRatio = CGFloat(imageSize) / originalHeight
         let scaleFactor = max(widthRatio, heightRatio)
@@ -154,11 +221,9 @@ class ImageProcessor {
         let scaledWidth = originalWidth * scaleFactor
         let scaledHeight = originalHeight * scaleFactor
 
+        // Calculate the crop rectangle
         let dx = (scaledWidth - CGFloat(imageSize)) / 2.0
         let dy = (scaledHeight - CGFloat(imageSize)) / 2.0
-        let insetRect = CGRect(x: dx, y: dy, width: CGFloat(imageSize) - dx * 2, height: CGFloat(imageSize) - dy * 2)
-
-        // Create a new context (off-screen canvas) with the desired dimensions
         guard
             let context = CGContext(
                 data: nil,
@@ -171,11 +236,9 @@ class ImageProcessor {
             )
         else { return nil }
 
-        // Draw the image in the context with the specified inset (cropping as necessary)
+        // Draw the scaled and cropped image in the context
         context.interpolationQuality = .high
-        context.draw(image, in: insetRect, byTiling: false)
-
-        // Extract the new image from the context
+        context.draw(image, in: CGRect(x: -dx, y: -dy, width: scaledWidth, height: scaledHeight))
         return context.makeImage()
     }
 
@@ -193,44 +256,31 @@ class ImageProcessor {
             bitsPerComponent: 8,
             bytesPerRow: 4 * width,
             space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         )
         context?.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        // Convert pixel data to float and normalize
-        let totalCount = width * height * 4
-        var floatPixels = [Float](repeating: 0, count: totalCount)
-        vDSP_vfltu8(pixelData, 1, &floatPixels, 1, vDSP_Length(totalCount))
-
-        // Scale the pixel values to [0, 1]
-        var divisor = Float(255.0)
-        vDSP_vsdiv(floatPixels, 1, &divisor, &floatPixels, 1, vDSP_Length(totalCount))
-
-        // Normalize the pixel values
+        // Normalize the pixel data
+        var floatPixels = [Float](repeating: 0, count: width * height * 3)
         for c in 0 ..< 3 {
-            var slice = [Float](repeating: 0, count: width * height)
             for i in 0 ..< (width * height) {
-                slice[i] = (floatPixels[i * 4 + c] - mean[c]) / std[c]
-            }
-            floatPixels.replaceSubrange(c * width * height ..< (c + 1) * width * height, with: slice)
-        }
-
-        // Rearrange the array to C x H x W
-        var tensor = [Float](repeating: 0, count: width * height * 3)
-        for y in 0 ..< height {
-            for x in 0 ..< width {
-                for c in 0 ..< 3 {
-                    tensor[c * width * height + y * width + x] = floatPixels[y * width * 4 + x * 4 + c]
-                }
+                floatPixels[i * 3 + c] = (Float(pixelData[i * 4 + c]) / 255.0 - mean[c]) / std[c]
             }
         }
 
-        // Reshape the tensor to 1 x 3 x H x W and pack into a rank-3 `MLFeatureValue`
+        // Create the tensor array
+        var tensor = [Float](repeating: 0, count: 3 * width * height)
+        for i in 0 ..< (width * height) {
+            for c in 0 ..< 3 {
+                tensor[c * width * height + i] = floatPixels[i * 3 + c]
+            }
+        }
+
         let multiArray = try? MLMultiArray(
-            shape: [1, 3, NSNumber(value: self.imageSize), NSNumber(value: self.imageSize)],
+            shape: [1, 3, NSNumber(value: height), NSNumber(value: width)],
             dataType: .float32
         )
-        for i in 0 ..< (width * height * 3) {
+        for i in 0 ..< tensor.count {
             multiArray?[i] = NSNumber(value: tensor[i])
         }
         return multiArray
