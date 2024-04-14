@@ -89,6 +89,9 @@ class NumPyProcessor:
         bottom = (height + self._image_size) / 2
 
         image = image.convert("RGB").crop((left, top, right, bottom))
+        # At this point `image` is a PIL Image with RGB channels.
+        # If you convert it to `np.ndarray` it will have shape (H, W, C) where C is the number of channels.
         image = (np.array(image).astype(np.float32) / 255.0 - self.image_mean) / self.image_std
 
+        # To make it compatible with PyTorch, we need to transpose the image to (C, H, W).
         return np.transpose(image, (2, 0, 1))

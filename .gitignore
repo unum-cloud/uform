@@ -6,3 +6,5 @@ package-lock.json
 *.egg-info
 *.onnx
 __pycache__
+.build
+.swiftpm
