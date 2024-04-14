@@ -1,6 +1,7 @@
 import CoreGraphics
 import ImageIO
 import UForm
+import Hub
 import XCTest
 
 final class TokenizerTests: XCTestCase {
@@ -24,11 +25,10 @@ final class TokenizerTests: XCTestCase {
 
     func testTextEmbeddings() async throws {
 
-        let root = "/uform/"
-        let textModel = try TextEncoder(
-            modelPath: root + "uform-vl-english-large-text.mlpackage",
-            configPath: root + "uform-vl-english-large-text.json",
-            tokenizerPath: root + "uform-vl-english-large-text.tokenizer.json"
+        let api = HubApi(hfToken: "xxx")
+        let textModel = try await TextEncoder(
+            modelName: "unum-cloud/uform-vl2-english-small",
+            hubApi: api
         )
 
         let texts = [
@@ -62,15 +62,28 @@ final class TokenizerTests: XCTestCase {
 
     func testImageEmbeddings() async throws {
 
-        let root = "/uform/"
-        let textModel = try TextEncoder(
-            modelPath: root + "uform-vl-english-large-text.mlpackage",
-            configPath: root + "uform-vl-english-large-text.json",
-            tokenizerPath: root + "uform-vl-english-large-text.tokenizer.json"
+        // One option is to use a local model repository.
+        //
+        //        let root = "uform/"
+        //        let textModel = try TextEncoder(
+        //            modelPath: root + "uform-vl-english-large-text.mlpackage",
+        //            configPath: root + "uform-vl-english-large-text.json",
+        //            tokenizerPath: root + "uform-vl-english-large-text.tokenizer.json"
+        //        )
+        //        let imageModel = try ImageEncoder(
+        //            modelPath: root + "uform-vl-english-large-image.mlpackage",
+        //            configPath: root + "uform-vl-english-large-image.json"
+        //        )
+        //
+        // A better option is to fetch directly from HuggingFace, similar to how users would do that:
+        let api = HubApi(hfToken: "xxx")
+        let textModel = try await TextEncoder(
+            modelName: "unum-cloud/uform-vl2-english-small",
+            hubApi: api
         )
-        let imageModel = try ImageEncoder(
-            modelPath: root + "uform-vl-english-large-image.mlpackage",
-            configPath: root + "uform-vl-english-large-image.json"
+        let imageModel = try await ImageEncoder(
+            modelName: "unum-cloud/uform-vl2-english-small",
+            hubApi: api
         )
 
         let texts = [

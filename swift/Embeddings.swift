@@ -83,12 +83,16 @@ func readConfig(fromPath path: String) throws -> [String: Any] {
     return try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
 }
 
+func readModel(fromURL modelURL: URL) throws -> MLModel {
+    let compiledModelURL = try MLModel.compileModel(at: modelURL)
+    return try MLModel(contentsOf: compiledModelURL)
+}
+
 func readModel(fromPath path: String) throws -> MLModel {
     // If it's not an absolute path, let's assume it's a path relative to the current working directory
     let absPath = path.hasPrefix("/") ? path : FileManager.default.currentDirectoryPath + "/" + path
     let modelURL = URL(fileURLWithPath: absPath, isDirectory: true)
-    let compiledModelURL = try MLModel.compileModel(at: modelURL)
-    return try MLModel(contentsOf: compiledModelURL)
+    return try readModel(fromURL: modelURL)
 }
 
 // MARK: - Encoders
@@ -97,8 +101,20 @@ public class TextEncoder {
     let model: MLModel
     let processor: TextProcessor
 
-    public init(modelPath: String, configPath: String, tokenizerPath: String) throws {
+    public init(modelPath: String, configPath: String? = nil, tokenizerPath: String? = nil) throws {
+        let finalConfigPath = configPath ?? modelPath + "/config.json"
+        let finalTokenizerPath = tokenizerPath ?? modelPath + "/tokenizer.json"
         self.model = try readModel(fromPath: modelPath)
+        self.processor = try TextProcessor(configPath: finalConfigPath, tokenizerPath: finalTokenizerPath, model: self.model)
+    }
+
+    
+    public init(modelName: String, hubApi: HubApi = .shared) async throws {
+        let repo = Hub.Repo(id: modelName)
+        let modelURL = try await hubApi.snapshot(from: repo, matching: ["text.mlpackage/*", "config.json", "tokenizer.json"])
+        let configPath = modelURL.appendingPathComponent("config.json").path
+        let tokenizerPath = modelURL.appendingPathComponent("tokenizer.json").path
+        self.model = try readModel(fromURL: modelURL.appendingPathComponent("text.mlpackage", isDirectory: true))
         self.processor = try TextProcessor(configPath: configPath, tokenizerPath: tokenizerPath, model: self.model)
     }
 
@@ -123,11 +139,20 @@ public class ImageEncoder {
     let model: MLModel
     let processor: ImageProcessor
 
-    public init(modelPath: String, configPath: String) throws {
+    public init(modelPath: String, configPath: String? = nil) throws {
+        let finalConfigPath = configPath ?? modelPath + "/config.json"
         self.model = try readModel(fromPath: modelPath)
-        self.processor = try ImageProcessor(configPath: configPath)
+        self.processor = try ImageProcessor(configPath: finalConfigPath)
     }
 
+    public init(modelName: String, hubApi: HubApi = .shared) async throws {
+        let repo = Hub.Repo(id: modelName)
+        let modelURL = try await hubApi.snapshot(from: repo, matching: ["image.mlpackage/*", "config.json"])
+        let configPath = modelURL.appendingPathComponent("config.json").path
+        self.model = try readModel(fromURL: modelURL.appendingPathComponent("image.mlpackage", isDirectory: true))
+        self.processor = try ImageProcessor(configPath: configPath)
+    }
+    
     public func forward(with image: CGImage) throws -> Embedding {
         let inputFeatureProvider = try self.processor.preprocess(image)
         let prediction = try self.model.prediction(from: inputFeatureProvider)
@@ -153,8 +178,13 @@ class TextProcessor {
     let maxContextLength: Int
 
     public init(configPath: String, tokenizerPath: String, model: MLModel) throws {
-        let configDict = try readConfig(fromPath: configPath)
+        var configDict = try readConfig(fromPath: configPath)
         let tokenizerDict = try readConfig(fromPath: tokenizerPath)
+
+        // Check if there's a specific 'text_encoder' configuration within the main configuration
+        if let textEncoderConfig = configDict["text_encoder"] as? [String: Any] {
+            configDict = textEncoderConfig  // Use the specific 'text_encoder' configuration
+        }
 
         let config = Config(configDict)
         let tokenizerData = Config(tokenizerDict)
@@ -194,7 +224,12 @@ class ImageProcessor {
     let std: [Float] = [0.229, 0.224, 0.225]  // Common std values for normalization
 
     init(configPath: String) throws {
-        let configDict = try readConfig(fromPath: configPath)
+        var configDict = try readConfig(fromPath: configPath)
+        // Check if there's a specific 'image_encoder' configuration within the main configuration
+        if let imageEncoderConfig = configDict["image_encoder"] as? [String: Any] {
+            configDict = imageEncoderConfig
+        }
+        
         let config = Config(configDict)
         self.imageSize = config.imageSize!.intValue!
     }

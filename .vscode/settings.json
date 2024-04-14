@@ -1,8 +1,12 @@
 {
     "cSpell.words": [
+        "arange",
+        "CFURL",
         "coreml",
+        "cumsum",
         "dtype",
         "embs",
+        "finfo",
         "huggingface",
         "keepdim",
         "linalg",
@@ -24,6 +28,7 @@
         "rerank",
         "reranker",
         "reranking",
+        "sess",
         "SIMD",
         "softmax",
         "transfromers",
