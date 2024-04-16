@@ -63,8 +63,8 @@ def get_checkpoint(model_name: str, token: Optional[str], modalities: Tuple[str,
 
 
 def get_model(model_name: str, token: Optional[str] = None, modalities: Optional[Tuple[str]] = None):
-    from uform.torch_models import TextVisualEncoder
-    from uform.torch_preprocessor import TorchProcessor
+    from python.uform.torch_encoders import TextVisualEncoder
+    from python.uform.torch_processors import TorchProcessor
 
     if modalities is None:
         modalities = (Modality.TEXT, Modality.IMAGE)
@@ -83,8 +83,8 @@ def get_model(model_name: str, token: Optional[str] = None, modalities: Optional
 
 
 def get_model_onnx(model_name: str, device: str, dtype: str, token: Optional[str] = None):
-    from uform.onnx_models import TextVisualEncoder
-    from uform.numpy_preprocessor import NumPyProcessor
+    from python.uform.onnx_encoders import TextVisualEncoder
+    from python.uform.numpy_processors import NumPyProcessor
 
     assert device in (
         "cpu",

@@ -3,19 +3,24 @@ from typing import List, Optional, Tuple, Union
 import torch
 import torch.nn.functional as F
 from torch import nn
-from torchvision.transforms import (CenterCrop, Compose, InterpolationMode,
-                                    Normalize, RandomResizedCrop, Resize,
-                                    ToTensor)
+from torchvision.transforms import (
+    CenterCrop,
+    Compose,
+    InterpolationMode,
+    Normalize,
+    RandomResizedCrop,
+    Resize,
+    ToTensor,
+)
 from transformers import AutoConfig, AutoTokenizer
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.modeling_utils import PreTrainedModel
-from transformers.models.auto.modeling_auto import (AutoModel,
-                                                    AutoModelForCausalLM)
+from transformers.models.auto.modeling_auto import AutoModel, AutoModelForCausalLM
 from transformers.processing_utils import ProcessorMixin
 from transformers.tokenization_utils_base import BatchEncoding
 
-from uform.models import VisualEncoder
+from uform.torch_encoders import VisualEncoder
 
 IMAGENET_MEAN = (0.48145466, 0.4578275, 0.40821073)
 IMAGENET_STD = (0.26862954, 0.26130258, 0.27577711)
@@ -213,21 +218,13 @@ class VLMForCausalLM(VLMPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[dict, Tuple, CausalLMOutputWithPast]:
-        output_attentions = (
-            output_attentions
-            if output_attentions is not None
-            else self.config.output_attentions
-        )
+        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
-            output_hidden_states
-            if output_hidden_states is not None
-            else self.config.output_hidden_states
+            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
         use_cache = use_cache if use_cache is not None else self.config.use_cache
 
-        return_dict = (
-            return_dict if return_dict is not None else self.config.use_return_dict
-        )
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         if input_ids is not None and inputs_embeds is not None:
             raise ValueError(
@@ -248,11 +245,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
                 )
 
         if position_ids is None:
-            seq_length = (
-                inputs_embeds.shape[1]
-                if inputs_embeds is not None
-                else input_ids.shape[1]
-            )
+            seq_length = inputs_embeds.shape[1] if inputs_embeds is not None else input_ids.shape[1]
             past_key_values_length = 0
 
             if past_key_values is not None:
