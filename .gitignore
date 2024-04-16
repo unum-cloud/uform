@@ -4,8 +4,13 @@ test
 build/
 package-lock.json
 *.egg-info
-*.onnx
 __pycache__
 .build
 .swiftpm
+.hf_token
 node_modules
+
+# Tensors & ML Model
+*.onnx
+*.pt
+*.safetensors

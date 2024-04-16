@@ -22,7 +22,7 @@ except:
     onnx_available = False
 
 torch_models = [
-    "unum-cloud/uform-vl2-english-small",
+    "unum-cloud/uform2-vl-english-small",
     "unum-cloud/uform-vl-english",
     "unum-cloud/uform-vl-multilingual-v2",
 ]

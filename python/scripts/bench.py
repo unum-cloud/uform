@@ -13,7 +13,7 @@ from transformers import (
 )
 
 from uform import get_model
-from uform.gen_model import VLMForCausalLM, VLMProcessor
+from uform.torch_decoders import VLMForCausalLM, VLMProcessor
 
 dtype = torch.bfloat16
 low_cpu_mem_usage = False

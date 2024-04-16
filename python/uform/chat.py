@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 from transformers import TextStreamer
 
-from uform.gen_model import VLMForCausalLM, VLMProcessor
+from uform.torch_decoders import VLMForCausalLM, VLMProcessor
 
 EOS_TOKEN = 32001
 

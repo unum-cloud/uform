@@ -7,8 +7,8 @@ from huggingface_hub import snapshot_download
 
 
 class Modality(Enum):
-    TEXT = "text"
-    IMAGE = "image"
+    TEXT_ENCODER = "text_encoder"
+    IMAGE_ENCODER = "image_encoder"
 
 
 def get_checkpoint(model_name: str, token: Optional[str], modalities: Tuple[str, Modality]) -> Tuple[str, Mapping, str]:
