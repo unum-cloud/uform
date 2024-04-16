@@ -1,4 +1,5 @@
 from typing import Tuple
+import os
 
 import pytest
 from PIL import Image
@@ -21,6 +22,7 @@ except:
     onnx_available = False
 
 torch_models = [
+    "unum-cloud/uform2-vl-english-small",
     "unum-cloud/uform-vl-english",
     "unum-cloud/uform-vl-multilingual-v2",
 ]
@@ -34,11 +36,20 @@ onnx_models_and_providers = [
     ("unum-cloud/uform-vl-english-large", "gpu", "fp16"),
 ]
 
+# Let's check if the HuggingFace Hub API token is set in the environment variable.
+# If it's not there, check if the `.hf_token` file is present in the current working directory.
+token = os.getenv("HUGGINGFACE_HUB_TOKEN", None)
+if token is None:
+    token_path = "./.hf_token"
+    if os.path.exists(token_path):
+        with open(token_path, "r") as file:
+            token = file.read().strip()
+
 
 @pytest.mark.skipif(not torch_available, reason="PyTorch is not installed")
 @pytest.mark.parametrize("model_name", torch_models)
 def test_torch_one_embedding(model_name: str):
-    model, processor = uform.get_model(model_name)
+    model, processor = uform.get_model(model_name, token=token)
     text = "a small red panda in a zoo"
     image_path = "assets/unum.png"
 
@@ -67,7 +78,7 @@ def test_torch_one_embedding(model_name: str):
 @pytest.mark.parametrize("model_name", torch_models)
 @pytest.mark.parametrize("batch_size", [1, 2])
 def test_torch_many_embeddings(model_name: str, batch_size: int):
-    model, processor = uform.get_model(model_name)
+    model, processor = uform.get_model(model_name, token=token)
     texts = ["a small red panda in a zoo"] * batch_size
     image_paths = ["assets/unum.png"] * batch_size
 
@@ -90,7 +101,7 @@ def test_onnx_one_embedding(model_specs: Tuple[str, str, str]):
 
     try:
 
-        model, processor = uform.get_model_onnx(*model_specs)
+        model, processor = uform.get_model_onnx(*model_specs, token=token)
         text = "a small red panda in a zoo"
         image_path = "assets/unum.png"
 
@@ -126,7 +137,7 @@ def test_onnx_many_embeddings(model_specs: Tuple[str, str, str], batch_size: int
 
     try:
 
-        model, processor = uform.get_model_onnx(*model_specs)
+        model, processor = uform.get_model_onnx(*model_specs, token=token)
         texts = ["a small red panda in a zoo"] * batch_size
         image_paths = ["assets/unum.png"] * batch_size
 

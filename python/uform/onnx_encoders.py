@@ -23,7 +23,7 @@ def available_providers(device: str) -> Tuple[str, ...]:
     return cpu_providers
 
 
-class VisualEncoderONNX:
+class VisualEncoder:
     def __init__(self, model_path: str, device: str):
         """
         :param model_path: Path to onnx model
@@ -43,7 +43,7 @@ class VisualEncoderONNX:
         return self.session.run(None, {"images": images})
 
 
-class TextEncoderONNX:
+class TextEncoder:
     def __init__(self, text_encoder_path: str, reranker_path: str, device: str):
         """
         :param text_encoder_path: Path to onnx of text encoder
@@ -82,7 +82,7 @@ class TextEncoderONNX:
         )
 
 
-class VLM_ONNX:
+class TextVisualEncoder:
     def __init__(self, checkpoint_path: str, config: Dict, device: str, dtype: str):
         assert device in (
             "cpu",
@@ -103,13 +103,13 @@ class VLM_ONNX:
         self._text_encoder_dim = config["text_encoder"]["dim"]
         self._image_encoder_dim = config["image_encoder"]["dim"]
 
-        self.text_encoder = TextEncoderONNX(
+        self.text_encoder = TextEncoder(
             join(checkpoint_path, f"text_encoder.onnx"),
             join(checkpoint_path, f"reranker.onnx"),
             device,
         )
 
-        self.image_encoder = VisualEncoderONNX(join(checkpoint_path, f"image_encoder.onnx"), device)
+        self.image_encoder = VisualEncoder(join(checkpoint_path, f"image_encoder.onnx"), device)
 
     def encode_image(
         self,
@@ -229,3 +229,6 @@ class VLM_ONNX:
     def multimodal_embedding_dim(self) -> int:
         """Dimensionality of multimodal joint embedding."""
         return self._text_encoder_dim
+
+
+VLM_ONNX = TextVisualEncoder  # legacy

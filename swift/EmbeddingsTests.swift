@@ -27,7 +27,7 @@ final class TokenizerTests: XCTestCase {
 
         let api = HubApi(hfToken: "xxx")
         let textModel = try await TextEncoder(
-            modelName: "unum-cloud/uform-vl2-english-small",
+            modelName: "unum-cloud/uform2-vl-english-small",
             hubApi: api
         )
 
@@ -78,11 +78,11 @@ final class TokenizerTests: XCTestCase {
         // A better option is to fetch directly from HuggingFace, similar to how users would do that:
         let api = HubApi(hfToken: "xxx")
         let textModel = try await TextEncoder(
-            modelName: "unum-cloud/uform-vl2-english-small",
+            modelName: "unum-cloud/uform2-vl-english-small",
             hubApi: api
         )
         let imageModel = try await ImageEncoder(
-            modelName: "unum-cloud/uform-vl2-english-small",
+            modelName: "unum-cloud/uform2-vl-english-small",
             hubApi: api
         )
 

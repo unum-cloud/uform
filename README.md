@@ -20,9 +20,11 @@ For Content Understanding and Generation<br/>
 <p align="center">
 Multimodal Embeddings from 64 to 768 Dimensions • 1B Parameter Chat
 <br/>
-Short Texts • Images • 🔜 Video Clips
+Short Texts • Images • 🔜 Video Clips • 🔜 Long Documents
 <br/>
-PyTorch • ONNX
+ONNX • CoreML • PyTorch
+<br/>
+Python • JavaScript • Swift
 </p>
 
 ---
@@ -279,7 +281,7 @@ The generative model can be used to caption images, summarize their content, or 
 The exact behavior is controlled by prompts.
 
 ```python
-from uform.gen_model import VLMForCausalLM, VLMProcessor
+from uform.torch_decoders import VLMForCausalLM, VLMProcessor
 
 model = VLMForCausalLM.from_pretrained('unum-cloud/uform-gen')
 processor = VLMProcessor.from_pretrained('unum-cloud/uform-gen')
