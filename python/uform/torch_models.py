@@ -364,8 +364,9 @@ class TextVisualEncoder(nn.Module):
         """
 
         super().__init__()
-        self._embedding_dim = config["text_encoder"]["embedding_dim"]
+        config["text_encoder"].pop("tokenizer_class", None)
 
+        self._embedding_dim = config["text_encoder"]["embedding_dim"]
         self.text_encoder = TextEncoder(**config["text_encoder"])
         self.image_encoder = VisualEncoder(**config["image_encoder"])
 

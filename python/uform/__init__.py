@@ -11,14 +11,14 @@ class Modality(Enum):
     IMAGE = "image"
 
 
-def get_checkpoint(model_name: str, token: Optional[str], modalities: Tuple[str]) -> Tuple[str, Mapping, str]:
+def get_checkpoint(model_name: str, token: Optional[str], modalities: Tuple[str, Modality]) -> Tuple[str, Mapping, str]:
     import torch
 
     # It is not recommended to use `.pth` extension when checkpointing models
     # because it collides with Python path (`.pth`) configuration files.
-    merged_model_names = ["torch_weight.pt", "weights.pt", "model.pt"]
-    separate_modality_names = [str(x) + ".pt" for x in modalities]
-    config_names = ["config.json", "torch_config.json"]
+    merged_model_names = ["torch_weight.pt", "weight.pt", "model.pt"]
+    separate_modality_names = [(x.value if isinstance(x, Modality) else x) + ".pt" for x in modalities]
+    config_names = ["torch_config.json", "config.json"]
     tokenizer_names = ["tokenizer.json"]
 
     # The download stats depend on the number of times the `config.json` is pulled
@@ -75,8 +75,8 @@ def get_model(model_name: str, token: Optional[str] = None, modalities: Optional
         config = load(f)
 
     model = TextVisualEncoder(config, tokenizer_path)
-    model.image_encoder.load_state_dict(state["image_encoder"])
-    model.text_encoder.load_state_dict(state["text_encoder"])
+    model.image_encoder.load_state_dict(state.get("image_encoder", None))
+    model.text_encoder.load_state_dict(state.get("text_encoder", None))
     processor = TorchProcessor(config, tokenizer_path)
 
     return model.eval(), processor
