@@ -15,7 +15,7 @@ from transformers.models.auto.modeling_auto import (AutoModel,
 from transformers.processing_utils import ProcessorMixin
 from transformers.tokenization_utils_base import BatchEncoding
 
-from uform.models import VisualEncoder
+from uform.torch_models import VisualEncoder
 
 IMAGENET_MEAN = (0.48145466, 0.4578275, 0.40821073)
 IMAGENET_STD = (0.26862954, 0.26130258, 0.27577711)
