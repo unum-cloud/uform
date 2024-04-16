@@ -8,3 +8,4 @@ package-lock.json
 __pycache__
 .build
 .swiftpm
+node_modules

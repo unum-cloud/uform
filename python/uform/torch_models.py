@@ -353,7 +353,7 @@ class VisualEncoder(nn.Module):
         return embeddings
 
 
-class VLM(nn.Module):
+class TextVisualEncoder(nn.Module):
     """
     Vision-Language Model for Multimodal embeddings.
     """
@@ -503,3 +503,6 @@ class VLM(nn.Module):
     def multimodal_embedding_dim(self) -> int:
         """Dimensionality of multimodal joint embedding."""
         return self.text_encoder.dim
+
+
+VLM = TextVisualEncoder  # legacy
