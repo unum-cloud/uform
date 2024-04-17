@@ -11,7 +11,6 @@ import Foundation
 import Hub  // `Config`
 import Tokenizers  // `AutoTokenizer`
 
-
 enum EncoderError: Error {
     case configLoadingError(String)
     case modelLoadingError(String)
@@ -20,7 +19,6 @@ enum EncoderError: Error {
     case unsupportedShapeConstraint
     case modelPredictionFailed(String)
 }
-
 
 public enum Embedding {
     case i32s([Int32])
@@ -116,16 +114,22 @@ public class TextEncoder {
         let finalConfigPath = configPath ?? modelPath + "/config.json"
         let finalTokenizerPath = tokenizerPath ?? modelPath + "/tokenizer.json"
         self.model = try readModel(fromPath: modelPath)
-        self.processor = try TextProcessor(configPath: finalConfigPath, tokenizerPath: finalTokenizerPath, model: self.model)
+        self.processor = try TextProcessor(
+            configPath: finalConfigPath,
+            tokenizerPath: finalTokenizerPath,
+            model: self.model
+        )
     }
 
-    
     public init(modelName: String, hubApi: HubApi = .shared) async throws {
         let repo = Hub.Repo(id: modelName)
-        let modelURL = try await hubApi.snapshot(from: repo, matching: ["text.mlpackage/*", "config.json", "tokenizer.json"])
+        let modelURL = try await hubApi.snapshot(
+            from: repo,
+            matching: ["text_encoder.mlpackage/*", "config.json", "tokenizer.json"]
+        )
         let configPath = modelURL.appendingPathComponent("config.json").path
         let tokenizerPath = modelURL.appendingPathComponent("tokenizer.json").path
-        self.model = try readModel(fromURL: modelURL.appendingPathComponent("text.mlpackage", isDirectory: true))
+        self.model = try readModel(fromURL: modelURL.appendingPathComponent("text_encoder.mlpackage", isDirectory: true))
         self.processor = try TextProcessor(configPath: configPath, tokenizerPath: tokenizerPath, model: self.model)
     }
 
@@ -158,12 +162,12 @@ public class ImageEncoder {
 
     public init(modelName: String, hubApi: HubApi = .shared) async throws {
         let repo = Hub.Repo(id: modelName)
-        let modelURL = try await hubApi.snapshot(from: repo, matching: ["image.mlpackage/*", "config.json"])
+        let modelURL = try await hubApi.snapshot(from: repo, matching: ["image_encoder.mlpackage/*", "config.json"])
         let configPath = modelURL.appendingPathComponent("config.json").path
-        self.model = try readModel(fromURL: modelURL.appendingPathComponent("image.mlpackage", isDirectory: true))
+        self.model = try readModel(fromURL: modelURL.appendingPathComponent("image_encoder.mlpackage", isDirectory: true))
         self.processor = try ImageProcessor(configPath: configPath)
     }
-    
+
     public func forward(with image: CGImage) throws -> Embedding {
         let inputFeatureProvider = try self.processor.preprocess(image)
         let prediction = try self.model.prediction(from: inputFeatureProvider)
@@ -240,7 +244,7 @@ class ImageProcessor {
         if let imageEncoderConfig = configDict["image_encoder"] as? [String: Any] {
             configDict = imageEncoderConfig
         }
-        
+
         let config = Config(configDict)
         self.imageSize = config.imageSize!.intValue!
     }

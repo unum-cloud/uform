@@ -1,10 +1,22 @@
 import CoreGraphics
+import Hub
 import ImageIO
 import UForm
-import Hub
 import XCTest
 
 final class TokenizerTests: XCTestCase {
+
+    var hfToken: String?
+
+    override func setUp() {
+        super.setUp()
+        // Attempt to load the Hugging Face token from the `.hf_token` file in the current directory
+        let fileURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(".hf_token")
+        if let token = try? String(contentsOf: fileURL, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+        {
+            hfToken = token
+        }
+    }
 
     func cosineSimilarity<T: FloatingPoint>(between vectorA: [T], and vectorB: [T]) -> T {
         guard vectorA.count == vectorB.count else {
@@ -23,9 +35,9 @@ final class TokenizerTests: XCTestCase {
         return dotProduct / (magnitudeA * magnitudeB)
     }
 
-    func testTextEmbeddings() async throws {
+    func testTextEmbeddings(forModel modelName: String) async throws {
 
-        let api = HubApi(hfToken: "xxx")
+        let api = HubApi(hfToken: hfToken)
         let textModel = try await TextEncoder(
             modelName: "unum-cloud/uform3-image-text-english-small",
             hubApi: api
@@ -60,29 +72,35 @@ final class TokenizerTests: XCTestCase {
         )
     }
 
-    func testImageEmbeddings() async throws {
+    func testTextEmbeddings() async throws {
+        for model in ["unum-cloud/uform3-image-text-english-small"] {
+            try await testTextEmbeddings(forModel: model)
+        }
+    }
+
+    func testImageEmbeddings(forModel modelName: String) async throws {
 
         // One option is to use a local model repository.
         //
         //        let root = "uform/"
         //        let textModel = try TextEncoder(
-        //            modelPath: root + "uform-vl-english-large-text.mlpackage",
+        //            modelPath: root + "uform-vl-english-large-text_encoder.mlpackage",
         //            configPath: root + "uform-vl-english-large-text.json",
         //            tokenizerPath: root + "uform-vl-english-large-text.tokenizer.json"
         //        )
         //        let imageModel = try ImageEncoder(
-        //            modelPath: root + "uform-vl-english-large-image.mlpackage",
+        //            modelPath: root + "uform-vl-english-large-image_encoder.mlpackage",
         //            configPath: root + "uform-vl-english-large-image.json"
         //        )
         //
         // A better option is to fetch directly from HuggingFace, similar to how users would do that:
-        let api = HubApi(hfToken: "xxx")
+        let api = HubApi(hfToken: hfToken)
         let textModel = try await TextEncoder(
-            modelName: "unum-cloud/uform3-image-text-english-small",
+            modelName: modelName,
             hubApi: api
         )
         let imageModel = try await ImageEncoder(
-            modelName: "unum-cloud/uform3-image-text-english-small",
+            modelName: modelName,
             hubApi: api
         )
 
@@ -140,6 +158,12 @@ final class TokenizerTests: XCTestCase {
                 pairSimilarity > otherImageSimilarities.max()!,
                 "Text should be more similar to its corresponding image than to other texts."
             )
+        }
+    }
+
+    func testImageEmbeddings() async throws {
+        for model in ["unum-cloud/uform3-image-text-english-small"] {
+            try await testImageEmbeddings(forModel: model)
         }
     }
 

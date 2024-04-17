@@ -42,7 +42,8 @@
         "uform",
         "unimodal",
         "unsqueeze",
-        "Vardanian"
+        "Vardanian",
+        "whitespaces"
     ],
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"

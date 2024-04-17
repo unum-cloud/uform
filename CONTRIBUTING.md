@@ -20,6 +20,13 @@ pytest python/scripts/ -s -x -Wd -v -k onnx # To run only ONNX tests without loa
 
 ## Swift
 
+To build and test the Swift package, use the following command:
+
+```bash
+swift build
+swift test
+```
+
 Swift formatting is enforced with `swift-format` default utility from Apple.
 To install and run it on all the files in the project, use the following command:
 
