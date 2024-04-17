@@ -19,7 +19,7 @@ import UForm
 ### Text Embeddings
 
 ```swift
-let textModel = try await TextEncoder(modelName: "unum-cloud/uform2-vl-english-small")
+let textModel = try await TextEncoder(modelName: "unum-cloud/uform3-image-text-english-small")
 let text = "A group of friends enjoy a barbecue on a sandy beach, with one person grilling over a large black grill, while the other sits nearby, laughing and enjoying the camaraderie."
 let textEmbedding: Embedding = try textModel.forward(with: text)
 let textVector: [Float32] = textEmbedding.asFloats()
@@ -28,7 +28,7 @@ let textVector: [Float32] = textEmbedding.asFloats()
 ### Image Embeddings
 
 ```swift
-let imageModel = try await ImageEncoder(modelName: "unum-cloud/uform2-vl-english-small")
+let imageModel = try await ImageEncoder(modelName: "unum-cloud/uform3-image-text-english-small")
 let imageURL = "https://github.com/ashvardanian/ashvardanian/blob/master/demos/bbq-on-beach.jpg?raw=true"
 guard let url = URL(string: imageURL),
     let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),

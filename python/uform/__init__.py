@@ -1,6 +1,6 @@
 from json import load
 from os.path import join, exists
-from typing import Mapping, Optional, Tuple
+from typing import Dict, Optional, Tuple, Literal
 from enum import Enum
 
 from huggingface_hub import snapshot_download
@@ -9,15 +9,38 @@ from huggingface_hub import snapshot_download
 class Modality(Enum):
     TEXT_ENCODER = "text_encoder"
     IMAGE_ENCODER = "image_encoder"
+    VIDEO_ENCODER = "video_encoder"
+    TEXT_DECODER = "text_decoder"
 
 
-def get_checkpoint(model_name: str, token: Optional[str], modalities: Tuple[str, Modality]) -> Tuple[str, Mapping, str]:
-    import torch
+def normalize_modalities(modalities: Tuple[str, Modality]) -> Tuple[Modality]:
+    if modalities is None:
+        return (Modality.TEXT_ENCODER, Modality.IMAGE_ENCODER, Modality.TEXT_DECODER, Modality.VIDEO_ENCODER)
+
+    return tuple(x if isinstance(x, Modality) else Modality(x) for x in modalities)
+
+
+def get_checkpoint(
+    model_name: str,
+    modalities: Tuple[str, Modality],
+    token: Optional[str] = None,
+    format: Literal[".pt", ".onnx"] = ".pt",
+) -> Tuple[str, Dict[Modality, str], Optional[str]]:
+    """Downloads a model checkpoint from the Hugging Face Hub.
+
+    :param model_name: The name of the model to download, like `unum-cloud/uform3-image-text-english-small`
+    :param token: The Hugging Face API token, if required
+    :param modalities: The modalities to download, like `("text_encoder", "image_encoder")`
+    :param format: The format of the model checkpoint, either `.pt` or `.onnx`
+    :return: A tuple of the config path, dictionary of paths to different modalities, and tokenizer path
+    """
+
+    modalities = normalize_modalities(modalities)
 
     # It is not recommended to use `.pth` extension when checkpointing models
     # because it collides with Python path (`.pth`) configuration files.
-    merged_model_names = ["torch_weight.pt", "weight.pt", "model.pt"]
-    separate_modality_names = [(x.value if isinstance(x, Modality) else x) + ".pt" for x in modalities]
+    merged_model_names = [x + format for x in ["torch_weight", "weight", "model"]]
+    separate_modality_names = [(x.value if isinstance(x, Modality) else x) + format for x in modalities]
     config_names = ["torch_config.json", "config.json"]
     tokenizer_names = ["tokenizer.json"]
 
@@ -45,65 +68,58 @@ def get_checkpoint(model_name: str, token: Optional[str], modalities: Tuple[str,
 
     # Ideally, we want to separately fetch all the models.
     # If those aren't available, aggregate separate modalities and merge them.
-    state = None
+    modality_paths = None
     for file_name in merged_model_names:
         if exists(join(model_path, file_name)):
-            state = torch.load(join(model_path, file_name))
+            modality_paths = join(model_path, file_name)
             break
 
-    if state is None:
-        state = {}
-        for file_name in separate_modality_names:
-            if exists(join(model_path, file_name)):
-                modality_name, _, _ = file_name.partition(".")
-                property_name = modality_name + "_encoder"
-                state[property_name] = torch.load(join(model_path, file_name))
+    if modality_paths is None:
+        modality_paths = {}
+        for separate_modality_name in separate_modality_names:
+            if exists(join(model_path, separate_modality_name)):
+                modality_name, _, _ = separate_modality_name.partition(".")
+                modality_paths[Modality(modality_name)] = join(model_path, separate_modality_name)
 
-    return config_path, state, tokenizer_path
+    return config_path, modality_paths, tokenizer_path
 
 
-def get_model(model_name: str, token: Optional[str] = None, modalities: Optional[Tuple[str]] = None):
-    from python.uform.torch_encoders import TextVisualEncoder
-    from python.uform.torch_processors import TorchProcessor
+def get_model(
+    model_name: str,
+    *,
+    token: Optional[str] = None,
+    modalities: Optional[Tuple[str]] = None,
+):
+    from uform.torch_encoders import TextVisualEncoder
+    from uform.torch_processors import TorchProcessor
 
-    if modalities is None:
-        modalities = (Modality.TEXT, Modality.IMAGE)
+    config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, token, modalities, format=".pt")
+    modality_paths = (
+        {k.value: v for k, v in modality_paths.items()} if isinstance(modality_paths, dict) else modality_paths
+    )
 
-    config_path, state, tokenizer_path = get_checkpoint(model_name, token, modalities)
-
-    with open(config_path) as f:
-        config = load(f)
-
-    model = TextVisualEncoder(config, tokenizer_path)
-    model.image_encoder.load_state_dict(state.get("image_encoder", None))
-    model.text_encoder.load_state_dict(state.get("text_encoder", None))
-    processor = TorchProcessor(config, tokenizer_path)
+    model = TextVisualEncoder(config_path, modality_paths)
+    processor = TorchProcessor(config_path, tokenizer_path)
 
     return model.eval(), processor
 
 
-def get_model_onnx(model_name: str, device: str, dtype: str, token: Optional[str] = None):
-    from python.uform.onnx_encoders import TextVisualEncoder
-    from python.uform.numpy_processors import NumPyProcessor
+def get_model_onnx(
+    model_name: str,
+    *,
+    device: Literal["cpu", "cuda"] = "cpu",
+    token: Optional[str] = None,
+    modalities: Optional[Tuple[str]] = None,
+):
+    from uform.onnx_encoders import TextVisualEncoder
+    from uform.numpy_processors import NumPyProcessor
 
-    assert device in (
-        "cpu",
-        "gpu",
-    ), f"Invalid `device`: {device}. Must be either `cpu` or `gpu`"
-    assert dtype in (
-        "fp32",
-        "fp16",
-    ), f"Invalid `dtype`: {dtype}. Must be either `fp32` or `fp16` (only for gpu)"
-    assert (
-        device == "cpu" and dtype == "fp32"
-    ) or device == "gpu", "Combination `device`=`cpu` & `dtype=fp16` is not supported"
+    config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, token, modalities, format=".onnx")
+    modality_paths = (
+        {k.value: v for k, v in modality_paths.items()} if isinstance(modality_paths, dict) else modality_paths
+    )
 
-    model_path = snapshot_download(repo_id=f"{model_name}-{device}-{dtype}", token=token)
-
-    with open(join(model_path, "config.json")) as f:
-        config = load(f)
-
-    model = TextVisualEncoder(model_path, config, device, dtype)
-    processor = NumPyProcessor(config, join(model_path, "tokenizer.json"))
+    model = TextVisualEncoder(config_path, modality_paths, device=device)
+    processor = NumPyProcessor(config_path, tokenizer_path)
 
     return model, processor

@@ -11,6 +11,17 @@ import Foundation
 import Hub  // `Config`
 import Tokenizers  // `AutoTokenizer`
 
+
+enum EncoderError: Error {
+    case configLoadingError(String)
+    case modelLoadingError(String)
+    case unsupportedDataType
+    case invalidInput
+    case unsupportedShapeConstraint
+    case modelPredictionFailed(String)
+}
+
+
 public enum Embedding {
     case i32s([Int32])
     case f16s([Float16])

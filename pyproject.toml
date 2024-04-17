@@ -31,7 +31,8 @@ classifiers = [
 dependencies = [
     "huggingface_hub>=0.16.4",
     "tokenizers>=0.13.3",
-    "pillow"
+    "pillow",
+    "simsimd",
 ]
 description = "Pocket-Sized Multimodal AI for Content Understanding and Generation"
 maintainers = [

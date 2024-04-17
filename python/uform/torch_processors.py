@@ -1,5 +1,6 @@
 from os import PathLike
 from typing import Dict, List, Union
+import json
 
 import torch
 from PIL.Image import Image
@@ -15,19 +16,20 @@ from torchvision.transforms import (
 )
 
 
-# lambda is not pickable
+# lambda is not pickle-able
 def convert_to_rgb(image):
     return image.convert("RGB")
 
 
 class TorchProcessor:
-    def __init__(self, config: Dict, tokenizer_path: PathLike):
+    def __init__(self, config_path: PathLike, tokenizer_path: PathLike):
         """
         :param config: model config
         :param tokenizer_path: path to tokenizer file
         :param tensor_type: which tensors to return, either pt (PyTorch) or np (NumPy)
         """
 
+        config = json.load(open(config_path, "r"))
         self._image_size = config["image_encoder"]["image_size"]
         self._max_seq_len = config["text_encoder"]["max_position_embeddings"]
         self._tokenizer = Tokenizer.from_file(tokenizer_path)
