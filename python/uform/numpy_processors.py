@@ -7,25 +7,20 @@ from tokenizers import Tokenizer
 import numpy as np
 
 
-class NumPyProcessor:
+class TextProcessor:
     def __init__(self, config_path: PathLike, tokenizer_path: PathLike):
         """
         :param config: model config
         :param tokenizer_path: path to tokenizer file
-        :param tensor_type: which tensors to return, either pt (PyTorch) or np (NumPy)
         """
 
         config = json.load(open(config_path, "r"))
-        self._image_size = config["image_encoder"]["image_size"]
         self._max_seq_len = config["text_encoder"]["max_position_embeddings"]
         self._tokenizer = Tokenizer.from_file(tokenizer_path)
         self._tokenizer.no_padding()
         self._pad_token_idx = config["text_encoder"]["padding_idx"]
 
-        self.image_mean = np.array([0.48145466, 0.4578275, 0.40821073], dtype=np.float32)[None, None]
-        self.image_std = np.array([0.26862954, 0.26130258, 0.27577711], dtype=np.float32)[None, None]
-
-    def preprocess_text(self, texts: Union[str, List[str]]) -> Dict[str, np.ndarray]:
+    def __call__(self, texts: Union[str, List[str]]) -> Dict[str, np.ndarray]:
         """Transforms one or more strings into dictionary with tokenized strings and attention masks.
 
         :param texts: text of list of texts to tokenizer
@@ -53,7 +48,28 @@ class NumPyProcessor:
 
         return {"input_ids": input_ids, "attention_mask": attention_mask}
 
-    def preprocess_image(self, images: Union[Image, List[Image]]) -> np.ndarray:
+
+class ImageProcessor:
+    def __init__(self, config_path: PathLike, tokenizer_path: PathLike):
+        """
+        :param config: model config
+        :param tokenizer_path: path to tokenizer file
+        :param tensor_type: which tensors to return, either pt (PyTorch) or np (NumPy)
+        """
+
+        config = json.load(open(config_path, "r"))
+        self._image_size = config["image_encoder"]["image_size"]
+        self._normalization_means = config["image_encoder"]["normalization_means"]
+        self._normalization_deviations = config["image_encoder"]["normalization_deviations"]
+
+        assert isinstance(self._image_size, int) and self._image_size > 0
+        assert isinstance(self._normalization_means, list) and isinstance(self._normalization_deviations, list)
+        assert len(self._normalization_means) == len(self._normalization_deviations) == 3
+
+        self.image_mean = np.array(self._normalization_means, dtype=np.float32)[None, None]
+        self.image_std = np.array(self._normalization_deviations, dtype=np.float32)[None, None]
+
+    def __call__(self, images: Union[Image, List[Image]]) -> np.ndarray:
         """Transforms one or more Pillow images into Torch Tensors.
 
         :param images: image or list of images to preprocess
