@@ -40,9 +40,23 @@ As there is no standard for Swift formatting, even Apple's own `swift-format` to
 
 ## JavaScript
 
+For rapid development you can avoid the TypeScript precompilation step:
+
+```sh
+npm install -g ts-node
+ts-node javascript/embeddings.mts
+```
+
 Before submitting any changes, please make sure that the tests pass.
 
 ```sh
 npm install
+npm run build
 npm run test
 ```
+
+```
+tsc
+node node_build/embeddings.mjs
+```
+

@@ -1,5 +1,6 @@
 {
   "name": "uform",
+  "type": "module",
   "private": true,
   "version": "2.0.2",
   "description": "Pocket-Sized Multimodal AI for Content Understanding and Generation",
@@ -9,19 +10,22 @@
     "onnxruntime-web": "^1.17.3"
   },
   "devDependencies": {
-    "typescript": "^4.0.5",
-    "ts-node": "^9.0.0",
-    "@types/node": "^14.14.7"
+    "nodemon": "^2.0.15"
   },
   "scripts": {
-    "build": "tsc",
-    "test": "ts-node javascript/encoders_test.ts"
+    "start": "node javascript/encoders.mjs",
+    "test": "node javascript/encoders_test.js"
   },
-  "main": "node_build/encoders.js",
+  "main": "javascript/encoders.mjs",
   "directories": {
     "doc": "docs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": [
+    "AI",
+    "multimodal",
+    "content generation",
+    "huggingface"
+  ],
+  "author": "Ash Vardanian, Unum Cloud",
+  "license": "Apache-2.0"
 }
