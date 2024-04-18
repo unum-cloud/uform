@@ -90,7 +90,7 @@ def get_model(
     token: Optional[str] = None,
     modalities: Optional[Tuple[str]] = None,
 ):
-    from uform.torch_encoders import TextVisualEncoder
+    from uform.torch_encoders import TextImageEncoder
     from uform.torch_processors import TorchProcessor
 
     config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, token, modalities, format=".pt")
@@ -98,7 +98,7 @@ def get_model(
         {k.value: v for k, v in modality_paths.items()} if isinstance(modality_paths, dict) else modality_paths
     )
 
-    model = TextVisualEncoder(config_path, modality_paths)
+    model = TextImageEncoder(config_path, modality_paths)
     processor = TorchProcessor(config_path, tokenizer_path)
 
     return model.eval(), processor
@@ -111,7 +111,7 @@ def get_model_onnx(
     token: Optional[str] = None,
     modalities: Optional[Tuple[str]] = None,
 ):
-    from uform.onnx_encoders import TextVisualEncoder
+    from uform.onnx_encoders import TextImageEncoder
     from uform.numpy_processors import NumPyProcessor
 
     config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, token, modalities, format=".onnx")
@@ -119,7 +119,7 @@ def get_model_onnx(
         {k.value: v for k, v in modality_paths.items()} if isinstance(modality_paths, dict) else modality_paths
     )
 
-    model = TextVisualEncoder(config_path, modality_paths, device=device)
+    model = TextImageEncoder(config_path, modality_paths, device=device)
     processor = NumPyProcessor(config_path, tokenizer_path)
 
     return model, processor

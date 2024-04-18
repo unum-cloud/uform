@@ -20,7 +20,7 @@ from transformers.models.auto.modeling_auto import AutoModel, AutoModelForCausal
 from transformers.processing_utils import ProcessorMixin
 from transformers.tokenization_utils_base import BatchEncoding
 
-from uform.torch_encoders import VisualEncoder
+from uform.torch_encoders import ImageEncoder
 
 IMAGENET_MEAN = (0.48145466, 0.4578275, 0.40821073)
 IMAGENET_STD = (0.26862954, 0.26130258, 0.27577711)
@@ -143,7 +143,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
         self.text_config.vocab_size += 3
         self.text_decoder = AutoModelForCausalLM.from_config(self.text_config)
 
-        self.image_encoder = VisualEncoder(
+        self.image_encoder = ImageEncoder(
             self.config.image_encoder_hidden_size,
             self.config.image_encoder_patch_size,
             self.config.image_size,

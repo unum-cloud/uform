@@ -133,7 +133,7 @@ class TextEncoderBlock(nn.Module):
 
 
 @dataclass(eq=False)
-class VisualEncoderBlock(nn.Module):
+class ImageEncoderBlock(nn.Module):
     dim: int
     num_heads: int
 
@@ -293,7 +293,7 @@ class TextEncoder(nn.Module):
 
 
 @dataclass(eq=False)
-class VisualEncoder(nn.Module):
+class ImageEncoder(nn.Module):
     dim: int
     patch_size: int
     image_size: int
@@ -315,7 +315,7 @@ class VisualEncoder(nn.Module):
             self.reg_token = nn.Parameter(torch.zeros(1, self.num_reg_tokens, self.dim))
 
         self.blocks = nn.Sequential(
-            *[VisualEncoderBlock(self.dim, self.num_heads) for _ in range(self.num_layers)],
+            *[ImageEncoderBlock(self.dim, self.num_heads) for _ in range(self.num_layers)],
         )
 
         self.norm = nn.LayerNorm(self.dim, eps=1e-6)
@@ -354,7 +354,7 @@ class VisualEncoder(nn.Module):
         return embeddings
 
 
-class TextVisualEncoder(nn.Module):
+class TextImageEncoder(nn.Module):
     """
     Vision-Language Model for Multimodal embeddings.
     """
@@ -379,11 +379,11 @@ class TextVisualEncoder(nn.Module):
         # Both `text_encoder` and `image_encoder` are data-classes, so we must strip
         # all the non-member attributes before initializing the classes.
         text_fields = TextEncoder.__dataclass_fields__
-        image_fields = VisualEncoder.__dataclass_fields__
+        image_fields = ImageEncoder.__dataclass_fields__
         text_encoder_attrs = {k: v for k, v in config["text_encoder"].items() if k in text_fields}
         image_encoder_attrs = {k: v for k, v in config["image_encoder"].items() if k in image_fields}
         self.text_encoder = TextEncoder(**text_encoder_attrs)
-        self.image_encoder = VisualEncoder(**image_encoder_attrs)
+        self.image_encoder = ImageEncoder(**image_encoder_attrs)
 
         # Load pre-trained weights
         if modality_paths is not None:
@@ -535,4 +535,4 @@ class TextVisualEncoder(nn.Module):
         return self.text_encoder.dim
 
 
-VLM = TextVisualEncoder  # legacy
+VLM = TextImageEncoder  # legacy

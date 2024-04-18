@@ -1,8 +1,20 @@
 {
     "compilerOptions": {
-        "target": "ES5",
         "module": "CommonJS",
-        "outDir": "node_build",
-        "sourceMap": true
-    }
+        "target": "ES2018",
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "outDir": "dist",
+        "allowImportingTsExtensions": true,
+        "paths": {
+            "*": [
+                "node_modules/*",
+                "javascript/*"
+            ]
+        }
+    },
+    "include": [
+        "javascript/**/*"
+    ]
 }

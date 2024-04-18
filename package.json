@@ -1,11 +1,27 @@
 {
-    "name": "uform",
-    "private": true,
-    "version": "2.0.2",
-    "description": "Pocket-Sized Multimodal AI for Content Understanding and Generation",
-    "dependencies": {
-        "@huggingface/hub": "^0.14.8",
-        "@xenova/transformers": "^2.17.0",
-        "onnxruntime-web": "^1.17.3"
-    }
+  "name": "uform",
+  "private": true,
+  "version": "2.0.2",
+  "description": "Pocket-Sized Multimodal AI for Content Understanding and Generation",
+  "dependencies": {
+    "@huggingface/hub": "^0.14.8",
+    "@xenova/transformers": "^2.17.0",
+    "onnxruntime-web": "^1.17.3"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.5",
+    "ts-node": "^9.0.0",
+    "@types/node": "^14.14.7"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "ts-node javascript/encoders_test.ts"
+  },
+  "main": "node_build/encoders.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

@@ -58,7 +58,7 @@ def available_providers(device: Optional[str]) -> Tuple[str, ...]:
     return (device,)
 
 
-class VisualEncoder:
+class ImageEncoder:
     def __init__(self, model_path: str, device: str):
         """
         :param model_path: Path to onnx model
@@ -99,7 +99,7 @@ class TextEncoder:
         return self.text_encoder_session.run(None, {"input_ids": input_ids, "attention_mask": attention_mask})
 
 
-class TextVisualEncoder:
+class TextImageEncoder:
     def __init__(
         self,
         config_path: PathLike,
@@ -123,7 +123,7 @@ class TextVisualEncoder:
         text_encoder_path = modality_paths.get("text_encoder", None)
         image_encoder_path = modality_paths.get("image_encoder", None)
         self.text_encoder = TextEncoder(text_encoder_path, device) if text_encoder_path else None
-        self.image_encoder = VisualEncoder(image_encoder_path, device) if image_encoder_path else None
+        self.image_encoder = ImageEncoder(image_encoder_path, device) if image_encoder_path else None
 
     def encode_image(
         self,
@@ -200,4 +200,4 @@ class TextVisualEncoder:
         return self._text_encoder_dim
 
 
-VLM_ONNX = TextVisualEncoder  # legacy
+VLM_ONNX = TextImageEncoder  # legacy
