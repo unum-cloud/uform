@@ -8,9 +8,13 @@ __pycache__
 .build
 .swiftpm
 .hf_token
-node_modules
 
 # Tensors & ML Model
 *.onnx
 *.pt
 *.safetensors
+
+# NodeJS
+node_modules
+node_build
+yarn-error.log

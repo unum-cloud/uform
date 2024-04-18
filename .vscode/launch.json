@@ -10,6 +10,16 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+        },
+        {
+            "name": "NodeJS Debugger",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/javascript/embeddings.ts",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": [
+                "${workspaceFolder}/node_build/**/*.js"
+            ]
         }
     ]
 }

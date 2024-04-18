@@ -30,3 +30,12 @@ swift-format . -i -r
 
 The style is controlled by the `.swift-format` JSON file in the root of the repository.
 As there is no standard for Swift formatting, even Apple's own `swift-format` tool and Xcode differ in their formatting rules, and available settings.
+
+## JavaScript
+
+Before submitting any changes, please make sure that the tests pass.
+
+```sh
+npm install
+npm run test
+```
