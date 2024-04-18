@@ -29,13 +29,13 @@ let package = Package(
                 .product(name: "Transformers", package: "swift-transformers")
             ],
             path: "swift",
-            exclude: ["EmbeddingsTests.swift"]
+            exclude: ["EncodersTests.swift"]
         ),
         .testTarget(
             name: "UFormTests",
             dependencies: ["UForm"],
             path: "swift",
-            sources: ["EmbeddingsTests.swift"]
+            sources: ["EncodersTests.swift"]
         ),
     ]
 )

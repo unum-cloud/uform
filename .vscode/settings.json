@@ -1,8 +1,10 @@
 {
     "cSpell.words": [
         "arange",
+        "astype",
         "CFURL",
         "coreml",
+        "crossattn",
         "cumsum",
         "dtype",
         "embs",
@@ -25,17 +27,23 @@
         "pretrained",
         "probs",
         "pypi",
+        "pytest",
+        "randn",
         "rerank",
         "reranker",
         "reranking",
+        "sandbeach",
         "sess",
         "SIMD",
         "softmax",
+        "Tensorrt",
+        "torchvision",
         "transfromers",
         "uform",
         "unimodal",
         "unsqueeze",
-        "Vardanian"
+        "Vardanian",
+        "whitespaces"
     ],
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"

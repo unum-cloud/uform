@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from os import PathLike
 from typing import Dict, Optional, Tuple, Union
+import json
 
 import torch
 import torch.nn as nn
@@ -358,17 +359,45 @@ class TextVisualEncoder(nn.Module):
     Vision-Language Model for Multimodal embeddings.
     """
 
-    def __init__(self, config: Dict, tokenizer_path: PathLike):
-        """
-        :param config: Model config
+    def __init__(
+        self,
+        config_path: PathLike,
+        modality_paths: Union[Dict[str, PathLike], PathLike] = None,
+    ):
+        """Initializes the model with the configuration and pre-trained weights.
+
+        :param config_path: Path to the JSON model configuration file
+        :param modality_paths:  Dictionary with paths to different modalities,
+                                or a single path to the model checkpoint
         """
 
         super().__init__()
-        config["text_encoder"].pop("tokenizer_class", None)
 
+        config = json.load(open(config_path, "r"))
         self._embedding_dim = config["text_encoder"]["embedding_dim"]
-        self.text_encoder = TextEncoder(**config["text_encoder"])
-        self.image_encoder = VisualEncoder(**config["image_encoder"])
+
+        # Both `text_encoder` and `image_encoder` are data-classes, so we must strip
+        # all the non-member attributes before initializing the classes.
+        text_fields = TextEncoder.__dataclass_fields__
+        image_fields = VisualEncoder.__dataclass_fields__
+        text_encoder_attrs = {k: v for k, v in config["text_encoder"].items() if k in text_fields}
+        image_encoder_attrs = {k: v for k, v in config["image_encoder"].items() if k in image_fields}
+        self.text_encoder = TextEncoder(**text_encoder_attrs)
+        self.image_encoder = VisualEncoder(**image_encoder_attrs)
+
+        # Load pre-trained weights
+        if modality_paths is not None:
+            if isinstance(modality_paths, Union[PathLike, str]):
+                state = torch.load(modality_paths)
+                self.text_encoder.load_state_dict(state["text_encoder"])
+                self.image_encoder.load_state_dict(state["image_encoder"])
+            else:
+                text_encoder_path = modality_paths.get("text_encoder", None)
+                image_encoder_path = modality_paths.get("image_encoder", None)
+                if text_encoder_path:
+                    self.text_encoder.load_state_dict(torch.load(text_encoder_path))
+                if image_encoder_path:
+                    self.image_encoder.load_state_dict(torch.load(image_encoder_path))
 
     def encode_image(
         self,

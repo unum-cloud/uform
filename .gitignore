@@ -13,6 +13,7 @@ __pycache__
 *.onnx
 *.pt
 *.safetensors
+*.mlpackage
 
 # NodeJS
 node_modules
