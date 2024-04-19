@@ -1,3 +1,6 @@
+import { join } from "path"
+import { createWriteStream, existsSync, mkdirSync, writeFileSync } from "fs";
+
 import { downloadFile, listFiles } from "@huggingface/hub";
 
 const Modality = {
@@ -24,9 +27,13 @@ function normalizeModalities(modalities) {
     });
 }
 
-async function getCheckpoint(
-    modelId, modalities, token = null, format = '.onnx',
-) {
+async function ensureDirectoryExists(dirPath) {
+    if (!existsSync(dirPath)) {
+        mkdirSync(dirPath, { recursive: true });
+    }
+}
+
+async function getCheckpoint(modelId, modalities, token = null, format = '.onnx', saveDir = './models') {
     modalities = normalizeModalities(modalities);
 
     const configNames = ['config.json'];
@@ -40,24 +47,53 @@ async function getCheckpoint(
     let configPath = null;
     let tokenizerPath = null;
     const modalityPaths = {};
+    const modelSaveDir = join(saveDir, modelId);
+
+    await ensureDirectoryExists(modelSaveDir);
 
     const fileIterator = listFiles({ repo, recursive: true, credentials });
     for await (const file of fileIterator) {
         const fileName = file.path.split('/').pop();
         if (fileName && allowedPatterns.includes(fileName)) {
             const filePath = file.path;
+            const savePath = join(modelSaveDir, fileName);
+
             if (configNames.includes(fileName)) {
-                configPath = filePath;
+                configPath = savePath;
             } else if (tokenizerNames.includes(fileName)) {
-                tokenizerPath = filePath;
+                tokenizerPath = savePath;
             } else {
                 const modalityName = fileName.split('.')[0];
-                modalityPaths[modalityName] = filePath;
+                modalityPaths[modalityName] = savePath;
             }
 
             const response = await downloadFile({ repo, path: filePath, credentials });
             if (response) {
-                console.log(`Downloaded ${fileName} successfully to ${response.json()}`);
+                // HuggingFace might be defining the `env.localModelPath` variable
+                // to store the downloaded files in a local directory.
+                // Let's check if the file is there.
+                // const localPath = join(env.localModelPath, repo, filePath);
+                // if (existsSync(localPath)) {
+                //     console.log(`File already exists locally at ${localPath}`);
+                // }
+
+                if (response.body && response.body.pipe) {
+                    const fileStream = createWriteStream(savePath);
+                    response.body.pipe(fileStream);
+                    await new Promise((resolve, reject) => {
+                        fileStream.on('finish', resolve);
+                        fileStream.on('error', reject);
+                    });
+                } else if (response.arrayBuffer) {
+                    // Handle non-streamable response for environments like Node.js
+                    const buffer = await response.arrayBuffer();
+                    writeFileSync(savePath, Buffer.from(buffer));
+                } else {
+                    console.error('Unexpected response type');
+                }
+                console.log(`Downloaded ${fileName} successfully to ${savePath}`);
+            } else {
+                console.log('No response received for the file download request.');
             }
         }
     }

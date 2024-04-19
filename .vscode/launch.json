@@ -13,13 +13,9 @@
         },
         {
             "name": "NodeJS Debugger",
-            "type": "node",
+            "type": "node-terminal",
             "request": "launch",
-            "program": "${workspaceFolder}/javascript/embeddings.ts",
-            "preLaunchTask": "tsc: build - tsconfig.json",
-            "outFiles": [
-                "${workspaceFolder}/node_build/**/*.js"
-            ]
+            "command": "npm run test",
         }
     ]
 }

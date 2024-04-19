@@ -1,38 +1,97 @@
 import { readFileSync } from 'fs';
-import { InferenceSession } from 'onnxruntime-web';
-
+import { InferenceSession, Tensor } from 'onnxruntime-node';
 import { getCheckpoint, Modality } from "./hub.mjs";
-
-import { AutoTokenizer } from '@xenova/transformers';
+import { PreTrainedTokenizer } from '@xenova/transformers';
 
 
 class TextProcessor {
 
-    async init(configPath, tokenizerPath) {
-        const config = JSON.parse(readFileSync(configPath, { encoding: 'utf8' }));
-        this.maxSeqLen = config.text_encoder.max_position_embeddings;
-        this.padTokenIdx = config.text_encoder.padding_idx;
-        this.tokenizer = await AutoTokenizer.from_pretrained(tokenizerPath);
+    constructor(configPath, tokenizerPath) {
+        this.configPath = configPath;
+        this.tokenizerPath = tokenizerPath;
+
+        this.maxSeqLen = 0;
+        this.padTokenIdx = 0;
+        this.tokenizer = null;
     }
 
-    async processTexts(texts) {
-        if (typeof texts === 'string') {
-            texts = [texts];
-        }
+    async init() {
+        const config = JSON.parse(readFileSync(this.configPath, { encoding: 'utf8' }));
+        this.maxSeqLen = config.text_encoder.max_position_embeddings;
+        this.padTokenIdx = config.text_encoder.padding_idx;
 
-        const encoded = await this.tokenizer.encodeBatch(texts, {
+        const tokenizerConfig = JSON.parse(readFileSync(this.tokenizerPath, { encoding: 'utf8' }));
+        this.tokenizer = new PreTrainedTokenizer(tokenizerConfig, config.text_encoder);
+        this.tokenizer.model_max_length = this.maxSeqLen;
+        this.tokenizer.pad_token_id = this.padTokenIdx;
+    }
+
+    async process(texts) {
+
+        const encoded = await this.tokenizer(texts, {
             addSpecialTokens: true,
             returnAttentionMask: true,
             padding: 'max_length',
             max_length: this.maxSeqLen,
             truncation: true,
-            return_tensors: 'np'
         });
 
-        const inputIds = encoded.map(e => e.input_ids);
-        const attentionMask = encoded.map(e => e.attention_mask);
-        return { inputIds, attentionMask };
+        return {
+            'input_ids': encoded.input_ids,
+            'attention_mask': encoded.attention_mask,
+        };
     }
 }
 
-export { TextProcessor };
+class TextEncoder {
+
+    constructor(configPath, modelPath, tokenizerPath) {
+        this.configPath = configPath;
+        this.modelPath = modelPath;
+        this.tokenizerPath = tokenizerPath;
+
+        this.session = null;
+    }
+
+    async init() {
+        this.session = await InferenceSession.create(this.modelPath);
+    }
+
+    async forward(inputs) {
+        // Helper function to convert any BigInt64Array or other numeric arrays to Int32Array
+        function convertToCompatibleInt32(data) {
+            if (data instanceof Int32Array) {
+                return data; // Already the correct type
+            } else if (data instanceof BigInt64Array) {
+                // Convert BigInt64Array to Int32Array, ensuring values are within range
+                return new Int32Array(data.map(bigInt => {
+                    if (bigInt > 2147483647n || bigInt < -2147483648n) {
+                        throw new Error("Value out of range for Int32.");
+                    }
+                    return Number(bigInt); // Convert BigInt to Number and store in Int32Array
+                }));
+            } else if (Array.isArray(data) || data instanceof Uint32Array) {
+                // Convert other numeric array types to Int32Array
+                return new Int32Array(data.map(Number));
+            }
+            throw new Error("Unsupported data type for tensor conversion.");
+        }
+
+        // Prepare the tensor data using the helper function
+        const inputIDsData = convertToCompatibleInt32(inputs.input_ids.data);
+        const attentionMaskData = convertToCompatibleInt32(inputs.attention_mask.data);
+
+        // Create ONNX Tensors as int32
+        const inputIDs = new Tensor('int32', inputIDsData, inputs.input_ids.dims);
+        const attentionMask = new Tensor('int32', attentionMaskData, inputs.attention_mask.dims);
+
+        // Run the model inference
+        return this.session.run({
+            input_ids: inputIDs,
+            attention_mask: attentionMask,
+        });
+    }
+
+}
+
+export { TextProcessor, TextEncoder };

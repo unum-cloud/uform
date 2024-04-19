@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 
 import { getCheckpoint, Modality } from "./hub.mjs";
-import { TextProcessor } from "./encoders.mjs";
+import { TextProcessor, TextEncoder } from "./encoders.mjs";
 
 function assert(condition, message) {
     if (!condition) {
@@ -60,10 +60,15 @@ async function testTextEncoder() {
         assert(modalityPaths !== null, "Modality paths should not be null");
         assert(tokenizerPath !== null, "Tokenizer path should not be null");
 
-        const textProcessor = new TextProcessor();
-        await textProcessor.init(configPath, tokenizerPath);
-        const processedTexts = await textProcessor.processTexts(["Hello, world!", "Another example text."]);
+        const textProcessor = new TextProcessor(configPath, tokenizerPath);
+        await textProcessor.init();
+        const processedTexts = await textProcessor.process("Hello, world!");
         console.log(processedTexts);
+
+        const textEncoder = new TextEncoder(configPath, modalityPaths.text_encoder, tokenizerPath);
+        await textEncoder.init();
+        const output = await textEncoder.forward(processedTexts);
+        console.log(output);
 
         console.log("Test getCheckpoint: Success");
     } catch (error) {
