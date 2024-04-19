@@ -58,34 +58,36 @@ class TextEncoder {
     }
 
     async forward(inputs) {
-        // Helper function to convert any BigInt64Array or other numeric arrays to Int32Array
-        function convertToCompatibleInt32(data) {
+        // Helper function to convert BigInt64Array to Int32Array or validate Int32Array
+        function ensureInt32Array(data) {
             if (data instanceof Int32Array) {
-                return data; // Already the correct type
-            } else if (data instanceof BigInt64Array) {
-                // Convert BigInt64Array to Int32Array, ensuring values are within range
-                return new Int32Array(data.map(bigInt => {
+                return data; // Use as is if already Int32Array
+            }
+            if (data instanceof BigInt64Array) {
+                // Convert BigInt64Array to Int32Array, ensuring all values are in range
+                return new Int32Array(Array.from(data).map(bigInt => {
                     if (bigInt > 2147483647n || bigInt < -2147483648n) {
                         throw new Error("Value out of range for Int32.");
                     }
-                    return Number(bigInt); // Convert BigInt to Number and store in Int32Array
+                    return Number(bigInt); // Convert BigInt to Number
                 }));
-            } else if (Array.isArray(data) || data instanceof Uint32Array) {
-                // Convert other numeric array types to Int32Array
-                return new Int32Array(data.map(Number));
+            }
+            // Additional case: handle conversion from generic Arrays or other typed arrays to Int32Array
+            if (Array.isArray(data) || data instanceof Uint32Array || data instanceof Uint8Array) {
+                return new Int32Array(data); // Convert directly
             }
             throw new Error("Unsupported data type for tensor conversion.");
         }
 
-        // Prepare the tensor data using the helper function
-        const inputIDsData = convertToCompatibleInt32(inputs.input_ids.data);
-        const attentionMaskData = convertToCompatibleInt32(inputs.attention_mask.data);
+        // Prepare tensor data
+        const inputIDsData = ensureInt32Array(inputs.input_ids.data);
+        const attentionMaskData = ensureInt32Array(inputs.attention_mask.data);
 
-        // Create ONNX Tensors as int32
+        // Create ONNX Tensors as 'int32'
         const inputIDs = new Tensor('int32', inputIDsData, inputs.input_ids.dims);
         const attentionMask = new Tensor('int32', attentionMaskData, inputs.attention_mask.dims);
 
-        // Run the model inference
+        // Run model inference
         return this.session.run({
             input_ids: inputIDs,
             attention_mask: attentionMask,
