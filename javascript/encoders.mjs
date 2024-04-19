@@ -1,8 +1,9 @@
 import { readFileSync } from 'fs';
 import { InferenceSession, Tensor } from 'onnxruntime-node';
-import { getCheckpoint, Modality } from "./hub.mjs";
 import { PreTrainedTokenizer } from '@xenova/transformers';
+import sharp from 'sharp';
 
+import { getCheckpoint, Modality } from "./hub.mjs";
 
 class TextProcessor {
 
@@ -16,12 +17,16 @@ class TextProcessor {
     }
 
     async init() {
-        const config = JSON.parse(readFileSync(this.configPath, { encoding: 'utf8' }));
-        this.maxSeqLen = config.text_encoder.max_position_embeddings;
-        this.padTokenIdx = config.text_encoder.padding_idx;
+        var config = JSON.parse(readFileSync(this.configPath, { encoding: 'utf8' }));
+        if (config.text_encoder !== undefined) {
+            config = config.text_encoder;
+        }
+
+        this.maxSeqLen = config.max_position_embeddings;
+        this.padTokenIdx = config.padding_idx;
 
         const tokenizerConfig = JSON.parse(readFileSync(this.tokenizerPath, { encoding: 'utf8' }));
-        this.tokenizer = new PreTrainedTokenizer(tokenizerConfig, config.text_encoder);
+        this.tokenizer = new PreTrainedTokenizer(tokenizerConfig, config);
         this.tokenizer.model_max_length = this.maxSeqLen;
         this.tokenizer.pad_token_id = this.padTokenIdx;
     }
@@ -45,11 +50,8 @@ class TextProcessor {
 
 class TextEncoder {
 
-    constructor(configPath, modelPath, tokenizerPath) {
-        this.configPath = configPath;
+    constructor(modelPath, processor = null) {
         this.modelPath = modelPath;
-        this.tokenizerPath = tokenizerPath;
-
         this.session = null;
     }
 
@@ -57,7 +59,18 @@ class TextEncoder {
         this.session = await InferenceSession.create(this.modelPath);
     }
 
+    async dispose() {
+        if (this.session) {
+            await this.session.release();
+            this.session = null;
+        }
+    }
+
     async forward(inputs) {
+        if (!this.session) {
+            throw new Error("Session is not initialized.");
+        }
+
         // Helper function to convert BigInt64Array to Int32Array or validate Int32Array
         function ensureInt32Array(data) {
             if (data instanceof Int32Array) {
@@ -96,4 +109,132 @@ class TextEncoder {
 
 }
 
-export { TextProcessor, TextEncoder };
+
+class ImageProcessor {
+    constructor(configPath) {
+        this.configPath = configPath;
+    }
+
+    async init() {
+        var config = JSON.parse(readFileSync(this.configPath, 'utf8'));
+        if (config.image_encoder !== undefined) {
+            config = config.image_encoder;
+        }
+
+        this.imageSize = config.image_size;
+        this.normalizationMeans = config.normalization_means;
+        this.normalizationDeviations = config.normalization_deviations;
+
+        this.imageMean = new Float32Array(this.normalizationMeans).fill(0);
+        this.imageStd = new Float32Array(this.normalizationDeviations).fill(0);
+    }
+    async process(images) {
+        const processSingle = async (image) => {
+            let img = sharp(image);
+            const metadata = await img.metadata();
+            const scale = this.imageSize / Math.min(metadata.width, metadata.height);
+            const scaledWidth = parseInt(metadata.width * scale);
+            const scaledHeight = parseInt(metadata.height * scale);
+            img = img.resize({
+                width: scaledWidth,
+                height: scaledHeight,
+                fit: sharp.fit.cover,
+                position: sharp.strategy.entropy
+            }).extract({
+                left: Math.max(0, (scaledWidth - this.imageSize) / 2),
+                top: Math.max(0, (scaledHeight - this.imageSize) / 2),
+                width: this.imageSize,
+                height: this.imageSize
+            }).removeAlpha();
+
+            let buffer = await img.raw().toBuffer();
+            let array = new Float32Array(buffer);
+
+            return array.map((value, index) => {
+                const channel = index % 3;
+                return (value / 255.0 - this.normalizationMeans[channel]) / this.normalizationDeviations[channel];
+            });
+        };
+
+        if (Array.isArray(images)) {
+            return Promise.all(images.map(img => processSingle(img)));
+        } else {
+            return [await processSingle(images)];
+        }
+    }
+}
+
+class ImageEncoder {
+    constructor(modelPath, processor) {
+        this.modelPath = modelPath;
+        this.imageSize = processor.imageSize;
+    }
+
+    async init() {
+        this.session = await InferenceSession.create(this.modelPath);
+    }
+
+    async dispose() {
+        if (this.session) {
+            await this.session.release();
+            this.session = null;
+        }
+    }
+
+    async forward(inputs) {
+        if (!this.session) {
+            throw new Error("Session is not initialized.");
+        }
+
+        // Helper function to ensure data is a Float32Array.
+        const ensureFloat32Array = (data) => {
+            if (!(data instanceof Float32Array)) {
+                throw new Error("Unsupported data type for tensor conversion.");
+            }
+            return data;
+        };
+
+        // Helper function to concatenate multiple Float32Arrays into a single Float32Array.
+        const concatFloat32Arrays = (arrays) => {
+            const totalLength = arrays.reduce((acc, val) => acc + val.length, 0);
+            const result = new Float32Array(totalLength);
+            let offset = 0;
+            for (let arr of arrays) {
+                result.set(arr, offset);
+                offset += arr.length;
+            }
+            return result;
+        };
+
+        let inputData;
+        let dims;
+
+        if (Array.isArray(inputs)) {
+            // Assuming each input in the array is a Float32Array representing an image already processed to a fixed size.
+            const arrays = inputs.map(ensureFloat32Array);
+            inputData = concatFloat32Arrays(arrays);
+            const numImages = arrays.length;
+            const numChannels = 3;
+            const height = this.imageSize;
+            const width = this.imageSize;
+            dims = [numImages, numChannels, height, width];
+        } else {
+            // Single image input, which is already a Float32Array.
+            inputData = ensureFloat32Array(inputs);
+            const numChannels = 3;
+            const height = this.imageSize;
+            const width = this.imageSize;
+            dims = [1, numChannels, height, width];
+        }
+
+        // Create ONNX Tensor
+        const inputTensor = new Tensor('float32', inputData, dims);
+
+        // Run model inference
+        return this.session.run({
+            input: inputTensor,
+        });
+    }
+}
+
+export { TextProcessor, TextEncoder, ImageProcessor, ImageEncoder };

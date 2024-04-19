@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 
 import { getCheckpoint, Modality } from "./hub.mjs";
-import { TextProcessor, TextEncoder } from "./encoders.mjs";
+import { TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from "./encoders.mjs";
 
 function assert(condition, message) {
     if (!condition) {
@@ -41,8 +41,10 @@ async function testGetCheckpoint() {
     }
 }
 
-async function testTextEncoder() {
-    console.log("Test TextEncoder: Start");
+async function testEncoders() {
+    console.log("Test testEncoders: Start");
+    let textEncoder = null;
+    let imageEncoder = null;
 
     try {
         const modelId = 'unum-cloud/uform3-image-text-english-small';
@@ -63,18 +65,29 @@ async function testTextEncoder() {
         const textProcessor = new TextProcessor(configPath, tokenizerPath);
         await textProcessor.init();
         const processedTexts = await textProcessor.process("Hello, world!");
-        console.log(processedTexts);
 
-        const textEncoder = new TextEncoder(configPath, modalityPaths.text_encoder, tokenizerPath);
+        textEncoder = new TextEncoder(modalityPaths.text_encoder, textProcessor);
         await textEncoder.init();
-        const output = await textEncoder.forward(processedTexts);
-        console.log(output);
+        const textOutput = await textEncoder.forward(processedTexts);
+        console.log(textOutput.embeddings.dims);
 
-        console.log("Test getCheckpoint: Success");
+        const imageProcessor = new ImageProcessor(configPath);
+        await imageProcessor.init();
+        const processedImages = await imageProcessor.process("assets/unum.png");
+
+        imageEncoder = new ImageEncoder(modalityPaths.image_encoder, imageProcessor);
+        await imageEncoder.init();
+        const imageOutput = await imageEncoder.forward(processedImages);
+        console.log(imageOutput.embeddings.dims);
+
+        console.log("Test testEncoders: Success");
     } catch (error) {
-        console.error("Test getCheckpoint: Failed", error);
+        console.error("Test testEncoders: Failed", error);
+    } finally {
+        await textEncoder.dispose();
+        await imageEncoder.dispose();
     }
 }
 
 testGetCheckpoint();
-testTextEncoder();
+testEncoders();
