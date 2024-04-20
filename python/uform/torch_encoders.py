@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from os import PathLike
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union, Callable
 import json
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
+from PIL.Image import Image
 
 
 @dataclass(eq=False)
@@ -220,29 +223,8 @@ class TextEncoder(nn.Module):
 
         return x
 
-    def forward_multimodal(
-        self,
-        x: Tensor,
-        attn_mask: Tensor,
-        context: Tensor,
-    ) -> Tensor:
-        context = self.context_projection(context)
-        expanded_attn_mask = self.get_attention_mask(attn_mask, x.dtype)
-        for block in self.blocks:
-            if block.cross_attention:
-                x = block(x, expanded_attn_mask, context)
-
-        return self.pool_features(x, attn_mask)
-
     def forward_embedding(self, x: Tensor, attn_mask: Tensor) -> Tensor:
         return self.embedding_projection(self.pool_features(x, attn_mask))
-
-    def forward_matching(self, x: Tensor) -> Tensor:
-        logits = self.matching_head(x)
-        if self.head_one_neuron:
-            return torch.sigmoid(logits)[:, 0]
-
-        return F.softmax(logits, dim=1)[:, 1]
 
     def pool_features(self, x: Tensor, attn_mask: Tensor) -> Tensor:
         if self.pooling == "cls":
@@ -291,6 +273,22 @@ class TextEncoder(nn.Module):
             return features, embeddings
         return embeddings
 
+    @staticmethod
+    def from_pretrained(config: Union[PathLike, str, object], model_path: Union[PathLike, str]) -> TextEncoder:
+        if isinstance(config, (PathLike, str)):
+            config = json.load(open(config, "r"))
+        if "text_encoder" in config:
+            config = config["text_encoder"]
+
+        # We must strip all the non-member attributes before initializing the classes.
+        text_fields = TextEncoder.__dataclass_fields__
+        config = {k: v for k, v in config.items() if k in text_fields}
+
+        state = torch.load(model_path)
+        encoder = TextEncoder(**config)
+        encoder.load_state_dict(state)
+        return encoder
+
 
 @dataclass(eq=False)
 class ImageEncoder(nn.Module):
@@ -322,19 +320,16 @@ class ImageEncoder(nn.Module):
         self.embedding_projection = nn.Linear(self.dim, self.embedding_dim, bias=False)
         self.return_features = False
 
-    def forward_features(self, x: Tensor) -> Tensor:
+    def forward_features(self, x: Union[Tensor, dict]) -> Tensor:
         x = self.patch_embed(x).flatten(start_dim=2).transpose(2, 1)
         x = x + self.pos_embed
-
         special_tokens = [self.cls_token.expand(x.shape[0], -1, -1)]
 
         if self.num_reg_tokens > 0:
             special_tokens.append(self.reg_token.expand(x.shape[0], -1, -1))
 
         x = torch.cat(special_tokens + [x], dim=1)
-
         x = self.blocks(x)
-
         return self.norm(x)
 
     def forward_embedding(self, x: Tensor) -> Tensor:
@@ -346,6 +341,8 @@ class ImageEncoder(nn.Module):
         return self.embedding_projection(x)
 
     def forward(self, x: Tensor, return_features: Optional[bool] = None) -> Tensor:
+        if isinstance(x, dict):
+            x = x["images"]
         features = self.forward_features(x)
         embeddings = self.forward_embedding(features)
         return_features = return_features if return_features is not None else self.return_features
@@ -353,186 +350,18 @@ class ImageEncoder(nn.Module):
             return features, embeddings
         return embeddings
 
+    @staticmethod
+    def from_pretrained(config: Union[PathLike, str, object], model_path: Union[PathLike, str]) -> ImageEncoder:
+        if isinstance(config, (PathLike, str)):
+            config = json.load(open(config, "r"))
+        if "image_encoder" in config:
+            config = config["image_encoder"]
 
-class TextImageEncoder(nn.Module):
-    """
-    Vision-Language Model for Multimodal embeddings.
-    """
-
-    def __init__(
-        self,
-        config_path: PathLike,
-        modality_paths: Union[Dict[str, PathLike], PathLike] = None,
-    ):
-        """Initializes the model with the configuration and pre-trained weights.
-
-        :param config_path: Path to the JSON model configuration file
-        :param modality_paths:  Dictionary with paths to different modalities,
-                                or a single path to the model checkpoint
-        """
-
-        super().__init__()
-
-        config = json.load(open(config_path, "r"))
-        self._embedding_dim = config["text_encoder"]["embedding_dim"]
-
-        # Both `text_encoder` and `image_encoder` are data-classes, so we must strip
-        # all the non-member attributes before initializing the classes.
-        text_fields = TextEncoder.__dataclass_fields__
+        # We must strip all the non-member attributes before initializing the classes.
         image_fields = ImageEncoder.__dataclass_fields__
-        text_encoder_attrs = {k: v for k, v in config["text_encoder"].items() if k in text_fields}
-        image_encoder_attrs = {k: v for k, v in config["image_encoder"].items() if k in image_fields}
-        self.text_encoder = TextEncoder(**text_encoder_attrs)
-        self.image_encoder = ImageEncoder(**image_encoder_attrs)
+        config = {k: v for k, v in config.items() if k in image_fields}
 
-        # Load pre-trained weights
-        if modality_paths is not None:
-            if isinstance(modality_paths, Union[PathLike, str]):
-                state = torch.load(modality_paths)
-                self.text_encoder.load_state_dict(state["text_encoder"])
-                self.image_encoder.load_state_dict(state["image_encoder"])
-            else:
-                text_encoder_path = modality_paths.get("text_encoder", None)
-                image_encoder_path = modality_paths.get("image_encoder", None)
-                if text_encoder_path:
-                    self.text_encoder.load_state_dict(torch.load(text_encoder_path))
-                if image_encoder_path:
-                    self.image_encoder.load_state_dict(torch.load(image_encoder_path))
-
-    def encode_image(
-        self,
-        images: Tensor,
-        return_features: bool = False,
-    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        """Passes the pre-processed images through `image_encoder` to produce images features (optional) and embeddings.
-
-        :param images: Preprocessed image
-        :param return_features: Whether to return images features or return only embeddings
-        """
-
-        features = self.image_encoder.forward_features(images)
-        embeddings = self.image_encoder.forward_embedding(features)
-
-        if return_features:
-            return features, embeddings
-
-        return embeddings
-
-    def encode_text(
-        self,
-        texts: Dict[str, Tensor],
-        return_features: bool = False,
-    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        """Passes the pre-processed texts through `text_encoder` to produce texts features (optional) and embeddings.
-
-        :param texts: Dictionary with tokenized texts and attention masks
-        :param return_features: Whether to return texts features or return only embeddings
-        """
-
-        features = self.text_encoder.forward_features(
-            texts["input_ids"],
-            texts["attention_mask"],
-        )
-        embeddings = self.text_encoder.forward_embedding(
-            features,
-            texts["attention_mask"],
-        )
-
-        if return_features:
-            return features, embeddings
-
-        return embeddings
-
-    def encode_multimodal(
-        self,
-        image: Optional[Tensor] = None,
-        text: Optional[Dict] = None,
-        image_features: Optional[Tensor] = None,
-        text_features: Optional[Tensor] = None,
-        attention_mask: Optional[Tensor] = None,
-        return_scores: bool = False,
-    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        """Passes preprocessed texts (or precomputed texts features) and
-            preprocessed images (or precomputed images features) through multimodal encoded to produce multimodal joint embeddings.
-
-        :param image: Preprocessed images
-        :param text: Preprocessed texts
-        :param image_features: Precomputed images features
-        :param text_features: Precomputed text features
-        :param attention_mask: Attention masks, not required if pass `text` instead of text_features
-        """
-
-        assert image is not None or image_features is not None, "Either `image` or `image_features` should be non None"
-        assert text is not None or text_features is not None, "Either `text_data` or `text_features` should be non None"
-
-        if text_features is not None:
-            assert attention_mask is not None, "if `text_features` is not None, then you should pass `attention_mask`"
-
-        if image_features is None:
-            image_features = self.image_encoder.forward_features(image)
-
-        if text_features is None:
-            text_features = self.text_encoder.forward_features(
-                text["input_ids"],
-                text["attention_mask"],
-            )
-
-        embeddings = self.text_encoder.forward_multimodal(
-            text_features,
-            attention_mask if attention_mask is not None else text["attention_mask"],
-            image_features,
-        )
-
-        if return_scores:
-            return self.get_matching_scores(embeddings), embeddings
-
-        return embeddings
-
-    def get_matching_scores(self, embeddings: Tensor) -> Tensor:
-        """Computes the probability that there is a match between images and texts based on their multimodal embeddings
-
-        :param embeddings: multimodal joint embeddings
-        """
-
-        return self.text_encoder.forward_matching(embeddings)
-
-    def forward(
-        self,
-        images: Tensor,
-        texts: Dict[str, Tensor],
-    ) -> Union[Tensor, Tensor]:
-        """Inference forward method
-
-        :param images: Preprocessed images
-        :param texts: Preprocessed texts
-        :return: embeddings for images and texts
-        """
-        _, image_embeddings = self.image_encoder(images)
-        _, text_embeddings = self.text_encoder(texts)
-        return image_embeddings, text_embeddings
-
-    @property
-    def text_features_dim(self) -> int:
-        """Dimensionality of the text encoder features."""
-
-        return self.text_encoder.dim
-
-    @property
-    def image_features_dim(self) -> int:
-        """Dimensionality of the image encoder features."""
-
-        return self.image_encoder.dim
-
-    @property
-    def embedding_dim(self) -> int:
-        """Dimensionality of shared space embedding."""
-
-        return self._embedding_dim
-
-    @property
-    def multimodal_embedding_dim(self) -> int:
-        """Dimensionality of multimodal joint embedding."""
-        return self.text_encoder.dim
-
-
-VLM = TextImageEncoder  # legacy
+        state = torch.load(model_path)
+        encoder = ImageEncoder(**config)
+        encoder.load_state_dict(state)
+        return encoder

@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 from PIL import Image
 
-import uform
+from uform import Modality, get_model, get_model_onnx
 
 # PyTorch is a very heavy dependency, so we may want to skip these tests if it's not installed
 try:
@@ -27,12 +27,16 @@ except:
 
 torch_models = [
     "unum-cloud/uform3-image-text-english-small",
-    "unum-cloud/uform-vl-english",
-    "unum-cloud/uform-vl-multilingual-v2",
+    "unum-cloud/uform3-image-text-english-base",
+    "unum-cloud/uform3-image-text-english-large",
+    "unum-cloud/uform3-image-text-multilingual-base",
 ]
 
 onnx_models = [
     "unum-cloud/uform3-image-text-english-small",
+    "unum-cloud/uform3-image-text-english-base",
+    "unum-cloud/uform3-image-text-english-large",
+    "unum-cloud/uform3-image-text-multilingual-base",
 ]
 
 # Let's check if the HuggingFace Hub API token is set in the environment variable.
@@ -113,34 +117,29 @@ def cross_references_image_and_text_embeddings(text_to_embedding, image_to_embed
 @pytest.mark.skipif(not torch_available, reason="PyTorch is not installed")
 @pytest.mark.parametrize("model_name", torch_models)
 def test_torch_one_embedding(model_name: str):
-    model, processor = uform.get_model(model_name, token=token)
+    processors, models = get_model(model_name, token=token)
+    model_text = models[Modality.TEXT_ENCODER]
+    model_image = models[Modality.IMAGE_ENCODER]
+    processor_text = processors[Modality.TEXT_ENCODER]
+    processor_image = processors[Modality.IMAGE_ENCODER]
+
     text = "a small red panda in a zoo"
     image_path = "assets/unum.png"
 
     image = Image.open(image_path)
-    image_data = processor.preprocess_image(image)
-    text_data = processor.preprocess_text(text)
+    image_data = processor_image(image)
+    text_data = processor_text(text)
 
-    image_features, image_embedding = model.encode_image(image_data, return_features=True)
-    text_features, text_embedding = model.encode_text(text_data, return_features=True)
+    image_features, image_embedding = model_image.forward(image_data, return_features=True)
+    text_features, text_embedding = model_text.forward(text_data, return_features=True)
 
     assert image_embedding.shape[0] == 1, "Image embedding batch size is not 1"
     assert text_embedding.shape[0] == 1, "Text embedding batch size is not 1"
 
-    # Test reranking
-    score, joint_embedding = model.encode_multimodal(
-        image_features=image_features,
-        text_features=text_features,
-        attention_mask=text_data["attention_mask"],
-        return_scores=True,
-    )
-    assert score.shape[0] == 1, "Matching score batch size is not 1"
-    assert joint_embedding.shape[0] == 1, "Joint embedding batch size is not 1"
-
     # Test if the model outputs actually make sense
     cross_references_image_and_text_embeddings(
-        lambda text: model.encode_text(processor.preprocess_text(text)),
-        lambda image: model.encode_image(processor.preprocess_image(image)),
+        lambda text: model_text(processor_text(text)),
+        lambda image: model_image(processor_image(image)),
     )
 
 
@@ -148,16 +147,22 @@ def test_torch_one_embedding(model_name: str):
 @pytest.mark.parametrize("model_name", torch_models)
 @pytest.mark.parametrize("batch_size", [1, 2])
 def test_torch_many_embeddings(model_name: str, batch_size: int):
-    model, processor = uform.get_model(model_name, token=token)
+
+    processors, models = get_model(model_name, token=token)
+    model_text = models[Modality.TEXT_ENCODER]
+    model_image = models[Modality.IMAGE_ENCODER]
+    processor_text = processors[Modality.TEXT_ENCODER]
+    processor_image = processors[Modality.IMAGE_ENCODER]
+
     texts = ["a small red panda in a zoo"] * batch_size
     image_paths = ["assets/unum.png"] * batch_size
 
     images = [Image.open(path) for path in image_paths]
-    image_data = processor.preprocess_image(images)
-    text_data = processor.preprocess_text(texts)
+    image_data = processor_image(images)
+    text_data = processor_text(texts)
 
-    image_embeddings = model.encode_image(image_data, return_features=False)
-    text_embeddings = model.encode_text(text_data, return_features=False)
+    image_embeddings = model_image.forward(image_data, return_features=False)
+    text_embeddings = model_text.forward(text_data, return_features=False)
 
     assert image_embeddings.shape[0] == batch_size, "Image embedding is unexpected"
     assert text_embeddings.shape[0] == batch_size, "Text embedding is unexpected"
@@ -172,24 +177,29 @@ def test_onnx_one_embedding(model_name: str, device: str):
 
     try:
 
-        model, processor = uform.get_model_onnx(model_name, token=token, device=device)
+        processors, models = get_model_onnx(model_name, token=token, device=device)
+        model_text = models[Modality.TEXT_ENCODER]
+        model_image = models[Modality.IMAGE_ENCODER]
+        processor_text = processors[Modality.TEXT_ENCODER]
+        processor_image = processors[Modality.IMAGE_ENCODER]
+
         text = "a small red panda in a zoo"
         image_path = "assets/unum.png"
 
         image = Image.open(image_path)
-        image_data = processor.preprocess_image(image)
-        text_data = processor.preprocess_text(text)
+        image_data = processor_image(image)
+        text_data = processor_text(text)
 
-        image_features, image_embedding = model.encode_image(image_data, return_features=True)
-        text_features, text_embedding = model.encode_text(text_data, return_features=True)
+        image_features, image_embedding = model_image(image_data)
+        text_features, text_embedding = model_text(text_data)
 
         assert image_embedding.shape[0] == 1, "Image embedding batch size is not 1"
         assert text_embedding.shape[0] == 1, "Text embedding batch size is not 1"
 
         # Test if the model outputs actually make sense
         cross_references_image_and_text_embeddings(
-            lambda text: model.encode_text(processor.preprocess_text(text)),
-            lambda image: model.encode_image(processor.preprocess_image(image)),
+            lambda text: model_text(processor_text(text)),
+            lambda image: model_image(processor_image(image)),
         )
 
     except ExecutionProviderError as e:
@@ -206,16 +216,21 @@ def test_onnx_many_embeddings(model_name: str, batch_size: int, device: str):
 
     try:
 
-        model, processor = uform.get_model_onnx(model_name, token=token, device=device)
+        processors, models = get_model_onnx(model_name, token=token, device=device)
+        model_text = models[Modality.TEXT_ENCODER]
+        model_image = models[Modality.IMAGE_ENCODER]
+        processor_text = processors[Modality.TEXT_ENCODER]
+        processor_image = processors[Modality.IMAGE_ENCODER]
+
         texts = ["a small red panda in a zoo"] * batch_size
         image_paths = ["assets/unum.png"] * batch_size
 
         images = [Image.open(path) for path in image_paths]
-        image_data = processor.preprocess_image(images)
-        text_data = processor.preprocess_text(texts)
+        image_data = processor_image(images)
+        text_data = processor_text(texts)
 
-        image_embeddings = model.encode_image(image_data, return_features=False)
-        text_embeddings = model.encode_text(text_data, return_features=False)
+        image_embeddings = model_image(image_data, return_features=False)
+        text_embeddings = model_text(text_data, return_features=False)
 
         assert image_embeddings.shape[0] == batch_size, "Image embedding is unexpected"
         assert text_embeddings.shape[0] == batch_size, "Text embedding is unexpected"

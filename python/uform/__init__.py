@@ -1,6 +1,6 @@
 from json import load
 from os.path import join, exists
-from typing import Dict, Optional, Tuple, Literal
+from typing import Dict, Optional, Tuple, Literal, Union, Callable
 from enum import Enum
 
 from huggingface_hub import snapshot_download
@@ -88,20 +88,30 @@ def get_model(
     model_name: str,
     *,
     token: Optional[str] = None,
-    modalities: Optional[Tuple[str]] = None,
-):
-    from uform.torch_encoders import TextImageEncoder
-    from uform.torch_processors import TorchProcessor
+    modalities: Optional[Tuple[Union[str, Modality]]] = None,
+) -> Tuple[Dict[Modality, Callable], Dict]:
+    from uform.torch_encoders import TextEncoder, ImageEncoder
+    from uform.torch_processors import TextProcessor, ImageProcessor
 
-    config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, token, modalities, format=".pt")
-    modality_paths = (
-        {k.value: v for k, v in modality_paths.items()} if isinstance(modality_paths, dict) else modality_paths
-    )
+    modalities = normalize_modalities(modalities)
+    config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, modalities, token=token, format=".pt")
 
-    model = TextImageEncoder(config_path, modality_paths)
-    processor = TorchProcessor(config_path, tokenizer_path)
+    result_processors = {}
+    result_models = {}
 
-    return model.eval(), processor
+    if Modality.TEXT_ENCODER in modalities:
+        processor = TextProcessor(config_path, tokenizer_path)
+        encoder = TextEncoder.from_pretrained(config_path, modality_paths.get(Modality.TEXT_ENCODER)).eval()
+        result_processors[Modality.TEXT_ENCODER] = processor
+        result_models[Modality.TEXT_ENCODER] = encoder
+
+    if Modality.IMAGE_ENCODER in modalities:
+        processor = ImageProcessor(config_path)
+        encoder = ImageEncoder.from_pretrained(config_path, modality_paths.get(Modality.IMAGE_ENCODER)).eval()
+        result_processors[Modality.IMAGE_ENCODER] = processor
+        result_models[Modality.IMAGE_ENCODER] = encoder
+
+    return result_processors, result_models
 
 
 def get_model_onnx(
@@ -111,15 +121,25 @@ def get_model_onnx(
     token: Optional[str] = None,
     modalities: Optional[Tuple[str]] = None,
 ):
-    from uform.onnx_encoders import TextImageEncoder
-    from uform.numpy_processors import NumPyProcessor
+    from uform.onnx_encoders import TextEncoder, ImageEncoder
+    from uform.numpy_processors import TextProcessor, ImageProcessor
 
-    config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, token, modalities, format=".onnx")
-    modality_paths = (
-        {k.value: v for k, v in modality_paths.items()} if isinstance(modality_paths, dict) else modality_paths
-    )
+    modalities = normalize_modalities(modalities)
+    config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, modalities, token=token, format=".onnx")
 
-    model = TextImageEncoder(config_path, modality_paths, device=device)
-    processor = NumPyProcessor(config_path, tokenizer_path)
+    result_processors = {}
+    result_models = {}
 
-    return model, processor
+    if Modality.TEXT_ENCODER in modalities:
+        processor = TextProcessor(config_path, tokenizer_path)
+        encoder = TextEncoder(modality_paths.get(Modality.TEXT_ENCODER), device=device)
+        result_processors[Modality.TEXT_ENCODER] = processor
+        result_models[Modality.TEXT_ENCODER] = encoder
+
+    if Modality.IMAGE_ENCODER in modalities:
+        processor = ImageProcessor(config_path)
+        encoder = ImageEncoder(modality_paths.get(Modality.IMAGE_ENCODER), device=device)
+        result_processors[Modality.IMAGE_ENCODER] = processor
+        result_models[Modality.IMAGE_ENCODER] = encoder
+
+    return result_processors, result_models

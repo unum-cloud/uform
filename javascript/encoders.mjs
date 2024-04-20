@@ -181,7 +181,7 @@ class ImageEncoder {
         }
     }
 
-    async forward(inputs) {
+    async forward(images) {
         if (!this.session) {
             throw new Error("Session is not initialized.");
         }
@@ -206,21 +206,21 @@ class ImageEncoder {
             return result;
         };
 
-        let inputData;
+        let imagesData;
         let dims;
 
-        if (Array.isArray(inputs)) {
-            // Assuming each input in the array is a Float32Array representing an image already processed to a fixed size.
-            const arrays = inputs.map(ensureFloat32Array);
-            inputData = concatFloat32Arrays(arrays);
+        if (Array.isArray(images)) {
+            // Assuming each images in the array is a Float32Array representing an image already processed to a fixed size.
+            const arrays = images.map(ensureFloat32Array);
+            imagesData = concatFloat32Arrays(arrays);
             const numImages = arrays.length;
             const numChannels = 3;
             const height = this.imageSize;
             const width = this.imageSize;
             dims = [numImages, numChannels, height, width];
         } else {
-            // Single image input, which is already a Float32Array.
-            inputData = ensureFloat32Array(inputs);
+            // Single image images, which is already a Float32Array.
+            imagesData = ensureFloat32Array(images);
             const numChannels = 3;
             const height = this.imageSize;
             const width = this.imageSize;
@@ -228,11 +228,11 @@ class ImageEncoder {
         }
 
         // Create ONNX Tensor
-        const inputTensor = new Tensor('float32', inputData, dims);
+        const imagesTensor = new Tensor('float32', imagesData, dims);
 
         // Run model inference
         return this.session.run({
-            input: inputTensor,
+            images: imagesTensor,
         });
     }
 }

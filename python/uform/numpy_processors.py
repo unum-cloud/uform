@@ -15,10 +15,13 @@ class TextProcessor:
         """
 
         config = json.load(open(config_path, "r"))
-        self._max_seq_len = config["text_encoder"]["max_position_embeddings"]
+        if "text_encoder" in config:
+            config = config["text_encoder"]
+
+        self._max_seq_len = config["max_position_embeddings"]
         self._tokenizer = Tokenizer.from_file(tokenizer_path)
         self._tokenizer.no_padding()
-        self._pad_token_idx = config["text_encoder"]["padding_idx"]
+        self._pad_token_idx = config["padding_idx"]
 
     def __call__(self, texts: Union[str, List[str]]) -> Dict[str, np.ndarray]:
         """Transforms one or more strings into dictionary with tokenized strings and attention masks.
@@ -50,7 +53,7 @@ class TextProcessor:
 
 
 class ImageProcessor:
-    def __init__(self, config_path: PathLike, tokenizer_path: PathLike):
+    def __init__(self, config_path: PathLike, tokenizer_path: PathLike = None):
         """
         :param config: model config
         :param tokenizer_path: path to tokenizer file
@@ -58,9 +61,12 @@ class ImageProcessor:
         """
 
         config = json.load(open(config_path, "r"))
-        self._image_size = config["image_encoder"]["image_size"]
-        self._normalization_means = config["image_encoder"]["normalization_means"]
-        self._normalization_deviations = config["image_encoder"]["normalization_deviations"]
+        if "image_encoder" in config:
+            config = config["image_encoder"]
+
+        self._image_size = config["image_size"]
+        self._normalization_means = config["normalization_means"]
+        self._normalization_deviations = config["normalization_deviations"]
 
         assert isinstance(self._image_size, int) and self._image_size > 0
         assert isinstance(self._normalization_means, list) and isinstance(self._normalization_deviations, list)

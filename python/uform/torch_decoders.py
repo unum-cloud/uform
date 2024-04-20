@@ -153,7 +153,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
             self.config.image_encoder_pooling,
         )
 
-        # replace models' layerscales because `transformers` automatically renames keys in state_dict
+        # replace models' layerscales because `transformers` automatically renames keys in `state_dict`
         for i in range(len(self.image_encoder.blocks)):
             self.image_encoder.blocks[i].ls1 = LayerScale(
                 self.image_encoder.blocks[i].ls1.dim,
@@ -218,6 +218,7 @@ class VLMForCausalLM(VLMPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[dict, Tuple, CausalLMOutputWithPast]:
+
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -403,7 +404,10 @@ class VLMProcessor(ProcessorMixin):
             )
 
             encoding = BatchEncoding(
-                data={"input_ids": input_ids, "attention_mask": attention_mask},
+                data={
+                    "input_ids": input_ids,
+                    "attention_mask": attention_mask,
+                },
             )
 
         if images is not None:
@@ -449,7 +453,15 @@ class VLMProcessor(ProcessorMixin):
         revision: str = "main",
         **kwargs,
     ):
-        config = AutoConfig.from_pretrained(pretrained_model_name_or_path)
+        config = AutoConfig.from_pretrained(
+            pretrained_model_name_or_path,
+            cache_dir=cache_dir,
+            force_download=force_download,
+            local_files_only=local_files_only,
+            revision=revision,
+            token=token,
+            **kwargs,
+        )
         return cls(config)
 
 
