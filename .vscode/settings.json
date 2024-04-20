@@ -21,7 +21,9 @@
         "ndarray",
         "numpy",
         "ONNX",
+        "onnxconverter",
         "onnxruntime",
+        "opset",
         "packbits",
         "preprocess",
         "pretrained",
@@ -48,5 +50,8 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "python.formatting.provider": "none"
+    "python.formatting.provider": "none",
+    "window.autoDetectColorScheme": true,
+    "workbench.colorTheme": "Default Dark+",
+    "workbench.preferredDarkColorTheme": "Default Dark+"
 }

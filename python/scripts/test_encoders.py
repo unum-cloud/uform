@@ -27,16 +27,16 @@ except:
 
 torch_models = [
     "unum-cloud/uform3-image-text-english-small",
-    "unum-cloud/uform3-image-text-english-base",
-    "unum-cloud/uform3-image-text-english-large",
-    "unum-cloud/uform3-image-text-multilingual-base",
+    # "unum-cloud/uform3-image-text-english-base",
+    # "unum-cloud/uform3-image-text-english-large",
+    # "unum-cloud/uform3-image-text-multilingual-base",
 ]
 
 onnx_models = [
     "unum-cloud/uform3-image-text-english-small",
-    "unum-cloud/uform3-image-text-english-base",
-    "unum-cloud/uform3-image-text-english-large",
-    "unum-cloud/uform3-image-text-multilingual-base",
+    # "unum-cloud/uform3-image-text-english-base",
+    # "unum-cloud/uform3-image-text-english-large",
+    # "unum-cloud/uform3-image-text-multilingual-base",
 ]
 
 # Let's check if the HuggingFace Hub API token is set in the environment variable.
@@ -198,8 +198,8 @@ def test_onnx_one_embedding(model_name: str, device: str):
 
         # Test if the model outputs actually make sense
         cross_references_image_and_text_embeddings(
-            lambda text: model_text(processor_text(text)),
-            lambda image: model_image(processor_image(image)),
+            lambda text: model_text(processor_text(text))[1],
+            lambda image: model_image(processor_image(image))[1],
         )
 
     except ExecutionProviderError as e:

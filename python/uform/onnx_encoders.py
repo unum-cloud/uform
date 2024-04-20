@@ -64,6 +64,7 @@ class ImageEncoder:
         model_path: str,
         *,
         device: Literal["cpu", "cuda"] = "cpu",
+        return_features: bool = True,
     ):
         """
         :param model_path: Path to onnx model
@@ -73,14 +74,21 @@ class ImageEncoder:
         session_options = ort.SessionOptions()
         session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
+        self.return_features = return_features
         self.session = ort.InferenceSession(
             model_path,
             sess_options=session_options,
             providers=available_providers(device),
         )
 
-    def __call__(self, images: ndarray) -> Tuple[ndarray, ndarray]:
-        return self.session.run(None, {"images": images})
+    def __call__(
+        self, images: ndarray, return_features: Optional[bool] = None
+    ) -> Union[ndarray, Tuple[ndarray, ndarray]]:
+        features, embeddings = self.session.run(None, {"images": images})
+        return_features = return_features if return_features is not None else self.return_features
+        if return_features:
+            return features, embeddings
+        return embeddings
 
 
 class TextEncoder:
@@ -89,6 +97,7 @@ class TextEncoder:
         model_path: str,
         *,
         device: Literal["cpu", "cuda"] = "cpu",
+        return_features: bool = True,
     ):
         """
         :param text_encoder_path: Path to onnx of text encoder
@@ -98,11 +107,31 @@ class TextEncoder:
         session_options = ort.SessionOptions()
         session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
+        self.return_features = return_features
         self.text_encoder_session = ort.InferenceSession(
             model_path,
             sess_options=session_options,
             providers=available_providers(device),
         )
 
-    def __call__(self, input_ids: ndarray, attention_mask: ndarray) -> Tuple[ndarray, ndarray]:
-        return self.text_encoder_session.run(None, {"input_ids": input_ids, "attention_mask": attention_mask})
+    def __call__(
+        self,
+        x: Union[ndarray, dict],
+        attention_mask: Optional[ndarray] = None,
+        return_features: Optional[bool] = None,
+    ) -> Union[ndarray, Tuple[ndarray, ndarray]]:
+        if isinstance(x, dict):
+            assert attention_mask is None, "If `x` is a dictionary, then `attention_mask` should be None"
+            attention_mask = x["attention_mask"]
+            input_ids = x["input_ids"]
+        else:
+            input_ids = x
+
+        features, embeddings = self.text_encoder_session.run(
+            None, {"input_ids": input_ids, "attention_mask": attention_mask}
+        )
+
+        return_features = return_features if return_features is not None else self.return_features
+        if return_features:
+            return features, embeddings
+        return embeddings
