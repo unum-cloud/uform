@@ -402,14 +402,14 @@ class ImageInput: MLFeatureProvider {
     }
 
     var featureNames: Set<String> {
-        return Set(["input"])
+        return Set(["images"])
     }
 
     // The model expects the input IDs to be an array of integers
     // of length `sequenceLength`, padded with `paddingID` if necessary
     func featureValue(for featureName: String) -> MLFeatureValue? {
         switch featureName {
-        case "input":
+        case "images":
             return precomputedFeature
         default:
             return nil
