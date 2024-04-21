@@ -1,15 +1,11 @@
 import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import assert from 'assert';
+import fetch from 'node-fetch';
 
 import { getCheckpoint, Modality } from "./hub.mjs";
 import { TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from "./encoders.mjs";
-
-function assert(condition, message) {
-    if (!condition) {
-        throw new Error(message);
-    }
-}
 
 // Check if the HuggingFace Hub API token is set in the environment variable.
 let hf_token = process.env.HUGGINGFACE_HUB_TOKEN;
@@ -104,6 +100,107 @@ async function tryImageEncoderForwardPass(modelId) {
     await imageEncoder.dispose();
 }
 
+function cosineSimilarity(vecA, vecB) {
+    // We may be receiving a complex tesnor type, so let's check if it
+    // has an array member named `data`.
+    if (vecA.data) {
+        vecA = vecA.data;
+    }
+    if (vecB.data) {
+        vecB = vecB.data;
+    }
+
+    let dotProduct = 0.0;
+    let normA = 0.0;
+    let normB = 0.0;
+    for (let i = 0; i < vecA.length; i++) {
+        dotProduct += vecA[i] * 1.0 * vecB[i];
+        normA += vecA[i] * 1.0 * vecA[i];
+        normB += vecB[i] * 1.0 * vecB[i];
+    }
+    if (normA === 0 || normB === 0) {
+        return 0;
+    } else {
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+}
+
+async function fetchImage(url) {
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    return buffer;
+}
+
+async function tryCrossReferencingImageAndText(modelId) {
+
+    const modalities = [Modality.ImageEncoder, Modality.TextEncoder];
+    const { configPath, modalityPaths, tokenizerPath } = await getCheckpoint(
+        modelId,
+        modalities,
+        hf_token,
+        '.onnx'
+    );
+
+    const imageProcessor = new ImageProcessor(configPath);
+    await imageProcessor.init();
+    const imageEncoder = new ImageEncoder(modalityPaths.image_encoder, imageProcessor);
+    await imageEncoder.init();
+    const textProcessor = new TextProcessor(configPath, tokenizerPath);
+    await textProcessor.init();
+    const textEncoder = new TextEncoder(modalityPaths.text_encoder, textProcessor);
+    await textEncoder.init();
+
+    const texts = [
+        "A group of friends enjoy a barbecue on a sandy beach, with one person grilling over a large black grill, while the other sits nearby, laughing and enjoying the camaraderie.",
+        "A white and orange cat stands on its hind legs, reaching towards a wicker basket filled with red raspberries on a wooden table in a garden, surrounded by orange flowers and a white teapot, creating a serene and whimsical scene.",
+        "A little girl in a yellow dress stands in a grassy field, holding an umbrella and looking at the camera, amidst rain.",
+        "This serene bedroom features a white bed with a black canopy, a gray armchair, a black dresser with a mirror, a vase with a plant, a window with white curtains, a rug, and a wooden floor, creating a tranquil and elegant atmosphere.",
+        "The image captures the iconic Louvre Museum in Paris, illuminated by warm lights against a dark sky, with the iconic glass pyramid in the center, surrounded by ornate buildings and a large courtyard, showcasing the museum's grandeur and historical significance.",
+    ];
+    const imageUrls = [
+        "https://github.com/ashvardanian/ashvardanian/blob/master/demos/bbq-on-beach.jpg?raw=true",
+        "https://github.com/ashvardanian/ashvardanian/blob/master/demos/cat-in-garden.jpg?raw=true",
+        "https://github.com/ashvardanian/ashvardanian/blob/master/demos/girl-and-rain.jpg?raw=true",
+        "https://github.com/ashvardanian/ashvardanian/blob/master/demos/light-bedroom-furniture.jpg?raw=true",
+        "https://github.com/ashvardanian/ashvardanian/blob/master/demos/louvre-at-night.jpg?raw=true",
+    ];
+
+    const textEmbeddings = [];
+    const imageEmbeddings = [];
+
+    for (let i = 0; i < texts.length; i++) {
+        const text = texts[i];
+        const imageUrl = imageUrls[i];
+        const imageBuffer = await fetchImage(imageUrl);
+
+        const processedText = await textProcessor.process(text);
+        const processedImage = await imageProcessor.process(imageBuffer);
+
+        const textEmbedding = await textEncoder.forward(processedText);
+        const imageEmbedding = await imageEncoder.forward(processedImage);
+
+        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.data));
+        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.data));
+        console.log(`Text: ${text}, Image: ${imageUrl}, Similarity: ${cosineSimilarity(textEmbedding.embeddings, imageEmbedding.embeddings)}`);
+    }
+
+    for (let i = 0; i < texts.length; i++) {
+        const pairSimilarity = cosineSimilarity(textEmbeddings[i], imageEmbeddings[i]);
+        const otherTextSimilarities = textEmbeddings.map((te, idx) => idx === i ? -Infinity : cosineSimilarity(te, imageEmbeddings[i]));
+        const otherImageSimilarities = imageEmbeddings.map((ie, idx) => idx === i ? -Infinity : cosineSimilarity(textEmbeddings[i], ie));
+
+        const maxOtherTextSimilarity = Math.max(...otherTextSimilarities);
+        const maxOtherImageSimilarity = Math.max(...otherImageSimilarities);
+
+        assert(pairSimilarity > maxOtherTextSimilarity, "Text should be more similar to its corresponding image than to other images.");
+        assert(pairSimilarity > maxOtherImageSimilarity, "Image should be more similar to its corresponding text than to other texts.");
+    }
+
+    await textEncoder.dispose();
+    await imageEncoder.dispose();
+}
+
 async function testEncoders() {
     console.log("- `testEncoders`: Start");
 
@@ -118,6 +215,7 @@ async function testEncoders() {
         ]) {
             await tryTextEncoderForwardPass(modelId, hf_token);
             await tryImageEncoderForwardPass(modelId, hf_token);
+            await tryCrossReferencingImageAndText(modelId, hf_token);
         }
 
         console.log("- `testEncoders`: Success");

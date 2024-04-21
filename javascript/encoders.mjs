@@ -141,8 +141,8 @@ class ImageProcessor {
                 fit: sharp.fit.cover,
                 position: sharp.strategy.entropy
             }).extract({
-                left: Math.max(0, (scaledWidth - this.imageSize) / 2),
-                top: Math.max(0, (scaledHeight - this.imageSize) / 2),
+                left: Math.max(0, Math.floor((scaledWidth - this.imageSize) / 2)),
+                top: Math.max(0, Math.floor((scaledHeight - this.imageSize) / 2)),
                 width: this.imageSize,
                 height: this.imageSize
             }).removeAlpha();

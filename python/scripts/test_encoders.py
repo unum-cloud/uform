@@ -68,7 +68,7 @@ def cross_references_image_and_text_embeddings(text_to_embedding, image_to_embed
     texts = [
         "A group of friends enjoy a barbecue on a sandy beach, with one person grilling over a large black grill, while the other sits nearby, laughing and enjoying the camaraderie.",
         "A white and orange cat stands on its hind legs, reaching towards a wicker basket filled with red raspberries on a wooden table in a garden, surrounded by orange flowers and a white teapot, creating a serene and whimsical scene.",
-        "A young girl in a yellow dress stands in a grassy field, holding an umbrella and looking at the camera, amidst rain.",
+        "A little girl in a yellow dress stands in a grassy field, holding an umbrella and looking at the camera, amidst rain.",
         "This serene bedroom features a white bed with a black canopy, a gray armchair, a black dresser with a mirror, a vase with a plant, a window with white curtains, a rug, and a wooden floor, creating a tranquil and elegant atmosphere.",
         "The image captures the iconic Louvre Museum in Paris, illuminated by warm lights against a dark sky, with the iconic glass pyramid in the center, surrounded by ornate buildings and a large courtyard, showcasing the museum's grandeur and historical significance.",
     ]
