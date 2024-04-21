@@ -27,16 +27,16 @@ except:
 
 torch_models = [
     "unum-cloud/uform3-image-text-english-small",
-    # "unum-cloud/uform3-image-text-english-base",
-    # "unum-cloud/uform3-image-text-english-large",
-    # "unum-cloud/uform3-image-text-multilingual-base",
+    "unum-cloud/uform3-image-text-english-base",
+    "unum-cloud/uform3-image-text-english-large",
+    "unum-cloud/uform3-image-text-multilingual-base",
 ]
 
 onnx_models = [
     "unum-cloud/uform3-image-text-english-small",
-    # "unum-cloud/uform3-image-text-english-base",
-    # "unum-cloud/uform3-image-text-english-large",
-    # "unum-cloud/uform3-image-text-multilingual-base",
+    "unum-cloud/uform3-image-text-english-base",
+    "unum-cloud/uform3-image-text-english-large",
+    "unum-cloud/uform3-image-text-multilingual-base",
 ]
 
 # Let's check if the HuggingFace Hub API token is set in the environment variable.
