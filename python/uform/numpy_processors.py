@@ -34,7 +34,7 @@ class TextProcessor:
         input_ids = np.full(
             (len(texts), self._max_seq_len),
             fill_value=self._pad_token_idx,
-            dtype=np.int64,
+            dtype=np.int32,
         )
 
         attention_mask = np.zeros(

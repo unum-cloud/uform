@@ -51,12 +51,5 @@ Before submitting any changes, please make sure that the tests pass.
 
 ```sh
 npm install
-npm run build
 npm run test
 ```
-
-```
-tsc
-node node_build/embeddings.mjs
-```
-

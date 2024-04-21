@@ -198,8 +198,8 @@ def test_onnx_one_embedding(model_name: str, device: str):
 
         # Test if the model outputs actually make sense
         cross_references_image_and_text_embeddings(
-            lambda text: model_text(processor_text(text)),
-            lambda image: model_image(processor_image(image)),
+            lambda text: model_text(processor_text(text))[1],
+            lambda image: model_image(processor_image(image))[1],
         )
 
     except ExecutionProviderError as e:

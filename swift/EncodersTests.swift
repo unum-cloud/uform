@@ -76,7 +76,12 @@ final class TokenizerTests: XCTestCase {
     }
 
     func testTextEmbeddings() async throws {
-        for model in ["unum-cloud/uform3-image-text-english-small"] {
+        for model in [
+            "unum-cloud/uform3-image-text-english-small",
+            "unum-cloud/uform3-image-text-english-base",
+            "unum-cloud/uform3-image-text-english-large",
+            "unum-cloud/uform3-image-text-multilingual-base",
+        ] {
             try await testTextEmbeddings(forModel: model)
         }
     }
@@ -165,7 +170,12 @@ final class TokenizerTests: XCTestCase {
     }
 
     func testImageEmbeddings() async throws {
-        for model in ["unum-cloud/uform3-image-text-english-small"] {
+        for model in [
+            "unum-cloud/uform3-image-text-english-small",
+            "unum-cloud/uform3-image-text-english-base",
+            "unum-cloud/uform3-image-text-english-large",
+            "unum-cloud/uform3-image-text-multilingual-base",
+        ] {
             try await testImageEmbeddings(forModel: model)
         }
     }

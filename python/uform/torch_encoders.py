@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import PathLike
-from typing import Dict, Optional, Tuple, Union, Callable
+from typing import Dict, Optional, Union, Mapping, Any
 import json
 
 import torch
@@ -274,7 +274,12 @@ class TextEncoder(nn.Module):
         return embeddings
 
     @staticmethod
-    def from_pretrained(config: Union[PathLike, str, object], model_path: Union[PathLike, str]) -> TextEncoder:
+    def from_pretrained(config: Union[PathLike, str, object], model: Union[PathLike, str]) -> TextEncoder:
+        """Load the image encoder from the given configuration and model path.
+
+        :param config: the configuration dictionary or path to the JSON configuration file
+        :param model: the model state dictionary or path to the `.pt` model file
+        """
         if isinstance(config, (PathLike, str)):
             config = json.load(open(config, "r"))
         if "text_encoder" in config:
@@ -283,9 +288,15 @@ class TextEncoder(nn.Module):
         # We must strip all the non-member attributes before initializing the classes.
         text_fields = TextEncoder.__dataclass_fields__
         config = {k: v for k, v in config.items() if k in text_fields}
-
-        state = torch.load(model_path)
         encoder = TextEncoder(**config)
+
+        # Load from disk
+        if isinstance(model, (PathLike, str)):
+            state = torch.load(model)
+        else:
+            state = model
+        if "text_encoder" in state:
+            state = state["text_encoder"]
         encoder.load_state_dict(state)
         return encoder
 
@@ -351,7 +362,15 @@ class ImageEncoder(nn.Module):
         return embeddings
 
     @staticmethod
-    def from_pretrained(config: Union[PathLike, str, object], model_path: Union[PathLike, str]) -> ImageEncoder:
+    def from_pretrained(
+        config: Union[PathLike, str, object],
+        model: Union[PathLike, str, Mapping[str, Any]],
+    ) -> ImageEncoder:
+        """Load the image encoder from the given configuration and model path.
+
+        :param config: the configuration dictionary or path to the JSON configuration file
+        :param model: the model state dictionary or path to the `.pt` model file
+        """
         if isinstance(config, (PathLike, str)):
             config = json.load(open(config, "r"))
         if "image_encoder" in config:
@@ -360,8 +379,14 @@ class ImageEncoder(nn.Module):
         # We must strip all the non-member attributes before initializing the classes.
         image_fields = ImageEncoder.__dataclass_fields__
         config = {k: v for k, v in config.items() if k in image_fields}
-
-        state = torch.load(model_path)
         encoder = ImageEncoder(**config)
+
+        # Load from disk
+        if isinstance(model, (PathLike, str)):
+            state = torch.load(model)
+        else:
+            state = model
+        if "image_encoder" in state:
+            state = state["image_encoder"]
         encoder.load_state_dict(state)
         return encoder
