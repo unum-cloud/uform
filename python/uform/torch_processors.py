@@ -1,5 +1,5 @@
 from os import PathLike
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Sequence
 import json
 
 import torch
@@ -100,14 +100,14 @@ class ImageProcessor:
             ],
         )
 
-    def __call__(self, images: Union[Image, List[Image]]) -> Dict[str, Tensor]:
+    def __call__(self, images: Union[Image, Sequence[Image]]) -> Dict[str, Tensor]:
         """Transforms one or more Pillow images into Torch Tensors.
 
         :param images: image or list of images to preprocess
         :return: dictionary with float-represented images in tensors as values
         """
 
-        if isinstance(images, list):
+        if isinstance(images, Sequence):
             batch_images = torch.empty(
                 (len(images), 3, self._image_size, self._image_size),
                 dtype=torch.float32,

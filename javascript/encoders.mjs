@@ -3,7 +3,7 @@ import { InferenceSession, Tensor } from 'onnxruntime-node';
 import { PreTrainedTokenizer } from '@xenova/transformers';
 import sharp from 'sharp';
 
-import { getCheckpoint, Modality } from "./hub.mjs";
+import { getModel, Modality } from "./hub.mjs";
 
 class TextProcessor {
 
@@ -66,7 +66,7 @@ class TextEncoder {
         }
     }
 
-    async forward(inputs) {
+    async encode(inputs) {
         if (!this.session) {
             throw new Error("Session is not initialized.");
         }
@@ -191,7 +191,7 @@ class ImageEncoder {
         }
     }
 
-    async forward(images) {
+    async encode(images) {
         if (!this.session) {
             throw new Error("Session is not initialized.");
         }

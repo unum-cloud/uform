@@ -81,7 +81,7 @@ class ImageEncoder:
             providers=available_providers(device),
         )
 
-    def __call__(
+    def encode(
         self, images: ndarray, return_features: Optional[bool] = None
     ) -> Union[ndarray, Tuple[ndarray, ndarray]]:
         features, embeddings = self.session.run(None, {"images": images})
@@ -114,7 +114,7 @@ class TextEncoder:
             providers=available_providers(device),
         )
 
-    def __call__(
+    def encode(
         self,
         x: Union[ndarray, dict],
         attention_mask: Optional[ndarray] = None,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import PathLike
-from typing import Dict, Optional, Union, Mapping, Any
+from typing import Dict, Optional, Union, Mapping, Any, Tuple
 import json
 
 import torch
@@ -256,7 +256,8 @@ class TextEncoder(nn.Module):
         x: Union[Tensor, dict],
         attention_mask: Optional[Tensor] = None,
         return_features: Optional[bool] = None,
-    ) -> Tensor:
+    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+
         if isinstance(x, dict):
             assert attention_mask is None, "If `x` is a dictionary, then `attention_mask` should be None"
             attention_mask = x["attention_mask"]
@@ -272,6 +273,19 @@ class TextEncoder(nn.Module):
         if return_features:
             return features, embeddings
         return embeddings
+
+    def encode(
+        self,
+        x: Union[Tensor, dict],
+        attention_mask: Optional[Tensor] = None,
+        return_features: Optional[bool] = None,
+    ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+
+        result = self.forward(x, attention_mask, return_features)
+        if isinstance(result, tuple):
+            return result[0].detach(), result[1].detach()
+        else:
+            return result.detach()
 
     @staticmethod
     def from_pretrained(config: Union[PathLike, str, object], model: Union[PathLike, str]) -> TextEncoder:
@@ -360,6 +374,13 @@ class ImageEncoder(nn.Module):
         if return_features:
             return features, embeddings
         return embeddings
+
+    def encode(self, x: Tensor, return_features: Optional[bool] = None) -> Tensor:
+        result = self.forward(x, return_features)
+        if isinstance(result, tuple):
+            return result[0].detach(), result[1].detach()
+        else:
+            return result.detach()
 
     @staticmethod
     def from_pretrained(

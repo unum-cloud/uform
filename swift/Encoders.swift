@@ -129,11 +129,13 @@ public class TextEncoder {
         )
         let configPath = modelURL.appendingPathComponent("config.json").path
         let tokenizerPath = modelURL.appendingPathComponent("tokenizer.json").path
-        self.model = try readModel(fromURL: modelURL.appendingPathComponent("text_encoder.mlpackage", isDirectory: true))
+        self.model = try readModel(
+            fromURL: modelURL.appendingPathComponent("text_encoder.mlpackage", isDirectory: true)
+        )
         self.processor = try TextProcessor(configPath: configPath, tokenizerPath: tokenizerPath, model: self.model)
     }
 
-    public func forward(with text: String) throws -> Embedding {
+    public func encode(with text: String) throws -> Embedding {
         let inputFeatureProvider = try self.processor.preprocess(text)
         let prediction = try self.model.prediction(from: inputFeatureProvider)
         guard let predictionFeature = prediction.featureValue(for: "embeddings"),
@@ -164,11 +166,13 @@ public class ImageEncoder {
         let repo = Hub.Repo(id: modelName)
         let modelURL = try await hubApi.snapshot(from: repo, matching: ["image_encoder.mlpackage/*", "config.json"])
         let configPath = modelURL.appendingPathComponent("config.json").path
-        self.model = try readModel(fromURL: modelURL.appendingPathComponent("image_encoder.mlpackage", isDirectory: true))
+        self.model = try readModel(
+            fromURL: modelURL.appendingPathComponent("image_encoder.mlpackage", isDirectory: true)
+        )
         self.processor = try ImageProcessor(configPath: configPath)
     }
 
-    public func forward(with image: CGImage) throws -> Embedding {
+    public func encode(with image: CGImage) throws -> Embedding {
         let inputFeatureProvider = try self.processor.preprocess(image)
         let prediction = try self.model.prediction(from: inputFeatureProvider)
         guard let predictionFeature = prediction.featureValue(for: "embeddings"),

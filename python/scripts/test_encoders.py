@@ -117,7 +117,7 @@ def cross_references_image_and_text_embeddings(text_to_embedding, image_to_embed
 @pytest.mark.skipif(not torch_available, reason="PyTorch is not installed")
 @pytest.mark.parametrize("model_name", torch_models)
 def test_torch_one_embedding(model_name: str):
-    processors, models = get_model(model_name, token=token)
+    processors, models = get_model(model_name, token=token, backend="torch")
     model_text = models[Modality.TEXT_ENCODER]
     model_image = models[Modality.IMAGE_ENCODER]
     processor_text = processors[Modality.TEXT_ENCODER]
@@ -130,8 +130,8 @@ def test_torch_one_embedding(model_name: str):
     image_data = processor_image(image)
     text_data = processor_text(text)
 
-    image_features, image_embedding = model_image.forward(image_data, return_features=True)
-    text_features, text_embedding = model_text.forward(text_data, return_features=True)
+    image_features, image_embedding = model_image.encode(image_data, return_features=True)
+    text_features, text_embedding = model_text.encode(text_data, return_features=True)
 
     assert image_embedding.shape[0] == 1, "Image embedding batch size is not 1"
     assert text_embedding.shape[0] == 1, "Text embedding batch size is not 1"
@@ -148,7 +148,7 @@ def test_torch_one_embedding(model_name: str):
 @pytest.mark.parametrize("batch_size", [1, 2])
 def test_torch_many_embeddings(model_name: str, batch_size: int):
 
-    processors, models = get_model(model_name, token=token)
+    processors, models = get_model(model_name, token=token, backend="torch")
     model_text = models[Modality.TEXT_ENCODER]
     model_image = models[Modality.IMAGE_ENCODER]
     processor_text = processors[Modality.TEXT_ENCODER]
@@ -161,8 +161,8 @@ def test_torch_many_embeddings(model_name: str, batch_size: int):
     image_data = processor_image(images)
     text_data = processor_text(texts)
 
-    image_embeddings = model_image.forward(image_data, return_features=False)
-    text_embeddings = model_text.forward(text_data, return_features=False)
+    image_embeddings = model_image.encode(image_data, return_features=False)
+    text_embeddings = model_text.encode(text_data, return_features=False)
 
     assert image_embeddings.shape[0] == batch_size, "Image embedding is unexpected"
     assert text_embeddings.shape[0] == batch_size, "Text embedding is unexpected"
@@ -177,7 +177,7 @@ def test_onnx_one_embedding(model_name: str, device: str):
 
     try:
 
-        processors, models = get_model_onnx(model_name, token=token, device=device)
+        processors, models = get_model(model_name, token=token, device=device, backend="onnx")
         model_text = models[Modality.TEXT_ENCODER]
         model_image = models[Modality.IMAGE_ENCODER]
         processor_text = processors[Modality.TEXT_ENCODER]
@@ -190,19 +190,19 @@ def test_onnx_one_embedding(model_name: str, device: str):
         image_data = processor_image(image)
         text_data = processor_text(text)
 
-        image_features, image_embedding = model_image(image_data)
-        text_features, text_embedding = model_text(text_data)
+        image_features, image_embedding = model_image.encode(image_data)
+        text_features, text_embedding = model_text.encode(text_data)
 
         assert image_embedding.shape[0] == 1, "Image embedding batch size is not 1"
         assert text_embedding.shape[0] == 1, "Text embedding batch size is not 1"
 
         # Nested fucntions are easier to debug, than lambdas
         def get_image_embedding(image_data):
-            features, embedding = model_image(processor_image(image_data))
+            features, embedding = model_image.encode(processor_image(image_data))
             return embedding
 
         def get_text_embedding(text_data):
-            features, embedding = model_text(processor_text(text_data))
+            features, embedding = model_text.encode(processor_text(text_data))
             return embedding
 
         # Test if the model outputs actually make sense
@@ -222,7 +222,7 @@ def test_onnx_many_embeddings(model_name: str, batch_size: int, device: str):
 
     try:
 
-        processors, models = get_model_onnx(model_name, token=token, device=device)
+        processors, models = get_model(model_name, token=token, device=device, backend="onnx")
         model_text = models[Modality.TEXT_ENCODER]
         model_image = models[Modality.IMAGE_ENCODER]
         processor_text = processors[Modality.TEXT_ENCODER]
@@ -235,8 +235,8 @@ def test_onnx_many_embeddings(model_name: str, batch_size: int, device: str):
         image_data = processor_image(images)
         text_data = processor_text(texts)
 
-        image_embeddings = model_image(image_data, return_features=False)
-        text_embeddings = model_text(text_data, return_features=False)
+        image_embeddings = model_image.encode(image_data, return_features=False)
+        text_embeddings = model_text.encode(text_data, return_features=False)
 
         assert image_embeddings.shape[0] == batch_size, "Image embedding is unexpected"
         assert text_embeddings.shape[0] == batch_size, "Text embedding is unexpected"
