@@ -39,7 +39,7 @@ def available_providers(device: Optional[str]) -> Tuple[str, ...]:
             raise ExecutionProviderError(
                 f"GPU providers are not available, consider installing `onnxruntime-gpu` and make sure the CUDA is available on your system. Currently installed: {available}"
             )
-        return gpu_providers
+        return [x for x in gpu_providers if x in available]
 
     # If a CPU is requested, but no CPU providers are available, raise an error
     if device == "cpu":
@@ -47,7 +47,7 @@ def available_providers(device: Optional[str]) -> Tuple[str, ...]:
             raise ExecutionProviderError(
                 f"CPU providers are not available, consider installing `onnxruntime` and make sure the OpenVINO and CoreML are available on your system. Currently installed: {available}"
             )
-        return cpu_providers
+        return [x for x in cpu_providers if x in available]
 
     if device not in available:
         available_providers = ", ".join(available)
@@ -128,7 +128,11 @@ class TextEncoder:
             input_ids = x
 
         features, embeddings = self.text_encoder_session.run(
-            None, {"input_ids": input_ids, "attention_mask": attention_mask}
+            None,
+            {
+                "input_ids": input_ids,
+                "attention_mask": attention_mask,
+            },
         )
 
         return_features = return_features if return_features is not None else self.return_features

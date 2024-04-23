@@ -1,9 +1,10 @@
-from json import load
 from os.path import join, exists
 from typing import Dict, Optional, Tuple, Literal, Union, Callable
 from enum import Enum
 
-from huggingface_hub import snapshot_download
+from huggingface_hub import snapshot_download, utils
+
+from uform.onnx_encoders import ExecutionProviderError
 
 
 class Modality(Enum):
@@ -44,6 +45,9 @@ def get_checkpoint(
     config_names = ["torch_config.json", "config.json"]
     tokenizer_names = ["tokenizer.json"]
 
+    old_progress_behavior = utils.are_progress_bars_disabled()
+    utils.disable_progress_bars()
+
     # The download stats depend on the number of times the `config.json` is pulled
     # https://huggingface.co/docs/hub/models-download-stats
     model_path = snapshot_download(
@@ -51,6 +55,9 @@ def get_checkpoint(
         token=token,
         allow_patterns=merged_model_names + separate_modality_names + config_names + tokenizer_names,
     )
+
+    if old_progress_behavior:
+        utils.enable_progress_bars()
 
     # Find the first name in `config_names` that is present
     config_path = None
