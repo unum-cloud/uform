@@ -125,21 +125,22 @@ class ImageProcessor {
         this.normalizationMeans = config.normalization_means;
         this.normalizationDeviations = config.normalization_deviations;
 
-        this.imageMean = new Float32Array(this.normalizationMeans).fill(0);
-        this.imageStd = new Float32Array(this.normalizationDeviations).fill(0);
+        this.imageMean = new Float32Array(this.normalizationMeans);
+        this.imageStd = new Float32Array(this.normalizationDeviations);
     }
     async process(images) {
         const processSingle = async (image) => {
-            let img = sharp(image);
+            let img = sharp(image).toColorspace('srgb');
             const metadata = await img.metadata();
             const scale = this.imageSize / Math.min(metadata.width, metadata.height);
-            const scaledWidth = parseInt(metadata.width * scale);
-            const scaledHeight = parseInt(metadata.height * scale);
+            const scaledWidth = Math.ceil(metadata.width * scale);
+            const scaledHeight = Math.ceil(metadata.height * scale);
             img = img.resize({
                 width: scaledWidth,
                 height: scaledHeight,
                 fit: sharp.fit.cover,
-                position: sharp.strategy.entropy
+                position: sharp.strategy.entropy,
+                options: sharp.interpolators.bicubic
             }).extract({
                 left: Math.max(0, Math.floor((scaledWidth - this.imageSize) / 2)),
                 top: Math.max(0, Math.floor((scaledHeight - this.imageSize) / 2)),
@@ -148,12 +149,21 @@ class ImageProcessor {
             }).removeAlpha();
 
             let buffer = await img.raw().toBuffer();
-            let array = new Float32Array(buffer);
+            let array = new Float32Array(buffer.length);
 
-            return array.map((value, index) => {
-                const channel = index % 3;
-                return (value / 255.0 - this.normalizationMeans[channel]) / this.normalizationDeviations[channel];
-            });
+            // When we export into the `array`, we reorder the dimensions of the tensor 
+            // from HWC to CHW, and normalize the pixel values.
+            let channelSize = this.imageSize * this.imageSize;
+            for (let i = 0; i < this.imageSize * this.imageSize; i++) {
+                let r = buffer[i * 3];
+                let g = buffer[i * 3 + 1];
+                let b = buffer[i * 3 + 2];
+                array[i] = (r / 255.0 - this.imageMean[0]) / this.imageStd[0];
+                array[channelSize + i] = (g / 255.0 - this.imageMean[1]) / this.imageStd[1];
+                array[channelSize * 2 + i] = (b / 255.0 - this.imageMean[2]) / this.imageStd[2];
+            }
+
+            return array;
         };
 
         if (Array.isArray(images)) {

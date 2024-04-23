@@ -69,7 +69,7 @@ async function tryTextEncoderForwardPass(modelId) {
 
     const textProcessor = new TextProcessor(configPath, tokenizerPath);
     await textProcessor.init();
-    const processedTexts = await textProcessor.process("Hello, world!");
+    const processedTexts = await textProcessor.process("a small red panda in a zoo");
 
     const textEncoder = new TextEncoder(modalityPaths.text_encoder, textProcessor);
     await textEncoder.init();
@@ -180,9 +180,14 @@ async function tryCrossReferencingImageAndText(modelId) {
         const textEmbedding = await textEncoder.forward(processedText);
         const imageEmbedding = await imageEncoder.forward(processedImage);
 
-        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.data));
-        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.data));
-        console.log(`Text: ${text}, Image: ${imageUrl}, Similarity: ${cosineSimilarity(textEmbedding.embeddings, imageEmbedding.embeddings)}`);
+        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.cpuData));
+        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.cpuData));
+
+        // Print-based debugging at its best :)
+        // console.log(`Text: ${text}, Image: ${imageUrl}`);
+        // console.log(`Text embedding first components: ${textEmbeddings[i].slice(0, 5)}`);
+        // console.log(`Image embedding first components: ${imageEmbeddings[i].slice(0, 5)}`);
+        console.log(`Similarity: ${cosineSimilarity(textEmbeddings[i], imageEmbeddings[i])}`)
     }
 
     for (let i = 0; i < texts.length; i++) {
@@ -209,9 +214,9 @@ async function testEncoders() {
         // Go through the bi-modal models
         for (const modelId of [
             'unum-cloud/uform3-image-text-english-small',
-            'unum-cloud/uform3-image-text-english-base',
-            'unum-cloud/uform3-image-text-english-large',
-            'unum-cloud/uform3-image-text-multilingual-base',
+            // 'unum-cloud/uform3-image-text-english-base',
+            // 'unum-cloud/uform3-image-text-english-large',
+            // 'unum-cloud/uform3-image-text-multilingual-base',
         ]) {
             await tryTextEncoderForwardPass(modelId, hf_token);
             await tryImageEncoderForwardPass(modelId, hf_token);

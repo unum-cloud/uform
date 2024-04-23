@@ -196,11 +196,17 @@ def test_onnx_one_embedding(model_name: str, device: str):
         assert image_embedding.shape[0] == 1, "Image embedding batch size is not 1"
         assert text_embedding.shape[0] == 1, "Text embedding batch size is not 1"
 
+        # Nested fucntions are easier to debug, than lambdas
+        def get_image_embedding(image_data):
+            features, embedding = model_image(processor_image(image_data))
+            return embedding
+
+        def get_text_embedding(text_data):
+            features, embedding = model_text(processor_text(text_data))
+            return embedding
+
         # Test if the model outputs actually make sense
-        cross_references_image_and_text_embeddings(
-            lambda text: model_text(processor_text(text))[1],
-            lambda image: model_image(processor_image(image))[1],
-        )
+        cross_references_image_and_text_embeddings(get_text_embedding, get_image_embedding)
 
     except ExecutionProviderError as e:
         pytest.skip(f"Execution provider error: {e}")
