@@ -22,13 +22,13 @@ from time import perf_counter
 from dataclasses import dataclass
 from typing import List, Tuple, Literal, Callable, Generator
 import re
+import argparse
 
-import fire
 import requests
 from PIL import Image
 import pandas as pd
 
-from uform import get_model, get_model_onnx, Modality
+from uform import get_model, Modality, ExecutionProviderError
 
 # Define global constants for the hardware availability
 torch_available = False
@@ -195,27 +195,55 @@ def yield_benchmarks() -> Generator[Tuple[BenchmarkResult, Callable], None, None
                 ), partial(run, model_name, device, backend_name)
 
 
-def main(filter: str = None):
+def main(filter_out: str = None):
     results = []
-    filter_pattern = re.compile(filter) if filter else None
+    filter_pattern = re.compile(filter_out) if filter_out else None
     for specs, func in yield_benchmarks():
         if filter_pattern and (
-            not filter_pattern.search(specs.model_name)
-            and not filter_pattern.search(specs.backend_name)
-            and not filter_pattern.search(specs.device_name)
+            filter_pattern.search(specs.model_name)
+            or filter_pattern.search(specs.backend_name)
+            or filter_pattern.search(specs.device_name)
         ):
             continue
 
-        print(f"Running `{specs.model_name}` on `{specs.device_name}` using `{specs.backend_name}` backend")
-        result = func()
-        results.append(result)
+        try:
+            print(f"Running `{specs.model_name}` on `{specs.device_name}` using `{specs.backend_name}` backend")
+            result = func()
+            results.append(result)
+        except ExecutionProviderError as e:
+            print(f"- skipping missing backend")
+            print(e)
 
     results = sorted(results, key=lambda x: x.model_name)
     results = [x.__dict__ for x in results]
 
     df = pd.DataFrame(results)
-    print(df.to_markdown())
+    df.columns = [
+        "Model Name",
+        "Device",
+        "Backend",
+        "Images Preprocessed/s",
+        "Images Encoded/s",
+        "Texts Preprocessed/s",
+        "Texts Encoded/s",
+    ]
+
+    def inverse(x):
+        return 1 / x if x != 0 else 0
+
+    # Apply number formatting directly in the DataFrame
+    formatted_df = df.copy()
+    formatted_df["Images Preprocessed/s"] = df["Images Preprocessed/s"].map(inverse).map("{:,.2f}".format)
+    formatted_df["Images Encoded/s"] = df["Images Encoded/s"].map(inverse).map("{:,.2f}".format)
+    formatted_df["Texts Preprocessed/s"] = df["Texts Preprocessed/s"].map(inverse).map("{:,.2f}".format)
+    formatted_df["Texts Encoded/s"] = df["Texts Encoded/s"].map(inverse).map("{:,.2f}".format)
+
+    # Convert formatted DataFrame to Markdown
+    print(formatted_df.to_markdown())
 
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    argparse = argparse.ArgumentParser()
+    argparse.add_argument("--filter-out", type=str, default=None)
+    args = argparse.parse_args()
+    main(filter_out=args.filter_out)
