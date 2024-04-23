@@ -283,34 +283,35 @@ class ImageProcessor {
     /// Initializes an `ImageProcessor` with specific configuration.
     /// - Parameter configPath: The path to the configuration file specifying image size, mean, and std.
     init(configPath: String) throws {
-        let configDict = try readConfig(fromPath: configPath)
-        guard let imageEncoderConfig = configDict["image_encoder"] as? [String: Any] else {
-            throw EncoderError.loadingError("Image encoder configuration is missing.")
+        var configDict = try readConfig(fromPath: configPath)
+        if let imageEncoderConfig = configDict["image_encoder"] as? [String: Any] {
+            configDict = imageEncoderConfig
         }
 
-        guard let imageSize = imageEncoderConfig["imageSize"] as? Int else {
+        let config = Config(configDict)
+        guard let imageSize = config.imageSize?.value as? Int else {
             throw EncoderError.invalidInput("Invalid or missing image size.")
         }
         self.imageSize = imageSize
 
-        guard let meanArray = imageEncoderConfig["normalizationMeans"] as? [Any],
-            let stdArray = imageEncoderConfig["normalizationDeviations"] as? [Any]
+        guard let meanArray = config.normalizationMeans?.value as? [Any],
+            let stdArray = config.normalizationDeviations?.value as? [Any]
         else {
             throw EncoderError.invalidInput("Normalization means or deviations are missing.")
         }
 
         self.mean = try meanArray.compactMap({
-            guard let floatValue = $0 as? Float else {
+            guard let doubleValue = $0 as? Double else {
                 throw EncoderError.invalidInput("Normalization means should be an array of floats.")
             }
-            return floatValue
+            return Float(doubleValue)
         })
 
         self.std = try stdArray.compactMap({
-            guard let floatValue = $0 as? Float else {
+            guard let doubleValue = $0 as? Double else {
                 throw EncoderError.invalidInput("Normalization deviations should be an array of floats.")
             }
-            return floatValue
+            return Float(doubleValue)
         })
 
         // Check if the arrays have 3 values for the 3 channels
@@ -383,11 +384,13 @@ class ImageProcessor {
         else { return nil }
         context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        var floatPixels = [Float](repeating: 0, count: width * height * 3)
-        for c in 0 ..< 3 {
-            for i in 0 ..< (width * height) {
-                floatPixels[i * 3 + c] = (Float(pixelData[i * 4 + c]) / 255.0 - mean[c]) / std[c]
-            }
+        // While normalizing the pixels, let's also transpose them from HWC to CHW
+        let channelSize = width * height
+        var floatPixels = [Float](repeating: 0, count: channelSize * 3)
+        for i in 0 ..< channelSize {
+            floatPixels[channelSize * 0 + i] = (Float(pixelData[i * 4 + 0]) / 255.0 - mean[0]) / std[0]
+            floatPixels[channelSize * 1 + i] = (Float(pixelData[i * 4 + 1]) / 255.0 - mean[1]) / std[1]
+            floatPixels[channelSize * 2 + i] = (Float(pixelData[i * 4 + 2]) / 255.0 - mean[2]) / std[2]
         }
 
         // We need to wrap the constructor that may fail
