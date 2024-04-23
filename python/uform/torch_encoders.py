@@ -266,6 +266,11 @@ class TextEncoder(nn.Module):
             # If no attention mask is provided - create one with all ones
             attention_mask = torch.ones_like(x)
 
+        # If the model is on the GPU and the input matrices are not, shift them there
+        if next(self.parameters()).device.type == "cuda" and x.device.type != "cuda":
+            x = x.cuda()
+            attention_mask = attention_mask.cuda()
+
         features = self.forward_features(x, attention_mask)
         embeddings = self.forward_embedding(features, attention_mask)
 
@@ -368,6 +373,11 @@ class ImageEncoder(nn.Module):
     def forward(self, x: Tensor, return_features: Optional[bool] = None) -> Tensor:
         if isinstance(x, dict):
             x = x["images"]
+
+        # If the model is on the GPU and the input matrices are not, shift them there
+        if next(self.parameters()).device.type == "cuda" and x.device.type != "cuda":
+            x = x.cuda()
+
         features = self.forward_features(x)
         embeddings = self.forward_embedding(features)
         return_features = return_features if return_features is not None else self.return_features
