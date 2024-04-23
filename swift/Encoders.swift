@@ -152,7 +152,7 @@ public class TextEncoder {
     /// Processes text and returns embeddings. Throws an error if processing fails.
     /// - Parameter text: The text input to encode.
     /// - Returns: An `Embedding` object containing the model output.
-    public func forward(with text: String) throws -> Embedding {
+    public func encode(_ text: String) throws -> Embedding {
         let inputFeatureProvider = try self.processor.preprocess(text)
         guard let prediction = try? self.model.prediction(from: inputFeatureProvider),
             let predictionFeature = prediction.featureValue(for: "embeddings"),
@@ -197,7 +197,7 @@ public class ImageEncoder {
     /// Processes an image and returns embeddings. Throws an error if processing fails.
     /// - Parameter image: The `CGImage` to encode.
     /// - Returns: An `Embedding` object containing the model output.
-    public func forward(with image: CGImage) throws -> Embedding {
+    public func encode(_ image: CGImage) throws -> Embedding {
         let inputFeatureProvider = try self.processor.preprocess(image)
         guard let prediction = try? self.model.prediction(from: inputFeatureProvider),
             let predictionFeature = prediction.featureValue(for: "embeddings"),

@@ -1,5 +1,6 @@
 from functools import partial
 from time import perf_counter
+from dataclasses import dataclass
 from typing import List
 
 import requests
@@ -12,12 +13,22 @@ from transformers import (
     LlavaForConditionalGeneration,
 )
 
-from uform import get_model
 from uform.torch_decoders import VLMForCausalLM, VLMProcessor
 
 dtype = torch.bfloat16
 low_cpu_mem_usage = False
 device = "cuda:0"
+
+
+@dataclass
+class BenchmarkResult:
+    model_name: str
+    device_name: str
+    backend_name: str
+    duration_image_preprocessing: float
+    duration_image_embedding: float
+    duration_text_preprocessing: float
+    duration_text_embedding: float
 
 
 def caption(model, processor, prompt: str, image: Image.Image) -> str:
@@ -73,30 +84,6 @@ def bench_captions(
     del model
     del processor
     print(f"Throughput: {total_length/total_duration:.2f} tokens/s")
-
-
-def bench_image_embeddings(model, images):
-    total_duration = 0
-    total_embeddings = 0
-    images *= 10
-    while total_duration < 10:
-        seconds, embeddings = duration(lambda: model.encode_image(processor.preprocess_image(images)))
-        total_duration += seconds
-        total_embeddings += len(embeddings)
-
-    print(f"Throughput: {total_embeddings/total_duration:.2f} images/s")
-
-
-def bench_text_embeddings(model, texts):
-    total_duration = 0
-    total_embeddings = 0
-    texts *= 10
-    while total_duration < 10:
-        seconds, embeddings = duration(lambda: model.encode_text(processor.preprocess_text(texts)))
-        total_duration += seconds
-        total_embeddings += len(embeddings)
-
-    print(f"Throughput: {total_embeddings/total_duration:.2f} queries/s")
 
 
 if __name__ == "__main__":
@@ -157,11 +144,3 @@ if __name__ == "__main__":
         prompt="Summarize the visual content of the image.",
         images=images,
     )
-
-    print("UForm-English")
-    bench_image_embeddings(get_model("unum-cloud/uform-vl-english"), images)
-    bench_text_embeddings(get_model("unum-cloud/uform-vl-english"), captions)
-
-    print("UForm-Multilingual")
-    bench_image_embeddings(get_model("unum-cloud/uform-vl-multilingual-v2"), images)
-    bench_text_embeddings(get_model("unum-cloud/uform-vl-multilingual-v2"), captions)

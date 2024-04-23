@@ -1,5 +1,5 @@
 from os import PathLike
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Sequence
 import json
 
 from PIL.Image import Image, BICUBIC
@@ -23,7 +23,7 @@ class TextProcessor:
         self._tokenizer.no_padding()
         self._pad_token_idx = config["padding_idx"]
 
-    def __call__(self, texts: Union[str, List[str]]) -> Dict[str, np.ndarray]:
+    def __call__(self, texts: Union[str, Sequence[str]]) -> Dict[str, np.ndarray]:
         """Transforms one or more strings into dictionary with tokenized strings and attention masks.
 
         :param texts: text of list of texts to tokenizer
@@ -75,13 +75,13 @@ class ImageProcessor:
         self.image_mean = np.array(self._normalization_means, dtype=np.float32)[None, None]
         self.image_std = np.array(self._normalization_deviations, dtype=np.float32)[None, None]
 
-    def __call__(self, images: Union[Image, List[Image]]) -> np.ndarray:
+    def __call__(self, images: Union[Image, Sequence[Image]]) -> np.ndarray:
         """Transforms one or more Pillow images into Torch Tensors.
 
         :param images: image or list of images to preprocess
         """
 
-        if isinstance(images, list):
+        if isinstance(images, Sequence):
             batch_images = np.empty(
                 (len(images), 3, self._image_size, self._image_size),
                 dtype=np.float32,

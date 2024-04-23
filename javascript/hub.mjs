@@ -33,7 +33,7 @@ async function ensureDirectoryExists(dirPath) {
     }
 }
 
-async function getCheckpoint(modelId, modalities, token = null, format = '.onnx', saveDir = './models') {
+async function getModel(modelId, modalities, token = null, format = '.onnx', saveDir = './models') {
     modalities = normalizeModalities(modalities);
 
     const configNames = ['config.json'];
@@ -101,4 +101,4 @@ async function getCheckpoint(modelId, modalities, token = null, format = '.onnx'
     return { configPath, modalityPaths, tokenizerPath };
 }
 
-export { getCheckpoint, Modality };
+export { getModel, Modality };

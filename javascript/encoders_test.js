@@ -4,7 +4,7 @@ import path from 'path';
 import assert from 'assert';
 import fetch from 'node-fetch';
 
-import { getCheckpoint, Modality } from "./hub.mjs";
+import { getModel, Modality } from "./hub.mjs";
 import { TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from "./encoders.mjs";
 
 // Check if the HuggingFace Hub API token is set in the environment variable.
@@ -18,7 +18,7 @@ if (!hf_token) {
 }
 
 async function tryGettingCheckpoint(modelId, modalities) {
-    const { configPath, modalityPaths, tokenizerPath } = await getCheckpoint(
+    const { configPath, modalityPaths, tokenizerPath } = await getModel(
         modelId,
         modalities,
         hf_token,
@@ -60,7 +60,7 @@ async function testGetCheckpoint() {
 
 async function tryTextEncoderForwardPass(modelId) {
     const modalities = [Modality.TextEncoder];
-    const { configPath, modalityPaths, tokenizerPath } = await getCheckpoint(
+    const { configPath, modalityPaths, tokenizerPath } = await getModel(
         modelId,
         modalities,
         hf_token,
@@ -69,11 +69,11 @@ async function tryTextEncoderForwardPass(modelId) {
 
     const textProcessor = new TextProcessor(configPath, tokenizerPath);
     await textProcessor.init();
-    const processedTexts = await textProcessor.process("Hello, world!");
+    const processedTexts = await textProcessor.process("a small red panda in a zoo");
 
     const textEncoder = new TextEncoder(modalityPaths.text_encoder, textProcessor);
     await textEncoder.init();
-    const textOutput = await textEncoder.forward(processedTexts);
+    const textOutput = await textEncoder.encode(processedTexts);
     assert(textOutput.embeddings.dims.length === 2, "Output should be 2D");
 
     await textEncoder.dispose();
@@ -81,7 +81,7 @@ async function tryTextEncoderForwardPass(modelId) {
 
 async function tryImageEncoderForwardPass(modelId) {
     const modalities = [Modality.ImageEncoder];
-    const { configPath, modalityPaths } = await getCheckpoint(
+    const { configPath, modalityPaths } = await getModel(
         modelId,
         modalities,
         hf_token,
@@ -94,7 +94,7 @@ async function tryImageEncoderForwardPass(modelId) {
 
     const imageEncoder = new ImageEncoder(modalityPaths.image_encoder, imageProcessor);
     await imageEncoder.init();
-    const imageOutput = await imageEncoder.forward(processedImages);
+    const imageOutput = await imageEncoder.encode(processedImages);
     assert(imageOutput.embeddings.dims.length === 2, "Output should be 2D");
 
     await imageEncoder.dispose();
@@ -135,7 +135,7 @@ async function fetchImage(url) {
 async function tryCrossReferencingImageAndText(modelId) {
 
     const modalities = [Modality.ImageEncoder, Modality.TextEncoder];
-    const { configPath, modalityPaths, tokenizerPath } = await getCheckpoint(
+    const { configPath, modalityPaths, tokenizerPath } = await getModel(
         modelId,
         modalities,
         hf_token,
@@ -177,12 +177,17 @@ async function tryCrossReferencingImageAndText(modelId) {
         const processedText = await textProcessor.process(text);
         const processedImage = await imageProcessor.process(imageBuffer);
 
-        const textEmbedding = await textEncoder.forward(processedText);
-        const imageEmbedding = await imageEncoder.forward(processedImage);
+        const textEmbedding = await textEncoder.encode(processedText);
+        const imageEmbedding = await imageEncoder.encode(processedImage);
 
-        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.data));
-        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.data));
-        console.log(`Text: ${text}, Image: ${imageUrl}, Similarity: ${cosineSimilarity(textEmbedding.embeddings, imageEmbedding.embeddings)}`);
+        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.cpuData));
+        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.cpuData));
+
+        // Print-based debugging at its best :)
+        // console.log(`Text: ${text}, Image: ${imageUrl}`);
+        // console.log(`Text embedding first components: ${textEmbeddings[i].slice(0, 5)}`);
+        // console.log(`Image embedding first components: ${imageEmbeddings[i].slice(0, 5)}`);
+        console.log(`Similarity: ${cosineSimilarity(textEmbeddings[i], imageEmbeddings[i])}`)
     }
 
     for (let i = 0; i < texts.length; i++) {
@@ -209,9 +214,9 @@ async function testEncoders() {
         // Go through the bi-modal models
         for (const modelId of [
             'unum-cloud/uform3-image-text-english-small',
-            'unum-cloud/uform3-image-text-english-base',
-            'unum-cloud/uform3-image-text-english-large',
-            'unum-cloud/uform3-image-text-multilingual-base',
+            // 'unum-cloud/uform3-image-text-english-base',
+            // 'unum-cloud/uform3-image-text-english-large',
+            // 'unum-cloud/uform3-image-text-multilingual-base',
         ]) {
             await tryTextEncoderForwardPass(modelId, hf_token);
             await tryImageEncoderForwardPass(modelId, hf_token);

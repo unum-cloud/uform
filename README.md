@@ -51,13 +51,12 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 ### Embedding Models
 
-| Model                                    | Parameters | Languages |                                 Architecture |
-| :--------------------------------------- | ---------: | --------: | -------------------------------------------: |
-| [`uform-vl-english-large`][model-e-l] 🆕  |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
-| [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
-| [`uform-vl-english-small`][model-e-s] 🆕  |        79M |         1 | 2 text layers, ViT-S/16, 2 multimodal layers |
-| [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
-| [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
+| Model                                               | Parameters | Languages |                                 Architecture |
+| :-------------------------------------------------- | ---------: | --------: | -------------------------------------------: |
+| [`uform3-image-text-english-large`][model-e-l] 🆕    |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
+| [`uform3-image-text-english-base`][model-e]         |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
+| [`uform3-image-text-english-small`][model-e-s] 🆕    |        79M |         1 | 2 text layers, ViT-S/16, 2 multimodal layers |
+| [`uform3-image-text-multilingual-base`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
 
 [model-e-l]: https://huggingface.co/unum-cloud/uform-vl-english-large/
 [model-e]: https://huggingface.co/unum-cloud/uform-vl-english/
@@ -307,34 +306,18 @@ prompt_len = inputs['input_ids'].shape[1]
 decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
 ```
 
-### Multimodal Chat
+### Multimodal Chat in CLI
 
-The generative models can be used for chat-like experiences, where the user can provide both text and images as input.
-To use that feature, you can start with the following CLI command:
+The generative models can be used for chat-like experiences in the command line.
+For that, you can use the `uform-chat` CLI tool, which is available in the UForm package.
 
 ```bash
-uform-chat --model unum-cloud/uform-gen-chat --image=zebra.jpg
-uform-chat --model unum-cloud/uform-gen-chat \
-    --image="https://bit.ly/3tIVg9M" \
-    --device="cuda:0" \
-    --fp16
-```
-
-### Multi-GPU
-
-To achieve higher throughput, you can launch UForm on multiple GPUs.
-For that pick the encoder of the model you want to run in parallel (`text_encoder` or `image_encoder`), and wrap it in `nn.DataParallel` (or `nn.DistributedDataParallel`).
-
-```python
-import uform
-
-model, processor = uform.get_model('unum-cloud/uform-vl-english')
-model_image = nn.DataParallel(model.image_encoder)
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_image.to(device)
-
-_, res = model_image(images, 0)
+$ pip install uform
+$ uform-chat --model unum-cloud/uform-gen2-dpo --image=zebra.jpg
+$ uform-chat --model unum-cloud/uform-gen2-dpo \
+>     --image="https://bit.ly/3tIVg9M" \
+>     --device="cuda:0" \
+>     --fp16
 ```
 
 ## Evaluation
@@ -471,3 +454,8 @@ On Apple M2 Arm chips the energy efficiency of inference can exceed that of the 
 ## License
 
 All models come under the same license as the code - Apache 2.0.
+
+
+TODO:
+
+- [ ] Download the image if a URL is provided

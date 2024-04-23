@@ -84,10 +84,11 @@ def get_checkpoint(
     return config_path, modality_paths, tokenizer_path
 
 
-def get_model(
+def get_model_torch(
     model_name: str,
     *,
     token: Optional[str] = None,
+    device: Literal["cpu", "cuda"] = "cpu",
     modalities: Optional[Tuple[Union[str, Modality]]] = None,
 ) -> Tuple[Dict[Modality, Callable], Dict]:
     from uform.torch_encoders import TextEncoder, ImageEncoder
@@ -101,13 +102,15 @@ def get_model(
 
     if Modality.TEXT_ENCODER in modalities:
         processor = TextProcessor(config_path, tokenizer_path)
-        encoder = TextEncoder.from_pretrained(config_path, modality_paths.get(Modality.TEXT_ENCODER)).eval()
+        encoder = TextEncoder.from_pretrained(config_path, modality_paths.get(Modality.TEXT_ENCODER))
+        encoder = encoder.eval().to(device)
         result_processors[Modality.TEXT_ENCODER] = processor
         result_models[Modality.TEXT_ENCODER] = encoder
 
     if Modality.IMAGE_ENCODER in modalities:
         processor = ImageProcessor(config_path)
-        encoder = ImageEncoder.from_pretrained(config_path, modality_paths.get(Modality.IMAGE_ENCODER)).eval()
+        encoder = ImageEncoder.from_pretrained(config_path, modality_paths.get(Modality.IMAGE_ENCODER))
+        encoder = encoder.eval().to(device)
         result_processors[Modality.IMAGE_ENCODER] = processor
         result_models[Modality.IMAGE_ENCODER] = encoder
 
@@ -143,3 +146,20 @@ def get_model_onnx(
         result_models[Modality.IMAGE_ENCODER] = encoder
 
     return result_processors, result_models
+
+
+def get_model(
+    model_name: str,
+    *,
+    device: Literal["cpu", "cuda"] = "cpu",  # change this if you have a GPU
+    backend: Literal["onnx", "torch"] = "onnx",  # lighter = better
+    modalities: Optional[Tuple[str, Modality]] = None,  # all by default
+    token: Optional[str] = None,  # optional HuggingFace Hub token for private models
+) -> Tuple[Dict[Modality, Callable], Dict]:
+
+    if backend == "onnx":
+        return get_model_onnx(model_name, device=device, token=token, modalities=modalities)
+    elif backend == "torch":
+        return get_model_torch(model_name, device=device, token=token, modalities=modalities)
+    else:
+        raise ValueError(f"Unknown backend: {backend}")
