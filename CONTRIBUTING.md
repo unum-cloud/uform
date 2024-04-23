@@ -7,12 +7,11 @@ We welcome contributions to UForm!
 Before submitting any changes, please make sure that the tests pass.
 
 ```sh
-pip install -e .                # For core dependencies
-
+pip install -e ".[dev]"         # For development dependencies
 pip install -e ".[torch]"       # For PyTorch
 pip install -e ".[onnx]"        # For ONNX on CPU
 pip install -e ".[onnx-gpu]"    # For ONNX on GPU, available for some platforms
-pip install -e ".[torch,onnx]"  # For PyTorch and ONNX Python tests
+pip install -e ".[torch,onnx,onnx-gpu,dev]"  # For all
 
 pytest python/scripts/ -s -x -Wd -v
 pytest python/scripts/ -s -x -Wd -v -k onnx # To run only ONNX tests without loading Torch
@@ -53,3 +52,15 @@ Before submitting any changes, please make sure that the tests pass.
 npm install
 npm run test
 ```
+
+## Benchmarking
+
+If you want to double check, how fast the model may work on your hardware, you can clone the library and repeat the benchmarks locally.
+The following benchmark will exclude PyTorch backend, CUDA-capable devices, and all the `-base` and `-large` models, running only the ONNX benchmarks on the CPU.
+
+```sh
+git clone https://github.com/unum-cloud/uform --depth 1 # Clone the repository
+cd uform && pip install -e ".[torch,onnx,onnx-gpu,dev]" # Install all dependencies
+python python/scripts/bench_encoders.py --filter-out "torch|cuda|base|large"
+```
+
