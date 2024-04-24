@@ -57,31 +57,156 @@ For accuracy and speed benchmarks refer to the [evaluation page](https://github.
 
 ### Embedding Models
 
-| Model                                               | Parameters | Languages |                                 Architecture |
-| :-------------------------------------------------- | ---------: | --------: | -------------------------------------------: |
-| [`uform3-image-text-english-large`][model-e-l] 🆕    |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
-| [`uform3-image-text-english-base`][model-e]         |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
-| [`uform3-image-text-english-small`][model-e-s] 🆕    |        79M |         1 | 2 text layers, ViT-S/16, 2 multimodal layers |
-| [`uform3-image-text-multilingual-base`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
-
-[model-e-l]: https://huggingface.co/unum-cloud/uform-vl-english-large/
-[model-e]: https://huggingface.co/unum-cloud/uform-vl-english/
-[model-e-s]: https://huggingface.co/unum-cloud/uform-vl-english-small/
-[model-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/
-[model-m-v2]: https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/
+<table border="1" style="width:100%; border-collapse:collapse;">
+    <thead>
+        <tr style="background-color:#f2f2f2;">
+            <th>Model</th>
+            <th style="text-align:right;">Parameters</th>
+            <th style="text-align:right;">Languages</th>
+            <th style="text-align:right;">Architecture</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><a href="https://huggingface.co/unum-cloud/uform-vl-english-large/">uform3-image-text-english-large 🆕</a></td>
+            <td style="text-align:right;">365M</td>
+            <td style="text-align:right;">1</td>
+            <td style="text-align:right;">12 layer BERT, ViT-L/14</td>
+        </tr>
+        <tr>
+            <td><a href="https://huggingface.co/unum-cloud/uform-vl-english/">uform3-image-text-english-base</a></td>
+            <td style="text-align:right;">143M</td>
+            <td style="text-align:right;">1</td>
+            <td style="text-align:right;">4 layer BERT, ViT-B/16</td>
+        </tr>
+        <tr>
+            <td><a href="https://huggingface.co/unum-cloud/uform-vl-english-small/">uform3-image-text-english-small 🆕</a></td>
+            <td style="text-align:right;">79M</td>
+            <td style="text-align:right;">1</td>
+            <td style="text-align:right;">4 layer BERT, ViT-S/16</td>
+        </tr>
+        <tr>
+            <td><a href="https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/">uform3-image-text-multilingual-base</a></td>
+            <td style="text-align:right;">206M</td>
+            <td style="text-align:right;">21</td>
+            <td style="text-align:right;">12 layer BERT, ViT-B/16</td>
+        </tr>
+    </tbody>
+</table>
 
 ### Generative Models
 
-| Model                              | Parameters |                     Purpose |           Architecture |
-| :--------------------------------- | ---------: | --------------------------: | ---------------------: |
-| [`uform-gen2-dpo`][model-g2] 🆕     |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
-| [`uform-gen2-qwen-500m`][model-g2] |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
-| [`uform-gen`][model-g1]            |       1.5B |       Image Captioning, VQA |   llama-1.3B, ViT-B/16 |
+<table border="1" style="width:100%; border-collapse:collapse;">
+    <thead>
+        <tr style="background-color:#f2f2f2;">
+            <th>Model</th>
+            <th style="text-align:right;">Parameters</th>
+            <th style="text-align:right;">Purpose</th>
+            <th style="text-align:right;">Architecture</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><a href="https://huggingface.co/unum-cloud/uform-gen2-dpo/">uform-gen2-dpo 🆕</a></td>
+            <td style="text-align:right;">1.2B</td>
+            <td style="text-align:right;">Chat, Image Captioning, VQA</td>
+            <td style="text-align:right;">qwen1.5-0.5B, ViT-H/14</td>
+        </tr>
+        <tr>
+            <td><a href="https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/">uform-gen2-qwen-500m</a></td>
+            <td style="text-align:right;">1.2B</td>
+            <td style="text-align:right;">Chat, Image Captioning, VQA</td>
+            <td style="text-align:right;">qwen1.5-0.5B, ViT-H/14</td>
+        </tr>
+        <tr>
+            <td><a href="https://huggingface.co/unum-cloud/uform-gen/">uform-gen</a></td>
+            <td style="text-align:right;">1.5B</td>
+            <td style="text-align:right;">Image Captioning, VQA</td>
+            <td style="text-align:right;">llama-1.3B, ViT-B/16</td>
+        </tr>
+    </tbody>
+</table>
 
-[model-g2]: https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/
-[model-g1]: https://huggingface.co/unum-cloud/uform-gen/
+## Quick Start Examples
 
-## Features and Recommendations
+### Embedding Models
+
+First, `pip install uform`.
+Then, load the model:
+
+```py
+from uform import get_model, Modality
+
+processors, models = get_model('unum-cloud/uform3-image-text-english-small')
+
+model_text = models[Modality.TEXT_ENCODER]
+model_image = models[Modality.IMAGE_ENCODER]
+processor_text = processors[Modality.TEXT_ENCODER]
+processor_image = processors[Modality.IMAGE_ENCODER]
+```
+
+Embed images:
+
+```py
+import requests
+from io import BytesIO
+from PIL import Image
+
+image_url = 'https://media-cdn.tripadvisor.com/media/photo-s/1b/28/6b/53/lovely-armenia.jpg'
+image_url = Image.open(BytesIO(requests.get(image_url).content))
+image_data = processor_image(image)
+image_features, image_embedding = model_image.encode(image_data, return_features=True)
+```
+
+Embed queries:
+
+```py
+text = 'a cityscape bathed in the warm glow of the sun, with varied architecture and a towering, snow-capped mountain rising majestically in the background'
+text_data = processor_text(text)
+text_features, text_embedding = model_text.encode(text_data, return_features=True)
+```
+
+For more details check out:
+
+- Python docs on embedding models in [python/README.md](https://github.com/unum-cloud/uform/blob/main/python/README.md#embedding-models)
+- JavaScript docs on embedding models in [javascript/README.md](https://github.com/unum-cloud/uform/blob/main/javascript/README.md#embedding-models)
+- Swift docs on embedding models in [swift/README.md](https://github.com/unum-cloud/uform/blob/main/swift/README.md#embedding-models)
+
+### Generative Models
+
+The generative models are natively compatible with 
+
+```python
+from transformers import AutoModel, AutoProcessor
+
+model = AutoModel.from_pretrained('unum-cloud/uform-gen2-dpo', trust_remote_code=True)
+processor = AutoProcessor.from_pretrained('unum-cloud/uform-gen2-dpo', trust_remote_code=True)
+
+prompt = 'Question or Instruction'
+image = Image.open('image.jpg')
+
+inputs = processor(text=[prompt], images=[image], return_tensors='pt')
+
+with torch.inference_mode():
+     output = model.generate(
+        **inputs,
+        do_sample=False,
+        use_cache=True,
+        max_new_tokens=256,
+        eos_token_id=151645,
+        pad_token_id=processor.tokenizer.pad_token_id
+    )
+prompt_len = inputs['input_ids'].shape[1]
+decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
+```
+
+For more details check out:
+
+- Python docs on generative models in [python/README.md](https://github.com/unum-cloud/uform/blob/main/python/README.md#generative-models)
+- JavaScript docs on generative models 🔜
+- Swift docs on generative models 🔜
+
+## Technical Details
 
 ### Down-casting, Quantization, Matryoshka, and Slicing
 
