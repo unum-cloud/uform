@@ -231,7 +231,6 @@ class TextEncoder(nn.Module):
             return x[:, 0]
 
         attn_mask = attn_mask.unsqueeze(2).type_as(x)
-
         return (x * attn_mask).sum(dim=1) / attn_mask.sum(dim=1)
 
     def get_attention_mask(self, attn_mask: Tensor, dtype: torch.dtype) -> Tensor:
@@ -370,7 +369,7 @@ class ImageEncoder(nn.Module):
 
         return self.embedding_projection(x)
 
-    def forward(self, x: Tensor, return_features: Optional[bool] = None) -> Tensor:
+    def forward(self, x: Union[Tensor, dict], return_features: Optional[bool] = None) -> Tensor:
         if isinstance(x, dict):
             x = x["images"]
 
@@ -385,7 +384,7 @@ class ImageEncoder(nn.Module):
             return features, embeddings
         return embeddings
 
-    def encode(self, x: Tensor, return_features: Optional[bool] = None) -> Tensor:
+    def encode(self, x: Union[Tensor, dict], return_features: Optional[bool] = None) -> Tensor:
         result = self.forward(x, return_features)
         if isinstance(result, tuple):
             return result[0].detach(), result[1].detach()

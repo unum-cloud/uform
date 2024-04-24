@@ -50,6 +50,38 @@ text_features, text_embedding = model_text.encode(text_data, return_features=Tru
 
 ### Generative Models
 
+UForm generative models are fully compatible with the Hugging Face Transformers library, and can be used without installing the UForm library.
+Those models can be used to caption images or power multimodal chat experiences.
+
+```python
+from transformers import AutoModel, AutoProcessor
+
+model = AutoModel.from_pretrained('unum-cloud/uform-gen2-dpo', trust_remote_code=True)
+processor = AutoProcessor.from_pretrained('unum-cloud/uform-gen2-dpo', trust_remote_code=True)
+
+prompt = 'Question or Instruction'
+image = Image.open('image.jpg')
+
+inputs = processor(text=[prompt], images=[image], return_tensors='pt')
+
+with torch.inference_mode():
+     output = model.generate(
+        **inputs,
+        do_sample=False,
+        use_cache=True,
+        max_new_tokens=256,
+        eos_token_id=151645,
+        pad_token_id=processor.tokenizer.pad_token_id
+    )
+prompt_len = inputs['input_ids'].shape[1]
+decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
+```
+
+You can check examples of different prompts in our demo spaces:
+
+- for [`uform-gen2-qwen-500m`](https://huggingface.co/spaces/unum-cloud/uform-gen2-qwen-500m-demo)
+- for [`uform-gen2-dpo`](https://huggingface.co/spaces/unum-cloud/uform-gen2-qwen-500m-dpo-demo)
+
 ## Technical Details
 
 ### Down-casting, Quantization, Matryoshka, and Slicing
@@ -122,3 +154,22 @@ encoder_image = nn.DataParallel(encoder_image)
 
 _, res = encoder_image(images, 0)
 ```
+
+### ONNX and CUDA
+
+The configuration process may include a few additional steps, depending on the environment.
+When using the CUDA and TensorRT backends with CUDA 12 or newer make sure to [install the Nvidia toolkit][install-nvidia-toolkit] and the `onnxruntime-gpu` package from the custom repository.
+
+```sh
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda-toolkit-12
+pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
+export CUDA_PATH="/usr/local/cuda-12/bin"
+export PATH="/usr/local/cuda-12/bin${PATH:+:${PATH}}"
+export LD_LIBRARY_PATH="/usr/local/cuda-12/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+pytest python/scripts/ -s -x -Wd -v -k onnx
+```
+
+[install-nvidia-toolkit]: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#network-repo-installation-for-ubuntu

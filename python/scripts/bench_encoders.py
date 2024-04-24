@@ -68,10 +68,14 @@ class BenchmarkResult:
     duration_text_embedding: float = 0
 
 
-def duration(callable):
+def duration(callable, synchronize=False):
     """Profile the duration of a callable and return the duration and the result."""
+    if synchronize and torch_available and cuda_available:
+        torch.cuda.synchronize()  # Wait for CUDA operations to complete
     start = perf_counter()
     result = callable()
+    if synchronize and torch_available and cuda_available:
+        torch.cuda.synchronize()  # Ensure all CUDA kernels have finished
     stop = perf_counter()
     return stop - start, result
 
@@ -96,13 +100,20 @@ def get_captioned_images() -> List[Tuple[Image.Image, str]]:
     return list(zip(images, captions))
 
 
-def yield_benchmarks() -> Generator[Tuple[BenchmarkResult, Callable], None, None]:
+def yield_benchmarks(batch_size: int) -> Generator[Tuple[BenchmarkResult, Callable], None, None]:
     """Yields callable benchmarks for all supported backends of the given model."""
 
     # Pull the content and artificially grow the batch size
     images, captions = zip(*get_captioned_images())
-    images *= 10
-    captions *= 10
+
+    if len(images) < batch_size:
+        import math
+
+        multiplier = int(math.ceil(batch_size / len(images)))
+        images *= multiplier
+        captions *= multiplier
+    images = images[:batch_size]
+    captions = captions[:batch_size]
 
     def run(model_name: str, device: str, backend_name: str):
         result = BenchmarkResult(
@@ -115,6 +126,7 @@ def yield_benchmarks() -> Generator[Tuple[BenchmarkResult, Callable], None, None
             duration_text_embedding=0,
         )
 
+        sync = backend_name == "torch"
         processors, models = get_model(
             model_name,
             device=device,
@@ -130,7 +142,7 @@ def yield_benchmarks() -> Generator[Tuple[BenchmarkResult, Callable], None, None
         # Image preprocessing
         total_duration = 0
         total_iterations = 0
-        while total_duration < 10:
+        while total_duration < 10 and total_iterations < 100:
             seconds, _ = duration(lambda: processor_image(images))
             total_duration += seconds
             total_iterations += len(images)
@@ -140,9 +152,9 @@ def yield_benchmarks() -> Generator[Tuple[BenchmarkResult, Callable], None, None
         # Image embedding
         total_duration = 0
         total_iterations = 0
-        while total_duration < 10:
+        while total_duration < 10 and total_iterations < 100:
             images_data = processor_image(images)
-            seconds, _ = duration(lambda: model_image.encode(images_data))
+            seconds, _ = duration(lambda: model_image.encode(images_data), synchronize=sync)
             total_duration += seconds
             total_iterations += len(images)
         duration_per_iteration = total_duration / total_iterations
@@ -151,7 +163,7 @@ def yield_benchmarks() -> Generator[Tuple[BenchmarkResult, Callable], None, None
         # Text preprocessing
         total_duration = 0
         total_iterations = 0
-        while total_duration < 10:
+        while total_duration < 10 and total_iterations < 100:
             seconds, _ = duration(lambda: processor_text(captions))
             total_duration += seconds
             total_iterations += len(captions)
@@ -161,9 +173,9 @@ def yield_benchmarks() -> Generator[Tuple[BenchmarkResult, Callable], None, None
         # Text embedding
         total_duration = 0
         total_iterations = 0
-        while total_duration < 10:
+        while total_duration < 10 and total_iterations < 100:
             texts_data = processor_text(captions)
-            seconds, _ = duration(lambda: model_text.encode(texts_data))
+            seconds, _ = duration(lambda: model_text.encode(texts_data), synchronize=sync)
             total_duration += seconds
             total_iterations += len(captions)
         duration_per_iteration = total_duration / total_iterations
@@ -195,10 +207,10 @@ def yield_benchmarks() -> Generator[Tuple[BenchmarkResult, Callable], None, None
                 ), partial(run, model_name, device, backend_name)
 
 
-def main(filter_out: str = None):
+def main(filter_out: str = None, batch_size: int = 10):
     results = []
     filter_pattern = re.compile(filter_out) if filter_out else None
-    for specs, func in yield_benchmarks():
+    for specs, func in yield_benchmarks(batch_size=batch_size):
         if filter_pattern and (
             filter_pattern.search(specs.model_name)
             or filter_pattern.search(specs.backend_name)
@@ -243,7 +255,20 @@ def main(filter_out: str = None):
 
 
 if __name__ == "__main__":
-    argparse = argparse.ArgumentParser()
-    argparse.add_argument("--filter-out", type=str, default=None)
-    args = argparse.parse_args()
-    main(filter_out=args.filter_out)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--filter-out",
+        type=str,
+        default=None,
+        help="Filter out models, backends, or devices with a Regular Expression.",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=10,
+        help="Batch size for the benchmark. Batch size 1 measures latency. Large batch sizes may not fit on every GPU.",
+    )
+    args = parser.parse_args()
+
+    main(filter_out=args.filter_out, batch_size=args.batch_size)
