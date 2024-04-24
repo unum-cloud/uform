@@ -8,10 +8,10 @@ Few retrieval benchmarks exist for multimodal embeddings.
 The most famous ones for English are "MS-COCO" and "Flickr30k".
 Evaluating `uform-vl-english` model, one can expect the following numbers for search quality.
 
-| Dataset  | Recall @ 1 | Recall @ 5 | Recall @ 10 |
-| :------- | ---------: | ---------: | ----------: |
-| Flickr   |      0.727 |      0.915 |       0.949 |
-| MS-COCO¹ |      0.510 |      0.761 |       0.838 |
+| Dataset   | Recall @ 1 | Recall @ 5 | Recall @ 10 |
+| :-------- | ---------: | ---------: | ----------: |
+| Flickr    |      0.727 |      0.915 |       0.949 |
+| MS-COCO ¹ |      0.510 |      0.761 |       0.838 |
 
 For multilingual benchmarks, we've created the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) repository².
 Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the following metrics for text-to-image search, compared against `xlm-roberta-base-ViT-B-32` [OpenCLIP](https://github.com/mlfoundations/open_clip) model.
@@ -26,9 +26,7 @@ Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the f
 | French 🇫🇷  |         31.3 |  __35.4__ |         56.5 |  __62.6__ |          67.4 |   __73.3__ |    274 M |
 
 
-<details>
-<summary>All languages.</summary>
-<br>
+All languages:
 
 | Language             | OpenCLIP @ 1 |    UForm @ 1 | OpenCLIP @ 5 |    UForm @ 5 | OpenCLIP @ 10 |   UForm @ 10 | Speakers |
 | :------------------- | -----------: | -----------: | -----------: | -----------: | ------------: | -----------: | -------: |
@@ -59,8 +57,6 @@ Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the f
 | Microsoft Translator |     27.2±6.4 | __31.4±3.6__ |     50.8±9.8 | __57.7±4.7__ |     61.4±10.6 | __68.9±4.6__ |        - |
 | Meta NLLB            |     24.9±6.7 | __32.4±3.5__ |    47.5±10.3 | __58.9±4.5__ |     58.2±11.2 | __70.2±4.3__ |        - |
 
-</details>
-
 ### Generative Models
 
 | Model                | LLM Size |  SQA |    MME | MMBench | Average¹ |
@@ -75,13 +71,13 @@ For captioning evaluation we measure CLIPScore and RefCLIPScore³.
 | :---------------------------------- | ---: | -------------: | --------: | -----------: |
 | `llava-hf/llava-1.5-7b-hf`          |   7B |           Long |     0.878 |        0.529 |
 | `llava-hf/llava-1.5-7b-hf`          |   7B |          Short |     0.886 |        0.531 |
-|                                     |
+|                                     |      |                |           |              |
 | `Salesforce/instructblip-vicuna-7b` |   7B |           Long |     0.902 |        0.534 |
 | `Salesforce/instructblip-vicuna-7b` |   7B |          Short |     0.848 |        0.523 |
-|                                     |
+|                                     |      |                |           |              |
 | `unum-cloud/uform-gen`              | 1.5B |           Long |     0.847 |        0.523 |
 | `unum-cloud/uform-gen`              | 1.5B |          Short |     0.842 |        0.522 |
-|                                     |
+|                                     |      |                |           |              |
 | `unum-cloud/uform-gen-chat`         | 1.5B |           Long |     0.860 |        0.525 |
 | `unum-cloud/uform-gen-chat`         | 1.5B |          Short |     0.858 |        0.525 |
 

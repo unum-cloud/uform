@@ -3,10 +3,17 @@ import { InferenceSession, Tensor } from 'onnxruntime-node';
 import { PreTrainedTokenizer } from '@xenova/transformers';
 import sharp from 'sharp';
 
-import { getModel, Modality } from "./hub.mjs";
-
+/**
+ * A processor for text data that prepares input for the text encoder model.
+ */
 class TextProcessor {
 
+    /**
+     * Constructs a new TextProcessor instance.
+     *
+     * @param {string} configPath - The path to the configuration file for the text encoder.
+     * @param {string} tokenizerPath - The path to the tokenizer configuration file.
+     */
     constructor(configPath, tokenizerPath) {
         this.configPath = configPath;
         this.tokenizerPath = tokenizerPath;
@@ -16,6 +23,9 @@ class TextProcessor {
         this.tokenizer = null;
     }
 
+    /**
+     * Initializes the TextProcessor by loading configurations and setting up the tokenizer.
+     */
     async init() {
         var config = JSON.parse(readFileSync(this.configPath, { encoding: 'utf8' }));
         if (config.text_encoder !== undefined) {
@@ -31,6 +41,12 @@ class TextProcessor {
         this.tokenizer.pad_token_id = this.padTokenIdx;
     }
 
+    /**
+     * Processes a list of text strings into model-ready format, including padding and attention masks.
+     *
+     * @param {Array<string>} texts - An array of text strings to process.
+     * @return {Object} The processed texts as model input features.
+     */
     async process(texts) {
 
         const encoded = await this.tokenizer(texts, {
@@ -48,17 +64,31 @@ class TextProcessor {
     }
 }
 
+/**
+ * An encoder for text data that uses a pre-trained model to encode text.
+ */
 class TextEncoder {
 
-    constructor(modelPath, processor = null) {
+    /**
+     * Constructs a new TextEncoder instance.
+     *
+     * @param {string} modelPath - The path to the pre-trained ONNX model.
+     */
+    constructor(modelPath) {
         this.modelPath = modelPath;
         this.session = null;
     }
 
+    /**
+     * Initializes the ONNX session with the pre-trained model.
+     */
     async init() {
         this.session = await InferenceSession.create(this.modelPath);
     }
 
+    /**
+     * Releases the ONNX session resources.
+     */
     async dispose() {
         if (this.session) {
             await this.session.release();
@@ -66,6 +96,12 @@ class TextEncoder {
         }
     }
 
+    /**
+     * Encodes the input data using the pre-trained model.
+     *
+     * @param {Object} inputs - The input data containing input_ids and attention_mask.
+     * @return {Object} The encoded outputs from the model.
+     */
     async encode(inputs) {
         if (!this.session) {
             throw new Error("Session is not initialized.");
@@ -109,12 +145,17 @@ class TextEncoder {
 
 }
 
-
+/**
+ * A processor for image data that prepares images for the image encoder model.
+ */
 class ImageProcessor {
     constructor(configPath) {
         this.configPath = configPath;
     }
 
+    /**
+     * Initializes the ImageProcessor by loading configuration settings for image preprocessing.
+     */
     async init() {
         var config = JSON.parse(readFileSync(this.configPath, 'utf8'));
         if (config.image_encoder !== undefined) {
@@ -128,6 +169,12 @@ class ImageProcessor {
         this.imageMean = new Float32Array(this.normalizationMeans);
         this.imageStd = new Float32Array(this.normalizationDeviations);
     }
+    /**
+     * Processes raw image data into a model-ready format, including resizing, cropping, and normalizing.
+     *
+     * @param {Buffer|Array<Buffer>} images - A single image or an array of images to process.
+     * @return {Array<Float32Array>} The processed image data as an array of Float32Arrays.
+     */
     async process(images) {
         const processSingle = async (image) => {
             let img = sharp(image).toColorspace('srgb');
@@ -174,16 +221,25 @@ class ImageProcessor {
     }
 }
 
+/**
+ * An encoder for image data that uses a pre-trained model to encode images.
+ */
 class ImageEncoder {
     constructor(modelPath, processor) {
         this.modelPath = modelPath;
         this.imageSize = processor.imageSize;
     }
 
+    /**
+     * Initializes the ONNX session with the pre-trained model.
+     */
     async init() {
         this.session = await InferenceSession.create(this.modelPath);
     }
 
+    /**
+     * Releases the ONNX session resources.
+     */
     async dispose() {
         if (this.session) {
             await this.session.release();
@@ -191,6 +247,12 @@ class ImageEncoder {
         }
     }
 
+    /**
+     * Encodes the processed image data using the pre-trained model.
+     *
+     * @param {Float32Array|Array<Float32Array>} images - The processed image data.
+     * @return {Object} The encoded outputs from the model.
+     */
     async encode(images) {
         if (!this.session) {
             throw new Error("Session is not initialized.");
@@ -220,7 +282,7 @@ class ImageEncoder {
         let dims;
 
         if (Array.isArray(images)) {
-            // Assuming each images in the array is a Float32Array representing an image already processed to a fixed size.
+            // Assuming each image in the array is a Float32Array representing an image already processed to a fixed size.
             const arrays = images.map(ensureFloat32Array);
             imagesData = concatFloat32Arrays(arrays);
             const numImages = arrays.length;

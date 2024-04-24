@@ -57,9 +57,9 @@ For accuracy and speed benchmarks refer to the [evaluation page](https://github.
 
 ### Embedding Models
 
-<table border="1" style="width:100%; border-collapse:collapse;">
+<table style="width:100%; border-collapse:collapse;">
     <thead>
-        <tr style="background-color:#f2f2f2;">
+        <tr>
             <th>Model</th>
             <th style="text-align:right;">Parameters</th>
             <th style="text-align:right;">Languages</th>
@@ -68,25 +68,25 @@ For accuracy and speed benchmarks refer to the [evaluation page](https://github.
     </thead>
     <tbody>
         <tr>
-            <td><a href="https://huggingface.co/unum-cloud/uform-vl-english-large/">uform3-image-text-english-large 🆕</a></td>
-            <td style="text-align:right;">365M</td>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-vl-english-large/">uform3-image-text-english-large</a></code>  🆕</td>
+            <td style="text-align:right;">365 M</td>
             <td style="text-align:right;">1</td>
             <td style="text-align:right;">12 layer BERT, ViT-L/14</td>
         </tr>
         <tr>
-            <td><a href="https://huggingface.co/unum-cloud/uform-vl-english/">uform3-image-text-english-base</a></td>
-            <td style="text-align:right;">143M</td>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-vl-english/">uform3-image-text-english-base</a></code></td>
+            <td style="text-align:right;">143 M</td>
             <td style="text-align:right;">1</td>
             <td style="text-align:right;">4 layer BERT, ViT-B/16</td>
         </tr>
         <tr>
-            <td><a href="https://huggingface.co/unum-cloud/uform-vl-english-small/">uform3-image-text-english-small 🆕</a></td>
-            <td style="text-align:right;">79M</td>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-vl-english-small/">uform3-image-text-english-small</a></code>  🆕</td>
+            <td style="text-align:right;">79 M</td>
             <td style="text-align:right;">1</td>
             <td style="text-align:right;">4 layer BERT, ViT-S/16</td>
         </tr>
         <tr>
-            <td><a href="https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/">uform3-image-text-multilingual-base</a></td>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/">uform3-image-text-multilingual-base</a></code></td>
             <td style="text-align:right;">206M</td>
             <td style="text-align:right;">21</td>
             <td style="text-align:right;">12 layer BERT, ViT-B/16</td>
@@ -96,9 +96,9 @@ For accuracy and speed benchmarks refer to the [evaluation page](https://github.
 
 ### Generative Models
 
-<table border="1" style="width:100%; border-collapse:collapse;">
+<table style="width:100%; border-collapse:collapse;">
     <thead>
-        <tr style="background-color:#f2f2f2;">
+        <tr>
             <th>Model</th>
             <th style="text-align:right;">Parameters</th>
             <th style="text-align:right;">Purpose</th>
@@ -107,20 +107,20 @@ For accuracy and speed benchmarks refer to the [evaluation page](https://github.
     </thead>
     <tbody>
         <tr>
-            <td><a href="https://huggingface.co/unum-cloud/uform-gen2-dpo/">uform-gen2-dpo 🆕</a></td>
-            <td style="text-align:right;">1.2B</td>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-gen2-dpo/">uform-gen2-dpo</a></code>  🆕</td>
+            <td style="text-align:right;">1.2 B</td>
             <td style="text-align:right;">Chat, Image Captioning, VQA</td>
             <td style="text-align:right;">qwen1.5-0.5B, ViT-H/14</td>
         </tr>
         <tr>
-            <td><a href="https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/">uform-gen2-qwen-500m</a></td>
-            <td style="text-align:right;">1.2B</td>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/">uform-gen2-qwen-500m</a></code></td>
+            <td style="text-align:right;">1.2 B</td>
             <td style="text-align:right;">Chat, Image Captioning, VQA</td>
             <td style="text-align:right;">qwen1.5-0.5B, ViT-H/14</td>
         </tr>
         <tr>
-            <td><a href="https://huggingface.co/unum-cloud/uform-gen/">uform-gen</a></td>
-            <td style="text-align:right;">1.5B</td>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-gen/">uform-gen</a></code> ⚠️</td>
+            <td style="text-align:right;">1.5 B</td>
             <td style="text-align:right;">Image Captioning, VQA</td>
             <td style="text-align:right;">llama-1.3B, ViT-B/16</td>
         </tr>
