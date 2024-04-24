@@ -101,7 +101,7 @@ async function tryImageEncoderForwardPass(modelId) {
 }
 
 function cosineSimilarity(vecA, vecB) {
-    // We may be receiving a complex tesnor type, so let's check if it
+    // We may be receiving a complex tensor type, so let's check if it
     // has an array member named `data`.
     if (vecA.data) {
         vecA = vecA.data;
