@@ -180,8 +180,8 @@ async function tryCrossReferencingImageAndText(modelId) {
         const textEmbedding = await textEncoder.encode(processedText);
         const imageEmbedding = await imageEncoder.encode(processedImage);
 
-        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.cpuData));
-        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.cpuData));
+        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.data));
+        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.data));
 
         // Print-based debugging at its best :)
         // console.log(`Text: ${text}, Image: ${imageUrl}`);
