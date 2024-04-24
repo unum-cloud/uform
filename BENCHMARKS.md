@@ -100,6 +100,8 @@ Results for VQAv2 evaluation.
 
 ## Speed
 
+### Embedding Models
+
 UForm comes pre-packaged with speed benchmarks for the models.
     
 ```bash
@@ -141,14 +143,6 @@ On Nvidia RTX 3090:
 | `sentence-transformers/all-MiniLM-L12-v2`        |      __Yes__ | 3'604 sequences/second |     x 2.24 |
 | `unum-cloud/uform3-image-text-multilingual-base` |      __Yes__ | 6'809 sequences/second | __x 4.22__ |
 
-On Nvidia RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
-
-| Model                               | Size |               Speed |   Speedup |
-| :---------------------------------- | ---: | ------------------: | --------: |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |  ~ 40 tokens/second |           |
-| `Salesforce/instructblip-vicuna-7b` |   7B |  ~ 40 tokens/second |           |
-| `unum-cloud/uform-gen`              | 1.5B | ~ 140 tokens/second | __x 3.5__ |
-
 Given the small size of the model it also work well on mobile devices.
 On Apple M2 Arm chips the energy efficiency of inference can exceed that of the RTX 3090 GPU and other Ampere-generation cards.
 
@@ -158,3 +152,26 @@ On Apple M2 Arm chips the energy efficiency of inference can exceed that of the 
 | Apple M2 Pro unplugged |  ~ 19 tokens/second |      < 20W | 0.95 tokens/joule |
 | Apple M2 Max unplugged |  ~ 38 tokens/second |      < 36W | 1.06 tokens/joule |
 | Apple M2 Max plugged   |  ~ 56 tokens/second |      < 89W | 0.63 tokens/joule |
+
+### Generative Models
+
+```bash
+$ python python/scripts/bench_decoders.py --help
+usage: bench_decoders.py [-h] [--filter-out FILTER_OUT] [--batch-size BATCH_SIZE]
+
+options:
+  -h, --help            show this help message and exit
+  --filter-out FILTER_OUT
+                        Filter out models, backends, or devices with a Regular Expression.
+  --batch-size BATCH_SIZE
+                        Batch size for the benchmark. Batch size 1 measures latency. Large batch sizes may not fit on every GPU.
+```
+
+On Nvidia RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
+
+| Model                               | Size |               Speed |   Speedup |
+| :---------------------------------- | ---: | ------------------: | --------: |
+| `llava-hf/llava-1.5-7b-hf`          |   7B |  ~ 40 tokens/second |           |
+| `Salesforce/instructblip-vicuna-7b` |   7B |  ~ 40 tokens/second |           |
+| `unum-cloud/uform-gen`              | 1.5B | ~ 140 tokens/second | __x 3.5__ |
+

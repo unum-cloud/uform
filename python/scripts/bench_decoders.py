@@ -2,6 +2,7 @@ from functools import partial
 from time import perf_counter
 from dataclasses import dataclass
 from typing import List
+import argparse
 
 import requests
 import torch
@@ -11,6 +12,8 @@ from transformers import (
     InstructBlipForConditionalGeneration,
     InstructBlipProcessor,
     LlavaForConditionalGeneration,
+    AutoModel,
+    AutoProcessor,
 )
 
 from uform.torch_decoders import VLMForCausalLM, VLMProcessor
@@ -57,6 +60,7 @@ def caption(model, processor, prompt: str, image: Image.Image) -> str:
 
 
 def duration(callable):
+    """Profile the duration of a callable and return the duration and the result."""
     start = perf_counter()
     result = callable()
     stop = perf_counter()
@@ -86,7 +90,8 @@ def bench_captions(
     print(f"Throughput: {total_length/total_duration:.2f} tokens/s")
 
 
-if __name__ == "__main__":
+def main(filter_out: str = None, batch_size: int = 10):
+
     image_urls = [
         "https://images.unsplash.com/photo-1697665666330-7acf230fa830?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         "https://images.unsplash.com/photo-1695653422543-7da6d6744364?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -103,12 +108,30 @@ if __name__ == "__main__":
         "a few food containers, with past, corn, olives, and sliced red & green peppers, with a man pouring sous on top of it",
     ]
 
+    print("UForm-Gen2")
+    bench_captions(
+        model=AutoModel.from_pretrained(
+            "unum-cloud/uform-gen2-dpo",
+            trust_remote_code=True,
+            torch_dtype=dtype,
+            low_cpu_mem_usage=low_cpu_mem_usage,
+            ignore_mismatched_sizes=True,
+        ).to(device),
+        processor=AutoProcessor.from_pretrained(
+            "unum-cloud/uform-gen2-dpo",
+            trust_remote_code=True,
+        ),
+        prompt="Describe the picture in great detail",
+        images=images,
+    )
+
     print("UForm-Gen")
     bench_captions(
         model=VLMForCausalLM.from_pretrained(
             "unum-cloud/uform-gen",
             torch_dtype=dtype,
             low_cpu_mem_usage=low_cpu_mem_usage,
+            ignore_mismatched_sizes=True,
         ).to(device),
         processor=VLMProcessor.from_pretrained(
             "unum-cloud/uform-gen",
@@ -144,3 +167,23 @@ if __name__ == "__main__":
         prompt="Summarize the visual content of the image.",
         images=images,
     )
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--filter-out",
+        type=str,
+        default=None,
+        help="Filter out models, backends, or devices with a Regular Expression.",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=10,
+        help="Batch size for the benchmark. Batch size 1 measures latency. Large batch sizes may not fit on every GPU.",
+    )
+    args = parser.parse_args()
+
+    main(filter_out=args.filter_out, batch_size=args.batch_size)

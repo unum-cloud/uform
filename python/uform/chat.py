@@ -13,10 +13,10 @@ EOS_TOKEN = 32001
 def parse_args():
     parser = ArgumentParser(description="Chat with UForm generative model")
 
-    parser.add_argument("--model", type=str, default="unum-cloud/uform-gen-chat")
-    parser.add_argument("--image", type=str, help="", required=True)
-    parser.add_argument("--device", type=str, required=True)
-    parser.add_argument("--fp16", action="store_true")
+    parser.add_argument("--model", type=str, default="unum-cloud/uform-gen-chat", help="Model name or path")
+    parser.add_argument("--image", type=str, required=True, help="Path to image or URL")
+    parser.add_argument("--device", type=str, required=True, help="Device to run on, like `cpu` or `cuda:0`")
+    parser.add_argument("--fp16", action="store_true", help="Use half-precision math for faster inference")
 
     return parser.parse_args()
 
@@ -95,16 +95,16 @@ def run_chat(opts, model, processor):
 def main():
     try:
         opts = parse_args()
-
+        processor = VLMProcessor.from_pretrained(opts.model)
         model = (
             VLMForCausalLM.from_pretrained(
                 opts.model,
                 torch_dtype=torch.bfloat16 if opts.fp16 else torch.float32,
+                ignore_mismatched_sizes=True,
             )
             .eval()
             .to(opts.device)
         )
-        processor = VLMProcessor.from_pretrained(opts.model)
 
         run_chat(opts, model, processor)
 
