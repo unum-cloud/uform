@@ -6,6 +6,8 @@ from PIL.Image import Image, BICUBIC
 from tokenizers import Tokenizer
 import numpy as np
 
+from uform.shared import read_config
+
 
 class TextProcessor:
     def __init__(self, config_path: PathLike, tokenizer_path: PathLike):
@@ -14,7 +16,7 @@ class TextProcessor:
         :param tokenizer_path: path to tokenizer file
         """
 
-        config = json.load(open(config_path, "r"))
+        config = read_config(config_path)
         if "text_encoder" in config:
             config = config["text_encoder"]
 
@@ -60,7 +62,7 @@ class ImageProcessor:
         :param tensor_type: which tensors to return, either pt (PyTorch) or np (NumPy)
         """
 
-        config = json.load(open(config_path, "r"))
+        config = read_config(config_path)
         if "image_encoder" in config:
             config = config["image_encoder"]
 

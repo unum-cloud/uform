@@ -99,13 +99,33 @@ For that pick the encoder of the model you want to run in parallel, and wrap it 
 
 ```python
 from uform import get_model, Modality
+import torch.nn as nn
 
-encoders, processors = uform.get_model('unum-cloud/uform-vl-english-small', backend='torch', device='gpu')
+encoders, processors = uform.get_model('unum-cloud/uform-vl-english-small', backend='torch')
 
-encoder_image = encoders[Modality.IMAGE_ENCODER]
-encoder_image = nn.DataParallel(encoder_image)
+model_text = models[Modality.TEXT_ENCODER]
+model_image = models[Modality.IMAGE_ENCODER]
+processor_text = processors[Modality.TEXT_ENCODER]
+processor_image = processors[Modality.IMAGE_ENCODER]
 
-_, res = encoder_image(images, 0)
+model_text.return_features = False
+model_image.return_features = False
+model_text_parallel = nn.DataParallel(model_text)
+model_image_parallel = nn.DataParallel(model_image)
+```
+
+Since we are now dealing with the PyTorch wrapper, make sure to use the `forward` method (instead of `encode`) to get the embeddings, and the `.detach().cpu().numpy()` sequence to bring the data back to more Pythonic NumPy arrays.
+
+```python
+def get_image_embedding(images: List[Image]):
+    preprocessed = processor_image(images)
+    embedding = model_image_parallel.forward(preprocessed)
+    return embedding.detach().cpu().numpy()
+
+def get_text_embedding(texts: List[str]):
+    preprocessed = processor_text(texts)
+    embedding = model_text_parallel.forward(preprocessed)
+    return embedding.detach().cpu().numpy()
 ```
 
 ### ONNX and CUDA

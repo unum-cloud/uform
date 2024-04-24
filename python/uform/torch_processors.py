@@ -15,6 +15,8 @@ from torchvision.transforms import (
     ToTensor,
 )
 
+from uform.shared import read_config
+
 
 # lambda is not pickle-able
 def convert_to_rgb(image):
@@ -28,7 +30,7 @@ class TextProcessor:
         :param tokenizer_path: path to tokenizer file
         """
 
-        config = json.load(open(config_path, "r"))
+        config = read_config(config_path)
         if "text_encoder" in config:
             config = config["text_encoder"]
 
@@ -75,7 +77,7 @@ class ImageProcessor:
         :param config: model config
         """
 
-        config = json.load(open(config_path, "r"))
+        config = read_config(config_path)
         if "image_encoder" in config:
             config = config["image_encoder"]
 

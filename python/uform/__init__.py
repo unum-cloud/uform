@@ -1,17 +1,9 @@
 from os.path import join, exists
 from typing import Dict, Optional, Tuple, Literal, Union, Callable
-from enum import Enum
 
 from huggingface_hub import snapshot_download, utils
 
-from uform.onnx_encoders import ExecutionProviderError
-
-
-class Modality(Enum):
-    TEXT_ENCODER = "text_encoder"
-    IMAGE_ENCODER = "image_encoder"
-    VIDEO_ENCODER = "video_encoder"
-    TEXT_DECODER = "text_decoder"
+from uform.shared import ExecutionProviderError, Modality
 
 
 def _normalize_modalities(modalities: Tuple[str, Modality]) -> Tuple[Modality]:

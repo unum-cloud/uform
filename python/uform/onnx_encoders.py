@@ -5,9 +5,7 @@ import json
 import onnxruntime as ort
 from numpy import ndarray
 
-
-class ExecutionProviderError(Exception):
-    """Exception raised when a requested execution provider is not available."""
+from uform.shared import ExecutionProviderError
 
 
 def available_providers(device: Optional[str]) -> Tuple[str, ...]:

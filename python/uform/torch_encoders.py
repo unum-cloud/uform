@@ -3,13 +3,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 from os import PathLike
 from typing import Dict, Optional, Union, Mapping, Any, Tuple
-import json
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 from PIL.Image import Image
+
+from uform.shared import read_config
+
+
+def _is_on_gpu(model: nn.Module) -> bool:
+    try:
+        return next(model.parameters()).device.type == "cuda"
+    except StopIteration:
+        return False
 
 
 @dataclass(eq=False)
@@ -266,7 +274,7 @@ class TextEncoder(nn.Module):
             attention_mask = torch.ones_like(x)
 
         # If the model is on the GPU and the input matrices are not, shift them there
-        if next(self.parameters()).device.type == "cuda" and x.device.type != "cuda":
+        if _is_on_gpu(self) and not x.is_cuda:
             x = x.cuda()
             attention_mask = attention_mask.cuda()
 
@@ -298,8 +306,7 @@ class TextEncoder(nn.Module):
         :param config: the configuration dictionary or path to the JSON configuration file
         :param model: the model state dictionary or path to the `.pt` model file
         """
-        if isinstance(config, (PathLike, str)):
-            config = json.load(open(config, "r"))
+        config = read_config(config)
         if "text_encoder" in config:
             config = config["text_encoder"]
 
@@ -374,7 +381,7 @@ class ImageEncoder(nn.Module):
             x = x["images"]
 
         # If the model is on the GPU and the input matrices are not, shift them there
-        if next(self.parameters()).device.type == "cuda" and x.device.type != "cuda":
+        if _is_on_gpu(self) and not x.is_cuda:
             x = x.cuda()
 
         features = self.forward_features(x)
@@ -401,8 +408,7 @@ class ImageEncoder(nn.Module):
         :param config: the configuration dictionary or path to the JSON configuration file
         :param model: the model state dictionary or path to the `.pt` model file
         """
-        if isinstance(config, (PathLike, str)):
-            config = json.load(open(config, "r"))
+        config = read_config(config)
         if "image_encoder" in config:
             config = config["image_encoder"]
 
