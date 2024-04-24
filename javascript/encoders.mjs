@@ -50,8 +50,7 @@ class TextProcessor {
     async process(texts) {
 
         const encoded = await this.tokenizer(texts, {
-            addSpecialTokens: true,
-            returnAttentionMask: true,
+            add_special_tokens: true,
             padding: 'max_length',
             max_length: this.maxSeqLen,
             truncation: true,
