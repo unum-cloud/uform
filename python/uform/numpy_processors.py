@@ -1,29 +1,31 @@
 from os import PathLike
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Sequence
+import json
 
 from PIL.Image import Image, BICUBIC
 from tokenizers import Tokenizer
 import numpy as np
 
+from uform.shared import read_config
 
-class NumPyProcessor:
-    def __init__(self, config: Dict, tokenizer_path: PathLike):
+
+class TextProcessor:
+    def __init__(self, config_path: PathLike, tokenizer_path: PathLike):
         """
         :param config: model config
         :param tokenizer_path: path to tokenizer file
-        :param tensor_type: which tensors to return, either pt (PyTorch) or np (NumPy)
         """
 
-        self._image_size = config["image_encoder"]["image_size"]
-        self._max_seq_len = config["text_encoder"]["max_position_embeddings"]
+        config = read_config(config_path)
+        if "text_encoder" in config:
+            config = config["text_encoder"]
+
+        self._max_seq_len = config["max_position_embeddings"]
         self._tokenizer = Tokenizer.from_file(tokenizer_path)
         self._tokenizer.no_padding()
-        self._pad_token_idx = config["text_encoder"]["padding_idx"]
+        self._pad_token_idx = config["padding_idx"]
 
-        self.image_mean = np.array([0.48145466, 0.4578275, 0.40821073], dtype=np.float32)[None, None]
-        self.image_std = np.array([0.26862954, 0.26130258, 0.27577711], dtype=np.float32)[None, None]
-
-    def preprocess_text(self, texts: Union[str, List[str]]) -> Dict[str, np.ndarray]:
+    def __call__(self, texts: Union[str, Sequence[str]]) -> Dict[str, np.ndarray]:
         """Transforms one or more strings into dictionary with tokenized strings and attention masks.
 
         :param texts: text of list of texts to tokenizer
@@ -34,7 +36,7 @@ class NumPyProcessor:
         input_ids = np.full(
             (len(texts), self._max_seq_len),
             fill_value=self._pad_token_idx,
-            dtype=np.int64,
+            dtype=np.int32,
         )
 
         attention_mask = np.zeros(
@@ -51,13 +53,37 @@ class NumPyProcessor:
 
         return {"input_ids": input_ids, "attention_mask": attention_mask}
 
-    def preprocess_image(self, images: Union[Image, List[Image]]) -> np.ndarray:
+
+class ImageProcessor:
+    def __init__(self, config_path: PathLike, tokenizer_path: PathLike = None):
+        """
+        :param config: model config
+        :param tokenizer_path: path to tokenizer file
+        :param tensor_type: which tensors to return, either pt (PyTorch) or np (NumPy)
+        """
+
+        config = read_config(config_path)
+        if "image_encoder" in config:
+            config = config["image_encoder"]
+
+        self._image_size = config["image_size"]
+        self._normalization_means = config["normalization_means"]
+        self._normalization_deviations = config["normalization_deviations"]
+
+        assert isinstance(self._image_size, int) and self._image_size > 0
+        assert isinstance(self._normalization_means, list) and isinstance(self._normalization_deviations, list)
+        assert len(self._normalization_means) == len(self._normalization_deviations) == 3
+
+        self.image_mean = np.array(self._normalization_means, dtype=np.float32)[None, None]
+        self.image_std = np.array(self._normalization_deviations, dtype=np.float32)[None, None]
+
+    def __call__(self, images: Union[Image, Sequence[Image]]) -> np.ndarray:
         """Transforms one or more Pillow images into Torch Tensors.
 
         :param images: image or list of images to preprocess
         """
 
-        if isinstance(images, list):
+        if isinstance(images, Sequence):
             batch_images = np.empty(
                 (len(images), 3, self._image_size, self._image_size),
                 dtype=np.float32,

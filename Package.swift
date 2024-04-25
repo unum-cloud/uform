@@ -19,7 +19,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/ashvardanian/swift-transformers",
-            revision: "9ef46a51eca46978b62773f8887926dfe72b0ab4"
+            revision: "89fb5d97e1df347f9f588f62fc538dcad6fdb16c"
         )
     ],
     targets: [
@@ -29,13 +29,13 @@ let package = Package(
                 .product(name: "Transformers", package: "swift-transformers")
             ],
             path: "swift",
-            exclude: ["EmbeddingsTests.swift"]
+            exclude: ["EncodersTests.swift"]
         ),
         .testTarget(
             name: "UFormTests",
             dependencies: ["UForm"],
             path: "swift",
-            sources: ["EmbeddingsTests.swift"]
+            sources: ["EncodersTests.swift"]
         ),
     ]
 )

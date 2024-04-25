@@ -5,11 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File with Arguments",
+            "name": "Python Debugger",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+        },
+        {
+            "name": "PyTest Debugger",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "pytest",
+            "console": "integratedTerminal",
+            "args": [
+                "${file}",
+                "-s",
+                "-x",
+            ],
+        },
+        {
+            "name": "NodeJS Debugger",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run test",
         }
     ]
 }

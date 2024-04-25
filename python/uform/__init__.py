@@ -1,59 +1,191 @@
-from json import load
-from os.path import join
-from typing import Mapping, Optional, Tuple
+from os.path import join, exists
+from typing import Dict, Optional, Tuple, Literal, Union, Callable
 
-from huggingface_hub import snapshot_download
+from huggingface_hub import snapshot_download, utils
 
-
-def get_checkpoint(model_name: str, token: str) -> Tuple[str, Mapping, str]:
-    import torch
-
-    model_path = snapshot_download(repo_id=model_name, token=token)
-    config_path = join(model_path, "torch_config.json")
-
-    state = torch.load(join(model_path, "torch_weight.pt"))
-    return config_path, state, join(model_path, "tokenizer.json")
+from uform.shared import ExecutionProviderError, Modality
 
 
-def get_model(model_name: str, token: Optional[str] = None):
-    from uform.torch_models import VLM
-    from uform.torch_preprocessor import TorchProcessor
+def _normalize_modalities(modalities: Tuple[str, Modality]) -> Tuple[Modality]:
+    if modalities is None:
+        return (Modality.TEXT_ENCODER, Modality.IMAGE_ENCODER, Modality.TEXT_DECODER, Modality.VIDEO_ENCODER)
 
-    config_path, state, tokenizer_path = get_checkpoint(model_name, token)
-
-    with open(config_path) as f:
-        config = load(f)
-
-    model = VLM(config, tokenizer_path)
-    model.image_encoder.load_state_dict(state["image_encoder"])
-    model.text_encoder.load_state_dict(state["text_encoder"])
-    processor = TorchProcessor(config, tokenizer_path)
-
-    return model.eval(), processor
+    return tuple(x if isinstance(x, Modality) else Modality(x) for x in modalities)
 
 
-def get_model_onnx(model_name: str, device: str, dtype: str, token: Optional[str] = None):
-    from uform.onnx_models import VLM_ONNX
-    from uform.numpy_preprocessor import NumPyProcessor
+def get_checkpoint(
+    model_name: str,
+    modalities: Tuple[str, Modality],
+    token: Optional[str] = None,
+    format: Literal[".pt", ".onnx"] = ".pt",
+) -> Tuple[str, Dict[Modality, str], Optional[str]]:
+    """Downloads a model checkpoint from the Hugging Face Hub.
 
-    assert device in (
-        "cpu",
-        "gpu",
-    ), f"Invalid `device`: {device}. Must be either `cpu` or `gpu`"
-    assert dtype in (
-        "fp32",
-        "fp16",
-    ), f"Invalid `dtype`: {dtype}. Must be either `fp32` or `fp16` (only for gpu)"
-    assert (
-        device == "cpu" and dtype == "fp32"
-    ) or device == "gpu", "Combination `device`=`cpu` & `dtype=fp16` is not supported"
+    :param model_name: The name of the model to download, like `unum-cloud/uform3-image-text-english-small`
+    :param token: The Hugging Face API token, if required
+    :param modalities: The modalities to download, like `("text_encoder", "image_encoder")`
+    :param format: The format of the model checkpoint, either `.pt` or `.onnx`
+    :return: A tuple of the config path, dictionary of paths to different modalities, and tokenizer path
+    """
 
-    model_path = snapshot_download(repo_id=f"{model_name}-{device}-{dtype}", token=token)
+    modalities = _normalize_modalities(modalities)
 
-    with open(join(model_path, "config.json")) as f:
-        config = load(f)
+    # It is not recommended to use `.pth` extension when checkpointing models
+    # because it collides with Python path (`.pth`) configuration files.
+    merged_model_names = [x + format for x in ["torch_weight", "weight", "model"]]
+    separate_modality_names = [(x.value if isinstance(x, Modality) else x) + format for x in modalities]
+    config_names = ["torch_config.json", "config.json"]
+    tokenizer_names = ["tokenizer.json"]
 
-    model = VLM_ONNX(model_path, config, device, dtype)
-    processor = NumPyProcessor(config, join(model_path, "tokenizer.json"))
+    old_progress_behavior = utils.are_progress_bars_disabled()
+    utils.disable_progress_bars()
 
-    return model, processor
+    # The download stats depend on the number of times the `config.json` is pulled
+    # https://huggingface.co/docs/hub/models-download-stats
+    model_path = snapshot_download(
+        repo_id=model_name,
+        token=token,
+        allow_patterns=merged_model_names + separate_modality_names + config_names + tokenizer_names,
+    )
+
+    if old_progress_behavior:
+        utils.enable_progress_bars()
+
+    # Find the first name in `config_names` that is present
+    config_path = None
+    for config_name in config_names:
+        if exists(join(model_path, config_name)):
+            config_path = join(model_path, config_name)
+            break
+
+    # Same for the tokenizer
+    tokenizer_path = None
+    for tokenizer_name in tokenizer_names:
+        if exists(join(model_path, tokenizer_name)):
+            tokenizer_path = join(model_path, tokenizer_name)
+            break
+
+    # Ideally, we want to separately fetch all the models.
+    # If those aren't available, aggregate separate modalities and merge them.
+    modality_paths = None
+    for file_name in merged_model_names:
+        if exists(join(model_path, file_name)):
+            modality_paths = join(model_path, file_name)
+            break
+
+    if modality_paths is None:
+        modality_paths = {}
+        for separate_modality_name in separate_modality_names:
+            if exists(join(model_path, separate_modality_name)):
+                modality_name, _, _ = separate_modality_name.partition(".")
+                modality_paths[Modality(modality_name)] = join(model_path, separate_modality_name)
+
+    return config_path, modality_paths, tokenizer_path
+
+
+def get_model_torch(
+    model_name: str,
+    *,
+    token: Optional[str] = None,
+    device: Literal["cpu", "cuda"] = "cpu",
+    modalities: Optional[Tuple[Union[str, Modality]]] = None,
+) -> Tuple[Dict[Modality, Callable], Dict]:
+    """
+    Fetches and constructs a PyTorch model with its processors based on provided modalities.
+
+    :param model_name: The identifier of the model on the Hugging Face Hub.
+    :param token: Optional API token for authenticated access to the model.
+    :param device: The device to load the model onto ('cpu' or 'cuda').
+    :param modalities: A tuple specifying the types of model components to fetch (e.g., text encoder).
+    :return: A tuple containing dictionaries for processors and models keyed by their respective modalities.
+    """
+    from uform.torch_encoders import TextEncoder, ImageEncoder
+    from uform.torch_processors import TextProcessor, ImageProcessor
+
+    modalities = _normalize_modalities(modalities)
+    config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, modalities, token=token, format=".pt")
+
+    result_processors = {}
+    result_models = {}
+
+    if Modality.TEXT_ENCODER in modalities:
+        processor = TextProcessor(config_path, tokenizer_path)
+        encoder = TextEncoder.from_pretrained(config_path, modality_paths.get(Modality.TEXT_ENCODER))
+        encoder = encoder.eval().to(device)
+        result_processors[Modality.TEXT_ENCODER] = processor
+        result_models[Modality.TEXT_ENCODER] = encoder
+
+    if Modality.IMAGE_ENCODER in modalities:
+        processor = ImageProcessor(config_path)
+        encoder = ImageEncoder.from_pretrained(config_path, modality_paths.get(Modality.IMAGE_ENCODER))
+        encoder = encoder.eval().to(device)
+        result_processors[Modality.IMAGE_ENCODER] = processor
+        result_models[Modality.IMAGE_ENCODER] = encoder
+
+    return result_processors, result_models
+
+
+def get_model_onnx(
+    model_name: str,
+    *,
+    device: Literal["cpu", "cuda"] = "cpu",
+    token: Optional[str] = None,
+    modalities: Optional[Tuple[str]] = None,
+):
+    """
+    Fetches and constructs an ONNX model with its processors based on provided modalities.
+
+    :param model_name: The identifier of the model on the Hugging Face Hub.
+    :param device: The device on which the model will operate ('cpu' or 'cuda').
+    :param token: Optional API token for authenticated access to the model.
+    :param modalities: A tuple specifying the types of model components to fetch (e.g., text encoder).
+    :return: A tuple containing dictionaries for processors and models keyed by their respective modalities.
+    """
+    from uform.onnx_encoders import TextEncoder, ImageEncoder
+    from uform.numpy_processors import TextProcessor, ImageProcessor
+
+    modalities = _normalize_modalities(modalities)
+    config_path, modality_paths, tokenizer_path = get_checkpoint(model_name, modalities, token=token, format=".onnx")
+
+    result_processors = {}
+    result_models = {}
+
+    if Modality.TEXT_ENCODER in modalities:
+        processor = TextProcessor(config_path, tokenizer_path)
+        encoder = TextEncoder(modality_paths.get(Modality.TEXT_ENCODER), device=device)
+        result_processors[Modality.TEXT_ENCODER] = processor
+        result_models[Modality.TEXT_ENCODER] = encoder
+
+    if Modality.IMAGE_ENCODER in modalities:
+        processor = ImageProcessor(config_path)
+        encoder = ImageEncoder(modality_paths.get(Modality.IMAGE_ENCODER), device=device)
+        result_processors[Modality.IMAGE_ENCODER] = processor
+        result_models[Modality.IMAGE_ENCODER] = encoder
+
+    return result_processors, result_models
+
+
+def get_model(
+    model_name: str,
+    *,
+    device: Literal["cpu", "cuda"] = "cpu",  # change this if you have a GPU
+    backend: Literal["onnx", "torch"] = "onnx",  # lighter = better
+    modalities: Optional[Tuple[str, Modality]] = None,  # all by default
+    token: Optional[str] = None,  # optional HuggingFace Hub token for private models
+) -> Tuple[Dict[Modality, Callable], Dict]:
+    """
+    Fetches a model and its processors from the Hugging Face Hub, using either the ONNX or Torch backend.
+
+    :param model_name: The identifier of the model on the Hugging Face Hub.
+    :param device: The device to load the model onto ('cpu' or 'cuda').
+    :param backend: The backend framework to use ('onnx' or 'torch').
+    :param modalities: A tuple specifying the types of model components to fetch.
+    :param token: Optional API token for authenticated access to the model.
+    :return: A tuple containing dictionaries for processors and models keyed by their respective modalities.
+    """
+    if backend == "onnx":
+        return get_model_onnx(model_name, device=device, token=token, modalities=modalities)
+    elif backend == "torch":
+        return get_model_torch(model_name, device=device, token=token, modalities=modalities)
+    else:
+        raise ValueError(f"Unknown backend: {backend}")

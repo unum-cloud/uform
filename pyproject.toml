@@ -31,7 +31,8 @@ classifiers = [
 dependencies = [
     "huggingface_hub>=0.16.4",
     "tokenizers>=0.13.3",
-    "pillow"
+    "pillow",
+    "simsimd",
 ]
 description = "Pocket-Sized Multimodal AI for Content Understanding and Generation"
 maintainers = [
@@ -49,6 +50,7 @@ uform-chat = "uform.chat:main"
 torch = ["torch>=1.13.1", "torchvision", "transformers>=4.36.2"]
 onnx = ["onnx>=1.15.0", "onnxruntime>=1.17.1", "numpy"]
 onnx-gpu = ["onnx>=1.15.0", "onnxruntime-gpu>=1.17.1", "numpy"]
+dev = ["pytest", "pandas"]
 
 [project.urls]
 "Homepage" = "https://github.com/unum-cloud/uform"

@@ -5,12 +5,11 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-import toml
 
 project = "Unum · UForm"
 copyright = "2023, Unum"
 author = "Unum"
-release = toml.load("../pyproject.toml")["project"]["version"]
+release = open("../VERSION", "r").read().strip()
 with open("_static/custom.js", "r+") as js:
     content = js.read()
     js.seek(0)
@@ -24,6 +23,7 @@ extensions = [
     "breathe",
     "m2r2",
     "sphinx.ext.autodoc",
+    "sphinx_js",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
@@ -44,6 +44,9 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_js_files = ["custom.js"]
+html_baseurl = "/docs/uform/"
 
 breathe_projects = {"UForm": "../build/xml"}
 breathe_default_project = "UForm"
+
+js_source_path = "../javascript/"

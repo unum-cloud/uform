@@ -3,20 +3,16 @@ from argparse import ArgumentParser
 import requests
 import torch
 from PIL import Image
-from transformers import TextStreamer
-
-from uform.gen_model import VLMForCausalLM, VLMProcessor
-
-EOS_TOKEN = 32001
+from transformers import TextStreamer, AutoModel, AutoProcessor
 
 
 def parse_args():
     parser = ArgumentParser(description="Chat with UForm generative model")
 
-    parser.add_argument("--model", type=str, default="unum-cloud/uform-gen-chat")
-    parser.add_argument("--image", type=str, help="", required=True)
-    parser.add_argument("--device", type=str, required=True)
-    parser.add_argument("--fp16", action="store_true")
+    parser.add_argument("--model", type=str, default="unum-cloud/uform-gen-chat", help="Model name or path")
+    parser.add_argument("--image", type=str, required=True, help="Path to image or URL")
+    parser.add_argument("--device", type=str, required=True, help="Device to run on, like `cpu` or `cuda:0`")
+    parser.add_argument("--fp16", action="store_true", help="Use half-precision math for faster inference")
 
     return parser.parse_args()
 
@@ -30,22 +26,18 @@ def run_chat(opts, model, processor):
 
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
     is_first_message = True
+
     if opts.image.startswith("http"):
-        image = (
-            processor.image_processor(
-                Image.open(requests.get(opts.image, stream=True).raw),
-            )
-            .unsqueeze(0)
-            .to(torch.bfloat16 if opts.fp16 else torch.float32)
-            .to(opts.device)
-        )
+        image = Image.open(requests.get(opts.image, stream=True).raw)
     else:
-        image = (
-            processor.image_processor(Image.open(opts.image))
-            .unsqueeze(0)
-            .to(torch.bfloat16 if opts.fp16 else torch.float32)
-            .to(opts.device)
-        )
+        image = Image.open(opts.image)
+
+    image = (
+        processor.feature_extractor(image)  #
+        .unsqueeze(0)
+        .to(torch.bfloat16 if opts.fp16 else torch.float32)
+        .to(opts.device)
+    )
 
     while True:
         if messages[-1]["role"] in ("system", "assistant"):
@@ -68,7 +60,7 @@ def run_chat(opts, model, processor):
                 1,
                 input_ids.shape[1] + processor.num_image_latents - 1,
             ).to(opts.device)
-            x = {
+            inputs = {
                 "input_ids": input_ids,
                 "attention_mask": attention_mask,
                 "images": image,
@@ -76,18 +68,19 @@ def run_chat(opts, model, processor):
 
             print("Assistant: ", end="")
             with torch.inference_mode():
-                y = model.generate(
-                    **x,
+                output = model.generate(
+                    **inputs,
                     do_sample=False,
                     use_cache=True,
                     max_new_tokens=1024,
-                    eos_token_id=EOS_TOKEN,
+                    eos_token_id=151645,
                     pad_token_id=processor.tokenizer.pad_token_id,
                     streamer=streamer,
                 )
             print()
 
-            message = processor.batch_decode(y[:, x["input_ids"].shape[1] : -1])[0]
+            prompt_len = inputs["input_ids"].shape[1]
+            message = processor.batch_decode(output[:, prompt_len:-1])[0]
 
             messages.append({"role": "assistant", "content": message})
 
@@ -95,16 +88,17 @@ def run_chat(opts, model, processor):
 def main():
     try:
         opts = parse_args()
-
+        processor = AutoProcessor.from_pretrained(opts.model, trust_remote_code=True)
         model = (
-            VLMForCausalLM.from_pretrained(
+            AutoModel.from_pretrained(
                 opts.model,
                 torch_dtype=torch.bfloat16 if opts.fp16 else torch.float32,
+                ignore_mismatched_sizes=True,
+                trust_remote_code=True,
             )
             .eval()
             .to(opts.device)
         )
-        processor = VLMProcessor.from_pretrained(opts.model)
 
         run_chat(opts, model, processor)
 

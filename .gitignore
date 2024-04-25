@@ -4,7 +4,21 @@ test
 build/
 package-lock.json
 *.egg-info
-*.onnx
 __pycache__
 .build
 .swiftpm
+.hf_token
+
+dictionary*
+vocab*
+
+# Tensors & ML Model
+*.onnx
+*.pt
+*.safetensors
+*.mlpackage
+
+# NodeJS
+node_modules
+node_build
+yarn-error.log
