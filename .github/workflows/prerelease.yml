@@ -55,7 +55,7 @@ jobs:
 
   test_swift:
     name: Test Swift
-    runs-on: macos-12
+    runs-on: macos-14
 
     steps:
       - uses: actions/checkout@v3
