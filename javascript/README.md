@@ -18,8 +18,7 @@ yarn add uform
 ### Embeddings
 
 ```js
-import { getModel, Modality } from 'uform';
-import { TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from 'uform';
+import { getModel, Modality, TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from '@unum-cloud/uform';
 
 const { configPath, modalityPaths, tokenizerPath } = await getModel({
     modelId: 'unum-cloud/uform3-image-text-english-small',

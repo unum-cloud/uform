@@ -4,8 +4,7 @@ import path from 'path';
 import assert from 'assert';
 import fetch from 'node-fetch';
 
-import { getModel, Modality } from "./hub.mjs";
-import { TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from "./encoders.mjs";
+import { getModel, Modality, TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from './index.mjs';
 
 // Check if the HuggingFace Hub API token is set in the environment variable.
 let hf_token = process.env.HUGGINGFACE_HUB_TOKEN;
