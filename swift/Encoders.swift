@@ -32,7 +32,7 @@ public enum Embedding {
     /// - Returns: nil if the data type is unsupported.
     init?(from multiArray: MLMultiArray) {
         switch multiArray.dataType {
-        case .float64:
+        case .float64, .double:
             self = .f64s(
                 Array(
                     UnsafeBufferPointer(
@@ -41,7 +41,7 @@ public enum Embedding {
                     )
                 )
             )
-        case .float32:
+        case .float32, .float:
             self = .f32s(
                 Array(
                     UnsafeBufferPointer(
