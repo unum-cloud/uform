@@ -2,7 +2,7 @@
 /dist/
 /test
 /build/
-/package-lock.json
+yarn.lock
 *.egg-info
 __pycache__
 .build
