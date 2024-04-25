@@ -50,7 +50,7 @@ Before submitting any changes, please make sure that the tests pass.
 
 ```sh
 npm install
-npm run test
+npm test
 ```
 
 ## Benchmarking

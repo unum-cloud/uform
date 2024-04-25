@@ -1,8 +1,8 @@
-requirements.txt
-dist/
-test
-build/
-package-lock.json
+/requirements.txt
+/dist/
+/test
+/build/
+/package-lock.json
 *.egg-info
 __pycache__
 .build
@@ -11,6 +11,7 @@ __pycache__
 
 dictionary*
 vocab*
+/models/
 
 # Tensors & ML Model
 *.onnx

@@ -73,7 +73,7 @@ jobs:
       - name: Run PyTest
         run: pytest python/scripts/
 
-  pypi_publish:
+  publish_python:
     name: Publish Python
     runs-on: ubuntu-latest
     needs: versioning
@@ -101,13 +101,38 @@ jobs:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
 
+  publish_javascript:
+    name: Publish JavaScript
+    needs: versioning
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: "main"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Build and Test
+        run: |
+          npm ci
+          npm test
+
+      - name: Publish
+        uses: JS-DevTools/npm-publish@v2
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+
   deploy_docs:
     name: Deploy Docs
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-22.04
-    needs: pypi_publish
+    needs: [publish_python, publish_javascript]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
