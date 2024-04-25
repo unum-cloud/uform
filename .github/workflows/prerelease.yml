@@ -60,9 +60,7 @@ jobs:
     runs-on: macos-14
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: "main"
+      - uses: actions/checkout@v4
       - name: Build
         run: swift build
       - name: Run tests
