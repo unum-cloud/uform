@@ -52,3 +52,16 @@ jobs:
         run: npm ci
       - name: Test JavaScript
         run: npm test
+
+  test_swift:
+    name: Test Swift
+    runs-on: macos-12
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: "main"
+      - name: Build
+        run: swift build
+      - name: Run tests
+        run: swift test
