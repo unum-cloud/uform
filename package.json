@@ -1,7 +1,7 @@
 {
   "name": "uform",
   "type": "module",
-  "private": true,
+  "private": false,
   "version": "2.0.2",
   "description": "Pocket-Sized Multimodal AI for Content Understanding and Generation",
   "dependencies": {
