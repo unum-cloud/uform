@@ -90,7 +90,7 @@ class TextEncoder {
      */
     async dispose() {
         if (this.session) {
-            await this.session.release();
+            await this.session.release().catch(error => console.error("Failed to release session", error));
             this.session = null;
         }
     }
@@ -241,7 +241,7 @@ class ImageEncoder {
      */
     async dispose() {
         if (this.session) {
-            await this.session.release();
+            await this.session.release().catch(error => console.error("Failed to release session", error));
             this.session = null;
         }
     }

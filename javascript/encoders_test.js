@@ -229,5 +229,9 @@ async function testEncoders() {
     }
 }
 
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+});
+
 testGetCheckpoint();
 testEncoders();
