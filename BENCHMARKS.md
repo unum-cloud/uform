@@ -157,17 +157,26 @@ usage: bench_decoders.py [-h] [--filter-out FILTER_OUT] [--batch-size BATCH_SIZE
 
 options:
   -h, --help            show this help message and exit
-  --filter-out FILTER_OUT
-                        Filter out models, backends, or devices with a Regular Expression.
   --batch-size BATCH_SIZE
                         Batch size for the benchmark. Batch size 1 measures latency. Large batch sizes may not fit on every GPU.
+  --max-length MAX_LENGTH
+                        Maximum length of the generated text in tokens.
 ```
+
+On Nvidia H100 GPU, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
+
+| Model                               |  Size | Decoding Speed |    Decoding Parallel Streams |
+| :---------------------------------- | ----: | -------------: | ---------------------------: |
+| `llava-hf/llava-1.5-7b-hf`          |   7 B | ~ 141 tokens/s |  ~ 4 K tokens/s (32 streams) |
+| `Salesforce/instructblip-vicuna-7b` |   7 B | ~ 211 tokens/s |  ~ 2 K tokens/s (32 streams) |
+| `unum-cloud/uform-gen`              | 1.5 B | ~ 252 tokens/s | ~ 3 K tokens/s (128 streams) |
+| `unum-cloud/uform-gen2-dpo`         | 1.2 B | ~ 372 tokens/s | ~ 10 K tokens/s (64 streams) |
 
 On Nvidia RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
 
-| Model                               | Size |               Speed |   Speedup |
-| :---------------------------------- | ---: | ------------------: | --------: |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |  ~ 40 tokens/second |           |
-| `Salesforce/instructblip-vicuna-7b` |   7B |  ~ 40 tokens/second |           |
-| `unum-cloud/uform-gen`              | 1.5B | ~ 140 tokens/second | __x 3.5__ |
+| Model                               |  Size | Decoding Speed |   Speedup |
+| :---------------------------------- | ----: | -------------: | --------: |
+| `llava-hf/llava-1.5-7b-hf`          |   7 B |  ~ 40 tokens/s |           |
+| `Salesforce/instructblip-vicuna-7b` |   7 B |  ~ 40 tokens/s |           |
+| `unum-cloud/uform-gen`              | 1.5 B | ~ 140 tokens/s | __x 3.5__ |
 
