@@ -101,7 +101,7 @@ async function tryImageEncoderForwardPass(modelId) {
 }
 
 function cosineSimilarity(vecA, vecB) {
-    // We may be receiving a complex tesnor type, so let's check if it
+    // We may be receiving a complex tensor type, so let's check if it
     // has an array member named `data`.
     if (vecA.data) {
         vecA = vecA.data;
@@ -180,8 +180,8 @@ async function tryCrossReferencingImageAndText(modelId) {
         const textEmbedding = await textEncoder.encode(processedText);
         const imageEmbedding = await imageEncoder.encode(processedImage);
 
-        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.cpuData));
-        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.cpuData));
+        textEmbeddings.push(new Float32Array(textEmbedding.embeddings.data));
+        imageEmbeddings.push(new Float32Array(imageEmbedding.embeddings.data));
 
         // Print-based debugging at its best :)
         // console.log(`Text: ${text}, Image: ${imageUrl}`);
