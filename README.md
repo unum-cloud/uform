@@ -20,18 +20,24 @@ For Content Understanding and Generation<br/>
 <p align="center">
 Multimodal Embeddings from 64 to 768 Dimensions • 1B Parameter Chat
 <br/>
-Short Texts • Images • 🔜 Video Clips
+Short Texts • Images • 🔜 Video Clips • 🔜 Long Documents
 <br/>
-PyTorch • ONNX
+ONNX • CoreML • PyTorch
+<br/>
+<a href="https://github.com/unum-cloud/uform/blob/main/python/README.md">Python</a>
+ • 
+<a href="https://github.com/unum-cloud/uform/blob/main/javascript/README.md">JavaScript</a>
+ • 
+<a href="https://github.com/unum-cloud/uform/blob/main/swift/README.md">Swift</a>
 </p>
 
 ---
 
-![](https://github.com/ashvardanian/usearch-images/blob/main/assets/uform-gen-preview.jpg?raw=true)
+![UForm Chat Preview](https://github.com/ashvardanian/usearch-images/blob/main/assets/uform-gen-preview.jpg?raw=true)
 
 Welcome to UForm, a __multimodal__ AI library that's as versatile as it is efficient.
 UForm [tiny embedding models](#encoder) will help you understand and search visual and textual content across various languages.
-UForm [small generative models](#decoder), on the other hand, don't only support conversational and chat use-cases, but are also capable of image captioning and Visual Question Answering (VQA).
+UForm [small generative models](#decoder), on the other hand, don't only support conversational and chat use-cases, but are great for fast image captioning and Visual Question Answering (VQA).
 With compact __custom pre-trained transformer models__, this can run anywhere from your server farm down to your smartphone.
 
 ## Features
@@ -40,108 +46,167 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 - __Throughput__: Thanks to the small size, the inference speed is [2-4x faster](#speed) than competitors.
 - __Portable__: Models come with native ONNX support, making them easy to deploy on any platform.
 - __Quantization Aware__: Down-cast embeddings from `f32` to `i8` without losing much recall.
-- __Multilingual__: Trained on a balanced dataset, the recall is great across over [20 languages](#evaluation).
+- __Multilingual__: Trained on a balanced dataset, the recall is great across over 20 languages.
 
 [usearch]: https://github.com/unum-cloud/usearch
 [matryoshka]: https://arxiv.org/abs/2205.13147
 
 ## Models
 
+For accuracy and speed benchmarks refer to the [evaluation page](https://github.com/unum-cloud/uform/blob/main/BENCHMARKS.md).
+
 ### Embedding Models
 
-| Model                                    | Parameters | Languages |                                 Architecture |
-| :--------------------------------------- | ---------: | --------: | -------------------------------------------: |
-| [`uform-vl-english-large`][model-e-l] 🆕  |       365M |         1 | 6 text layers, ViT-L/14, 6 multimodal layers |
-| [`uform-vl-english`][model-e]            |       143M |         1 | 2 text layers, ViT-B/16, 2 multimodal layers |
-| [`uform-vl-english-small`][model-e-s] 🆕  |        79M |         1 | 2 text layers, ViT-S/16, 2 multimodal layers |
-| [`uform-vl-multilingual-v2`][model-m-v2] |       206M |        21 | 8 text layers, ViT-B/16, 4 multimodal layers |
-| [`uform-vl-multilingual`][model-m]       |       206M |        12 | 8 text layers, ViT-B/16, 4 multimodal layers |
-
-[model-e-l]: https://huggingface.co/unum-cloud/uform-vl-english-large/
-[model-e]: https://huggingface.co/unum-cloud/uform-vl-english/
-[model-e-s]: https://huggingface.co/unum-cloud/uform-vl-english-small/
-[model-m]: https://huggingface.co/unum-cloud/uform-vl-multilingual/
-[model-m-v2]: https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/
+<table style="width:100%; border-collapse:collapse;">
+    <thead>
+        <tr>
+            <th>Model</th>
+            <th style="text-align:right;">Parameters</th>
+            <th style="text-align:right;">Languages</th>
+            <th style="text-align:right;">Architecture</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-vl-english-large/">uform3-image-text-english-large</a></code>  🆕</td>
+            <td style="text-align:right;">365 M</td>
+            <td style="text-align:right;">1</td>
+            <td style="text-align:right;">12 layer BERT, ViT-L/14</td>
+        </tr>
+        <tr>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-vl-english/">uform3-image-text-english-base</a></code></td>
+            <td style="text-align:right;">143 M</td>
+            <td style="text-align:right;">1</td>
+            <td style="text-align:right;">4 layer BERT, ViT-B/16</td>
+        </tr>
+        <tr>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-vl-english-small/">uform3-image-text-english-small</a></code>  🆕</td>
+            <td style="text-align:right;">79 M</td>
+            <td style="text-align:right;">1</td>
+            <td style="text-align:right;">4 layer BERT, ViT-S/16</td>
+        </tr>
+        <tr>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-vl-multilingual-v2/">uform3-image-text-multilingual-base</a></code></td>
+            <td style="text-align:right;">206M</td>
+            <td style="text-align:right;">21</td>
+            <td style="text-align:right;">12 layer BERT, ViT-B/16</td>
+        </tr>
+    </tbody>
+</table>
 
 ### Generative Models
 
-| Model                              | Parameters |                     Purpose |           Architecture |
-| :--------------------------------- | ---------: | --------------------------: | ---------------------: |
-| [`uform-gen2-dpo`][model-g2] 🆕     |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
-| [`uform-gen2-qwen-500m`][model-g2] |       1.2B | Chat, Image Captioning, VQA | qwen1.5-0.5B, ViT-H/14 |
-| [`uform-gen`][model-g1]            |       1.5B |       Image Captioning, VQA |   llama-1.3B, ViT-B/16 |
+<table style="width:100%; border-collapse:collapse;">
+    <thead>
+        <tr>
+            <th>Model</th>
+            <th style="text-align:right;">Parameters</th>
+            <th style="text-align:right;">Purpose</th>
+            <th style="text-align:right;">Architecture</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-gen2-dpo/">uform-gen2-dpo</a></code>  🆕</td>
+            <td style="text-align:right;">1.2 B</td>
+            <td style="text-align:right;">Chat, Image Captioning, VQA</td>
+            <td style="text-align:right;">qwen1.5-0.5B, ViT-H/14</td>
+        </tr>
+        <tr>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/">uform-gen2-qwen-500m</a></code></td>
+            <td style="text-align:right;">1.2 B</td>
+            <td style="text-align:right;">Chat, Image Captioning, VQA</td>
+            <td style="text-align:right;">qwen1.5-0.5B, ViT-H/14</td>
+        </tr>
+        <tr>
+            <td><code><a href="https://huggingface.co/unum-cloud/uform-gen/">uform-gen</a></code> ⚠️</td>
+            <td style="text-align:right;">1.5 B</td>
+            <td style="text-align:right;">Image Captioning, VQA</td>
+            <td style="text-align:right;">llama-1.3B, ViT-B/16</td>
+        </tr>
+    </tbody>
+</table>
 
-[model-g2]: https://huggingface.co/unum-cloud/uform-gen2-qwen-500m/
-[model-g1]: https://huggingface.co/unum-cloud/uform-gen/
+## Quick Start Examples
 
-## Producing Embeddings
+### Embedding Models
 
-Add UForm to your dependencies list, or just install it locally:
+First, `pip install uform`.
+Then, load the model:
 
-```bash
-pip install uform
+```py
+from uform import get_model, Modality
+
+processors, models = get_model('unum-cloud/uform3-image-text-english-small')
+
+model_text = models[Modality.TEXT_ENCODER]
+model_image = models[Modality.IMAGE_ENCODER]
+processor_text = processors[Modality.TEXT_ENCODER]
+processor_image = processors[Modality.IMAGE_ENCODER]
 ```
 
-Then, you can use the following code to get embeddings for text and images.
-You can do that either with the PyTorch reference model or the lighter cross-platform ONNX weights.
+Embed images:
 
-```python
-import uform
+```py
+import requests
+from io import BytesIO
 from PIL import Image
 
-# If you want to use the PyTorch model
-model, processor = uform.get_model('unum-cloud/uform-vl-english-large') # Just English
-model, processor = uform.get_model('unum-cloud/uform-vl-multilingual-v2') # 21 Languages
-
-# If you want to use the light-weight portable ONNX model
-# Available combinations: cpu & fp32, gpu & fp32, gpu & fp16
-# Check out Unum's Hugging Face space for more details: https://huggingface.co/unum-cloud
-model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-small', 'cpu', 'fp32')
-model, processor = uform.get_model_onnx('unum-cloud/uform-vl-english-large', 'gpu', 'fp16')
-
-text = 'a small red panda in a zoo'
-image = Image.open('red_panda.jpg')
-
-image_data = processor.preprocess_image(image)
-text_data = processor.preprocess_text(text)
-
-image_features, image_embedding = model.encode_image(image_data, return_features=True)
-text_features, text_embedding = model.encode_text(text_data, return_features=True)
+image_url = 'https://media-cdn.tripadvisor.com/media/photo-s/1b/28/6b/53/lovely-armenia.jpg'
+image_url = Image.open(BytesIO(requests.get(image_url).content))
+image_data = processor_image(image)
+image_features, image_embedding = model_image.encode(image_data, return_features=True)
 ```
 
-To search for similar items, the embeddings can be compared using cosine similarity.
-The resulting value will fall within the range of `-1` to `1`, where `1` indicates a high likelihood of a match.
-PyTorch provides a built-in function for calculating cosine similarity, while for ONNX, you can use NumPy.
+Embed queries:
+
+```py
+text = 'a cityscape bathed in the warm glow of the sun, with varied architecture and a towering, snow-capped mountain rising majestically in the background'
+text_data = processor_text(text)
+text_features, text_embedding = model_text.encode(text_data, return_features=True)
+```
+
+For more details check out:
+
+- Python docs on embedding models in [python/README.md](https://github.com/unum-cloud/uform/blob/main/python/README.md#embedding-models)
+- JavaScript docs on embedding models in [javascript/README.md](https://github.com/unum-cloud/uform/blob/main/javascript/README.md#embedding-models)
+- Swift docs on embedding models in [swift/README.md](https://github.com/unum-cloud/uform/blob/main/swift/README.md#embedding-models)
+
+### Generative Models
+
+The generative models are natively compatible with 
 
 ```python
-import torch.nn.functional as F
+from transformers import AutoModel, AutoProcessor
 
-similarity = F.cosine_similarity(image_embedding, text_embedding)
+model = AutoModel.from_pretrained('unum-cloud/uform-gen2-dpo', trust_remote_code=True)
+processor = AutoProcessor.from_pretrained('unum-cloud/uform-gen2-dpo', trust_remote_code=True)
+
+prompt = 'Question or Instruction'
+image = Image.open('image.jpg')
+
+inputs = processor(text=[prompt], images=[image], return_tensors='pt')
+
+with torch.inference_mode():
+     output = model.generate(
+        **inputs,
+        do_sample=False,
+        use_cache=True,
+        max_new_tokens=256,
+        eos_token_id=151645,
+        pad_token_id=processor.tokenizer.pad_token_id
+    )
+prompt_len = inputs['input_ids'].shape[1]
+decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
 ```
 
-ONNX has no such function, but you can calculate the cosine similarity using [SimSIMD](https://github.com/ashvardanian/simsimd) or manually, with NumPy:
+For more details check out:
 
-```python
-import numpy as np
+- Python docs on generative models in [python/README.md](https://github.com/unum-cloud/uform/blob/main/python/README.md#generative-models)
+- JavaScript docs on generative models 🔜
+- Swift docs on generative models 🔜
 
-image_embedding = image_embedding / np.linalg.norm(image_embedding, keepdims=True, axis=1)
-text_embedding = text_embedding / np.linalg.norm(text_embedding, keepdims=True, axis=1)
-similarity = (image_embedding * text_embedding).sum(axis=1)
-```
-
-### Reranking
-
-Once the list of nearest neighbors (best matches) is obtained, the joint multimodal embeddings, created from both text and image features, can be used to better rerank (reorder) the list.
-The model can calculate a "matching score" that falls within the range of `[0, 1]`, where `1` indicates a high likelihood of a match.
-
-```python
-score, joint_embedding = model.encode_multimodal(
-    image_features=image_features,
-    text_features=text_features,
-    attention_mask=text_data['attention_mask'],
-    return_scores=True,
-)
-```
+## Technical Details
 
 ### Down-casting, Quantization, Matryoshka, and Slicing
 
@@ -153,7 +218,7 @@ Similarly, for higher-dimensional embeddings (512 or 768), a common strategy is 
 ```python
 import numpy as np
 
-f32_embedding: np.ndarray = model.encode_text(text_data, return_features=False).detach().cpu().numpy()
+f32_embedding: np.ndarray = model.encode_text(text_data, return_features=False)
 f16_embedding: np.ndarray = f32_embedding.astype(np.float16)
 i8_embedding: np.ndarray = (f32_embedding * 127).astype(np.int8)
 b1_embedding: np.ndarray = np.packbits((f32_embedding > 0).astype(np.uint8))
@@ -164,7 +229,7 @@ Alternative approach to quantization is to use the Matryoshka embeddings, where 
 ```python
 import numpy as np
 
-large_embedding: np.ndarray = model.encode_text(text_data, return_features=False).detach().cpu().numpy()
+large_embedding: np.ndarray = model.encode_text(text_data, return_features=False)
 small_embedding: np.ndarray = large_embedding[:, :256]
 tiny_embedding: np.ndarray = large_embedding[:, :64]
 ```
@@ -219,253 +284,16 @@ You can pick one of many supported [ONNX execution providers][onnx-providers], w
 
 [onnx-providers]: https://onnxruntime.ai/docs/execution-providers/
 
----
+### Multimodal Chat in CLI
 
-The configuration process may include a few additional steps, depending on the environment.
-When using the CUDA and TensorRT backends with CUDA 12 or newer make sure to [install the Nvidia toolkit][install-nvidia-toolkit] and the `onnxruntime-gpu` package from the custom repository.
-
-```sh
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
-sudo apt-get update
-sudo apt-get -y install cuda-toolkit-12
-pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
-export CUDA_PATH="/usr/local/cuda-12/bin"
-export PATH="/usr/local/cuda-12/bin${PATH:+:${PATH}}"
-export LD_LIBRARY_PATH="/usr/local/cuda-12/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-pytest python/scripts/ -s -x -Wd -v -k onnx
-```
-
-[install-nvidia-toolkit]: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#network-repo-installation-for-ubuntu
-
-## Chat, Image Captioning and Question Answering
-
-UForm generative models are fully compatible with the Hugging Face Transformers library, and can be used without installing the UForm library.
-Those models can be used to caption images or power multimodal chat experiences.
-
-```python
-from transformers import AutoModel, AutoProcessor
-
-model = AutoModel.from_pretrained('unum-cloud/uform-gen2-qwen-500m', trust_remote_code=True)
-processor = AutoProcessor.from_pretrained('unum-cloud/uform-gen2-qwen-500m', trust_remote_code=True)
-
-prompt = 'Question or Instruction'
-image = Image.open('image.jpg')
-
-inputs = processor(text=[prompt], images=[image], return_tensors='pt')
-
-with torch.inference_mode():
-     output = model.generate(
-        **inputs,
-        do_sample=False,
-        use_cache=True,
-        max_new_tokens=256,
-        eos_token_id=151645,
-        pad_token_id=processor.tokenizer.pad_token_id
-    )
-prompt_len = inputs['input_ids'].shape[1]
-decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
-```
-
-You can check examples of different prompts in our [demo space](https://huggingface.co/spaces/unum-cloud/uform-gen2-qwen-500m-demo)
-
-
-### Image Captioning and Question Answering
-
-__It is the instruction for the first version of UForm-Gen model. We highly recommend you use the new model, instructions for which you can find above.__
-
-
-The generative model can be used to caption images, summarize their content, or answer questions about them.
-The exact behavior is controlled by prompts.
-
-```python
-from uform.gen_model import VLMForCausalLM, VLMProcessor
-
-model = VLMForCausalLM.from_pretrained('unum-cloud/uform-gen')
-processor = VLMProcessor.from_pretrained('unum-cloud/uform-gen')
-
-# [cap] Narrate the contents of the image with precision.
-# [cap] Summarize the visual content of the image.
-# [vqa] What is the main subject of the image?
-prompt = '[cap] Summarize the visual content of the image.'
-image = Image.open('zebra.jpg')
-
-inputs = processor(texts=[prompt], images=[image], return_tensors='pt')
-with torch.inference_mode():
-     output = model.generate(
-        **inputs,
-        do_sample=False,
-        use_cache=True,
-        max_new_tokens=128,
-        eos_token_id=32001,
-        pad_token_id=processor.tokenizer.pad_token_id
-    )
-
-prompt_len = inputs['input_ids'].shape[1]
-decoded_text = processor.batch_decode(output[:, prompt_len:])[0]
-```
-
-### Multimodal Chat
-
-The generative models can be used for chat-like experiences, where the user can provide both text and images as input.
-To use that feature, you can start with the following CLI command:
+The generative models can be used for chat-like experiences in the command line.
+For that, you can use the `uform-chat` CLI tool, which is available in the UForm package.
 
 ```bash
-uform-chat --model unum-cloud/uform-gen-chat --image=zebra.jpg
-uform-chat --model unum-cloud/uform-gen-chat \
-    --image="https://bit.ly/3tIVg9M" \
-    --device="cuda:0" \
-    --fp16
+$ pip install uform
+$ uform-chat --model unum-cloud/uform-gen2-dpo --image=zebra.jpg
+$ uform-chat --model unum-cloud/uform-gen2-dpo \
+>     --image="https://bit.ly/3tIVg9M" \
+>     --device="cuda:0" \
+>     --fp16
 ```
-
-### Multi-GPU
-
-To achieve higher throughput, you can launch UForm on multiple GPUs.
-For that pick the encoder of the model you want to run in parallel (`text_encoder` or `image_encoder`), and wrap it in `nn.DataParallel` (or `nn.DistributedDataParallel`).
-
-```python
-import uform
-
-model, processor = uform.get_model('unum-cloud/uform-vl-english')
-model_image = nn.DataParallel(model.image_encoder)
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_image.to(device)
-
-_, res = model_image(images, 0)
-```
-
-## Evaluation
-
-### Embedding Models
-
-Few retrieval benchmarks exist for multimodal embeddings.
-The most famous ones for English are "MS-COCO" and "Flickr30k".
-Evaluating `uform-vl-english` model, one can expect the following numbers for search quality.
-
-| Dataset  | Recall @ 1 | Recall @ 5 | Recall @ 10 |
-| :------- | ---------: | ---------: | ----------: |
-| Flickr   |      0.727 |      0.915 |       0.949 |
-| MS-COCO¹ |      0.510 |      0.761 |       0.838 |
-
-
-For multilingual benchmarks, we've created the [`unum-cloud/coco-sm`](https://github.com/unum-cloud/coco-sm) repository².
-Evaluating the `unum-cloud/uform-vl-multilingual-v2` model, one can expect the following metrics for text-to-image search, compared against `xlm-roberta-base-ViT-B-32` [OpenCLIP](https://github.com/mlfoundations/open_clip) model.
-
-| Language  | OpenCLIP @ 1 | UForm @ 1 | OpenCLIP @ 5 | UForm @ 5 | OpenCLIP @ 10 | UForm @ 10 | Speakers |
-| :-------- | -----------: | --------: | -----------: | --------: | ------------: | ---------: | -------: |
-| English 🇺🇸 |     __37.8__ |      37.7 |         63.5 |  __65.0__ |          73.5 |   __75.9__ |  1'452 M |
-| Chinese 🇨🇳 |         27.3 |  __32.2__ |         51.3 |  __59.0__ |          62.1 |   __70.5__ |  1'118 M |
-| Hindi 🇮🇳   |         20.7 |  __31.3__ |         42.5 |  __57.9__ |          53.7 |   __69.6__ |    602 M |
-| Spanish 🇪🇸 |         32.6 |  __35.6__ |         58.0 |  __62.8__ |          68.8 |   __73.7__ |    548 M |
-| Arabic 🇸🇦  |         22.7 |  __31.7__ |         44.9 |  __57.8__ |          55.8 |   __69.2__ |    274 M |
-| French 🇫🇷  |         31.3 |  __35.4__ |         56.5 |  __62.6__ |          67.4 |   __73.3__ |    274 M |
-
-
-<details>
-<summary>All languages.</summary>
-<br>
-
-| Language             | OpenCLIP @ 1 |    UForm @ 1 | OpenCLIP @ 5 |    UForm @ 5 | OpenCLIP @ 10 |   UForm @ 10 | Speakers |
-| :------------------- | -----------: | -----------: | -----------: | -----------: | ------------: | -----------: | -------: |
-| Arabic 🇸🇦             |         22.7 |     __31.7__ |         44.9 |     __57.8__ |          55.8 |     __69.2__ |    274 M |
-| Armenian 🇦🇲           |          5.6 |     __22.0__ |         14.3 |     __44.7__ |          20.2 |     __56.0__ |      4 M |
-| Chinese 🇨🇳            |         27.3 |     __32.2__ |         51.3 |     __59.0__ |          62.1 |     __70.5__ |  1'118 M |
-| English 🇺🇸            |     __37.8__ |         37.7 |         63.5 |     __65.0__ |          73.5 |     __75.9__ |  1'452 M |
-| French 🇫🇷             |         31.3 |     __35.4__ |         56.5 |     __62.6__ |          67.4 |     __73.3__ |    274 M |
-| German 🇩🇪             |         31.7 |     __35.1__ |         56.9 |     __62.2__ |          67.4 |     __73.3__ |    134 M |
-| Hebrew 🇮🇱             |         23.7 |     __26.7__ |         46.3 |     __51.8__ |          57.0 |     __63.5__ |      9 M |
-| Hindi 🇮🇳              |         20.7 |     __31.3__ |         42.5 |     __57.9__ |          53.7 |     __69.6__ |    602 M |
-| Indonesian 🇮🇩         |         26.9 |     __30.7__ |         51.4 |     __57.0__ |          62.7 |     __68.6__ |    199 M |
-| Italian 🇮🇹            |         31.3 |     __34.9__ |         56.7 |     __62.1__ |          67.1 |     __73.1__ |     67 M |
-| Japanese 🇯🇵           |         27.4 |     __32.6__ |         51.5 |     __59.2__ |          62.6 |     __70.6__ |    125 M |
-| Korean 🇰🇷             |         24.4 |     __31.5__ |         48.1 |     __57.8__ |          59.2 |     __69.2__ |     81 M |
-| Persian 🇮🇷            |         24.0 |     __28.8__ |         47.0 |     __54.6__ |          57.8 |     __66.2__ |     77 M |
-| Polish 🇵🇱             |         29.2 |     __33.6__ |         53.9 |     __60.1__ |          64.7 |     __71.3__ |     41 M |
-| Portuguese 🇵🇹         |         31.6 |     __32.7__ |         57.1 |     __59.6__ |          67.9 |     __71.0__ |    257 M |
-| Russian 🇷🇺            |         29.9 |     __33.9__ |         54.8 |     __60.9__ |          65.8 |     __72.0__ |    258 M |
-| Spanish 🇪🇸            |         32.6 |     __35.6__ |         58.0 |     __62.8__ |          68.8 |     __73.7__ |    548 M |
-| Thai 🇹🇭               |         21.5 |     __28.7__ |         43.0 |     __54.6__ |          53.7 |     __66.0__ |     61 M |
-| Turkish 🇹🇷            |         25.5 |     __33.0__ |         49.1 |     __59.6__ |          60.3 |     __70.8__ |     88 M |
-| Ukranian 🇺🇦           |         26.0 |     __30.6__ |         49.9 |     __56.7__ |          60.9 |     __68.1__ |     41 M |
-| Vietnamese 🇻🇳         |         25.4 |     __28.3__ |         49.2 |     __53.9__ |          60.3 |     __65.5__ |     85 M |
-|                      |              |              |              |              |               |              |          |
-| Mean                 |     26.5±6.4 | __31.8±3.5__ |     49.8±9.8 | __58.1±4.5__ |     60.4±10.6 | __69.4±4.3__ |        - |
-| Google Translate     |     27.4±6.3 | __31.5±3.5__ |     51.1±9.5 | __57.8±4.4__ |     61.7±10.3 | __69.1±4.3__ |        - |
-| Microsoft Translator |     27.2±6.4 | __31.4±3.6__ |     50.8±9.8 | __57.7±4.7__ |     61.4±10.6 | __68.9±4.6__ |        - |
-| Meta NLLB            |     24.9±6.7 | __32.4±3.5__ |    47.5±10.3 | __58.9±4.5__ |     58.2±11.2 | __70.2±4.3__ |        - |
-
-</details>
-
-### Generative Models
-
-| Model                | LLM Size |  SQA |    MME | MMBench | Average¹ |
-| :------------------- | -------: | ---: | -----: | ------: | -------: |
-| UForm-Gen2-Qwen-500m |     0.5B | 45.5 |  880.1 |    42.0 |    29.31 |
-| MobileVLM v2         |     1.4B | 52.1 | 1302.8 |    57.7 |    36.81 |
-| LLaVA-Phi            |     2.7B | 68.4 | 1335.1 |    59.8 |    42.95 |
-
-For captioning evaluation we measure CLIPScore and RefCLIPScore³.
-
-| Model                               | Size | Caption Length | CLIPScore | RefCLIPScore |
-| :---------------------------------- | ---: | -------------: | --------: | -----------: |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |           Long |     0.878 |        0.529 |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |          Short |     0.886 |        0.531 |
-|                                     |
-| `Salesforce/instructblip-vicuna-7b` |   7B |           Long |     0.902 |        0.534 |
-| `Salesforce/instructblip-vicuna-7b` |   7B |          Short |     0.848 |        0.523 |
-|                                     |
-| `unum-cloud/uform-gen`              | 1.5B |           Long |     0.847 |        0.523 |
-| `unum-cloud/uform-gen`              | 1.5B |          Short |     0.842 |        0.522 |
-|                                     |
-| `unum-cloud/uform-gen-chat`         | 1.5B |           Long |     0.860 |        0.525 |
-| `unum-cloud/uform-gen-chat`         | 1.5B |          Short |     0.858 |        0.525 |
-
-Results for VQAv2 evaluation.
-
-| Model                      | Size | Accuracy |
-| :------------------------- | ---: | -------: |
-| `llava-hf/llava-1.5-7b-hf` |   7B |     78.5 |
-| `unum-cloud/uform-gen`     | 1.5B |     66.5 |
-
-<br/>
-
-> ¹ Train split was in training data. <br/>
-> ² Lacking a broad enough evaluation dataset, we translated the [COCO Karpathy test split](https://www.kaggle.com/datasets/shtvkumar/karpathy-splits) with multiple public and proprietary translation services, averaging the scores across all sets, and breaking them down in the bottom section. <br/>
-> ³ We used `apple/DFN5B-CLIP-ViT-H-14-378` CLIP model.
-
-## Speed
-
-On Nvidia RTX 3090, the following performance is expected on text encoding.
-
-| Model                                     | Multilingual |                  Speed |    Speedup |
-| :---------------------------------------- | -----------: | ---------------------: | ---------: |
-| `bert-base-uncased`                       |           No | 1'612 sequences/second |            |
-| `distilbert-base-uncased`                 |           No | 3'174 sequences/second |     x 1.96 |
-| `sentence-transformers/all-MiniLM-L12-v2` |      __Yes__ | 3'604 sequences/second |     x 2.24 |
-| `unum-cloud/uform-vl-multilingual-v2`     |      __Yes__ | 6'809 sequences/second | __x 4.22__ |
-
-On Nvidia RTX 3090, the following performance is expected on text token generation using `float16`, equivalent PyTorch settings, and greedy decoding.
-
-| Model                               | Size |               Speed |   Speedup |
-| :---------------------------------- | ---: | ------------------: | --------: |
-| `llava-hf/llava-1.5-7b-hf`          |   7B |  ~ 40 tokens/second |           |
-| `Salesforce/instructblip-vicuna-7b` |   7B |  ~ 40 tokens/second |           |
-| `unum-cloud/uform-gen`              | 1.5B | ~ 140 tokens/second | __x 3.5__ |
-
-Given the small size of the model it also work well on mobile devices.
-On Apple M2 Arm chips the energy efficiency of inference can exceed that of the RTX 3090 GPU and other Ampere-generation cards.
-
-| Device                 |               Speed | Device TDP |        Efficiency |
-| :--------------------- | ------------------: | ---------: | ----------------: |
-| Nvidia RTX 3090        | ~ 140 tokens/second |     < 350W | 0.40 tokens/joule |
-| Apple M2 Pro unplugged |  ~ 19 tokens/second |      < 20W | 0.95 tokens/joule |
-| Apple M2 Max unplugged |  ~ 38 tokens/second |      < 36W | 1.06 tokens/joule |
-| Apple M2 Max plugged   |  ~ 56 tokens/second |      < 89W | 0.63 tokens/joule |
-
-> [!WARNING]
-> The above numbers are for reference only and are not guaranteed to be accurate.
-
-## License
-
-All models come under the same license as the code - Apache 2.0.

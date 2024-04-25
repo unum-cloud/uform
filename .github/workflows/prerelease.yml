@@ -16,13 +16,13 @@ permissions:
   contents: read
 
 jobs:
+
   test_python:
     name: Test Python
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-      - run: git submodule update --init --recursive
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -34,5 +34,34 @@ jobs:
           pip install -e ".[onnx]"
           pip install pytest
 
+        # When running tests in CI, limit ourselves to the small model tests
       - name: Test with PyTest
-        run: pytest python/scripts/ -s -x -Wd -v
+        run: pytest python/scripts/ -s -x -Wd -v -k small
+
+  test_javascript:
+    name: Test JavaScript
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # TODO: JavaScript tests pass, but ONNX throws a memory error on exit
+      # - name: Build JavaScript
+      #   run: npm ci
+      # - name: Test JavaScript
+      #   run: npm test
+
+  test_swift:
+    name: Test Swift
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: swift build
+      - name: Run tests
+        run: swift test

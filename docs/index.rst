@@ -1,11 +1,25 @@
-==========
+====================
 Overview
-==========
+====================
 .. mdinclude:: ../README.md
 
-.. toctree::
+.. toctree:: 
    :hidden:
+   :caption: �
 
-   self
-   reference
+   python/index
+   javascript/index
+   swift/index
+
+.. toctree:: 
+   :hidden:
+   :caption: �
+
+   contributing
+   benchmarks
+
+.. toctree:: 
+   :hidden:
+   :caption: �
+
    genindex

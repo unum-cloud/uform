@@ -1,10 +1,25 @@
-requirements.txt
-dist/
-test
-build/
-package-lock.json
+/requirements.txt
+/dist/
+/test
+/build/
+yarn.lock
 *.egg-info
-*.onnx
 __pycache__
 .build
 .swiftpm
+.hf_token
+
+dictionary*
+vocab*
+/models/
+
+# Tensors & ML Model
+*.onnx
+*.pt
+*.safetensors
+*.mlpackage
+
+# NodeJS
+node_modules
+node_build
+yarn-error.log
