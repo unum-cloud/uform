@@ -153,7 +153,7 @@ from io import BytesIO
 from PIL import Image
 
 image_url = 'https://media-cdn.tripadvisor.com/media/photo-s/1b/28/6b/53/lovely-armenia.jpg'
-image_url = Image.open(BytesIO(requests.get(image_url).content))
+image = Image.open(BytesIO(requests.get(image_url).content))
 image_data = processor_image(image)
 image_features, image_embedding = model_image.encode(image_data, return_features=True)
 ```
