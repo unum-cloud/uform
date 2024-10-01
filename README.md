@@ -42,7 +42,7 @@ With compact __custom pre-trained transformer models__, this can run anywhere fr
 
 ## Features
 
-- __Tiny Embeddings__: 64-dimensional [Matryoshaka][matryoshka]-style embeddings for extremely fast [search][usearch].
+- __Tiny Embeddings__: 64-dimensional [Matryoshka][matryoshka]-style embeddings for extremely fast [search][usearch].
 - __Throughput__: Thanks to the small size, the inference speed is [2-4x faster](#speed) than competitors.
 - __Portable__: Models come with native ONNX support, making them easy to deploy on any platform.
 - __Quantization Aware__: Down-cast embeddings from `f32` to `i8` without losing much recall.
@@ -153,7 +153,7 @@ from io import BytesIO
 from PIL import Image
 
 image_url = 'https://media-cdn.tripadvisor.com/media/photo-s/1b/28/6b/53/lovely-armenia.jpg'
-image_url = Image.open(BytesIO(requests.get(image_url).content))
+image = Image.open(BytesIO(requests.get(image_url).content))
 image_data = processor_image(image)
 image_features, image_embedding = model_image.encode(image_data, return_features=True)
 ```
