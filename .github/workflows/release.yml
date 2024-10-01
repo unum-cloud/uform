@@ -15,16 +15,28 @@ permissions:
 
 jobs:
   versioning:
-    name: Semantic Release
+    name: Update Version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - name: Run TinySemVer
+        uses: ashvardanian/tinysemver@v2.0.7
         with:
-          node-version: 20
-      - run: npm install --save-dev --prefix ./package-ci @semantic-release/exec @semantic-release/git conventional-changelog-eslint semantic-release && npx --prefix ./package-ci semantic-release
+          verbose: "true"
+          version-file: "VERSION"
+          update-version-in: |
+            package.json:"version": "(\d+\.\d+\.\d+)"
+            package-lock.json:"uform",\n\s+"version": "(\d+\.\d+\.\d+)"
+            CITATION.cff:^version: (\d+\.\d+\.\d+)
+            pyproject.toml:^version = "(\d+\.\d+\.\d+)"
+          dry-run: "false"
+          push: "true"
+          create-release: "true"
+          github-token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
 
   rebase:
     name: Rebase Dev. Branch
