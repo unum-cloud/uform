@@ -19,7 +19,10 @@ import UForm
 ### Text Embeddings
 
 ```swift
-let textModel = try await TextEncoder(modelName: "unum-cloud/uform3-image-text-english-small")
+let textModel = try await TextEncoder(
+    modelName: "unum-cloud/uform3-image-text-english-small",
+    computeUnits: .cpuAndNeuralEngine
+)
 let text = "A group of friends enjoy a barbecue on a sandy beach, with one person grilling over a large black grill, while the other sits nearby, laughing and enjoying the camaraderie."
 let textEmbedding: Embedding = try textModel.encode(text)
 let textVector: [Float32] = textEmbedding.asFloats()
@@ -28,7 +31,10 @@ let textVector: [Float32] = textEmbedding.asFloats()
 ### Image Embeddings
 
 ```swift
-let imageModel = try await ImageEncoder(modelName: "unum-cloud/uform3-image-text-english-small")
+let imageModel = try await ImageEncoder(
+    modelName: "unum-cloud/uform3-image-text-english-small",
+    computeUnits: .cpuAndNeuralEngine
+)
 let imageURL = "https://github.com/ashvardanian/ashvardanian/blob/master/demos/bbq-on-beach.jpg?raw=true"
 guard let url = URL(string: imageURL),
     let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),
@@ -39,6 +45,26 @@ guard let url = URL(string: imageURL),
 var imageEmbedding: Embedding = try imageModel.encode(cgImage)
 var imageVector: [Float32] = embedding.asFloats()
 ```
+
+### Choosing Target Device
+
+Apple chips provide several functional units capable of high-throughput matrix multiplication and AI inference.
+Those `computeUnits` include the CPU, GPU, and Neural Engine.
+For maximum compatibility, the `.all` option is used by default.
+Sadly, Apple's scheduler is not always optimal, and it might be beneficial to specify the target device explicitly, especially if the models are pre-compiled for the Apple Neural Engine, as it may yield significant performance gains.
+
+| Model               | GPU Text E. | ANE Text E. | GPU Image E. | ANE Image E. |
+| :------------------ | ----------: | ----------: | -----------: | -----------: |
+| `english-small`     |     2.53 ms |     0.53 ms |      6.57 ms |      1.23 ms |
+| `english-base`      |     2.54 ms |     0.61 ms |     18.90 ms |      3.79 ms |
+| `english-large`     |     2.30 ms |     0.61 ms |     79.68 ms |     20.94 ms |
+| `multilingual-base` |     2.34 ms |     0.50 ms |     18.98 ms |      3.77 ms |
+
+> On Apple M4 iPad, running iOS 18.2.
+> Batch size is 1, and the model is pre-loaded into memory.
+> The original encoders use `f32` single-precision numbers for maximum compatibility, and mostly rely on __GPU__ for computation.
+> The quantized encoders use a mixture of `i8`, `f16`, and `f32` numbers for maximum performance, and mostly rely on the Apple Neural Engine (__ANE__) for computation.
+> The median latency is reported.
 
 ### Computing Distances
 

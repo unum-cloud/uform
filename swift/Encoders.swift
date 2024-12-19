@@ -94,20 +94,26 @@ func readConfig(fromPath path: String) throws -> [String: Any] {
 }
 
 /// Compiles and loads a machine learning model from a URL.
-/// - Parameter modelURL: The URL where the model package is located.
+/// - Parameters:
+///   - modelURL: The URL where the model package is located.
+///   - computeUnits: The hardware devices to use for model computation.
 /// - Returns: An instance of `MLModel`.
-func readModel(fromURL modelURL: URL) throws -> MLModel {
+func readModel(fromURL modelURL: URL, computeUnits: MLComputeUnits = .all) throws -> MLModel {
     let compiledModelURL = try MLModel.compileModel(at: modelURL)
-    return try MLModel(contentsOf: compiledModelURL)
+    let config = MLModelConfiguration()
+    config.computeUnits = computeUnits
+    return try MLModel(contentsOf: compiledModelURL, configuration: config)
 }
 
 /// Loads a machine learning model from a local file path.
-/// - Parameter path: The file path where the model file is located.
+/// - Parameters:
+///   - path: The file path where the model file is located.
+///   - computeUnits: The hardware devices to use for model computation.
 /// - Returns: An instance of `MLModel`.
-func readModel(fromPath path: String) throws -> MLModel {
+func readModel(fromPath path: String, computeUnits: MLComputeUnits = .all) throws -> MLModel {
     let absPath = path.hasPrefix("/") ? path : FileManager.default.currentDirectoryPath + "/" + path
     let modelURL = URL(fileURLWithPath: absPath, isDirectory: true)
-    return try readModel(fromURL: modelURL)
+    return try readModel(fromURL: modelURL, computeUnits: computeUnits)
 }
 
 /// Encodes text input into embeddings using a machine learning model.
@@ -120,10 +126,16 @@ public class TextEncoder {
     ///   - modelPath: The path to the directory containing the machine learning model.
     ///   - configPath: Optional. The path to the configuration file. Defaults to config.json in the model directory.
     ///   - tokenizerPath: Optional. The path to the tokenizer file. Defaults to tokenizer.json in the model directory.
-    public init(modelPath: String, configPath: String? = nil, tokenizerPath: String? = nil) throws {
+    ///   - computeUnits: The hardware devices to use for model computation. Use `.cpuAndNeuralEngine` for best performance.
+    public init(
+        modelPath: String,
+        configPath: String? = nil,
+        tokenizerPath: String? = nil,
+        computeUnits: MLComputeUnits = .all
+    ) throws {
         let finalConfigPath = configPath ?? modelPath + "/config.json"
         let finalTokenizerPath = tokenizerPath ?? modelPath + "/tokenizer.json"
-        self.model = try readModel(fromPath: modelPath)
+        self.model = try readModel(fromPath: modelPath, computeUnits: computeUnits)
         self.processor = try TextProcessor(
             configPath: finalConfigPath,
             tokenizerPath: finalTokenizerPath,
@@ -135,16 +147,20 @@ public class TextEncoder {
     /// - Parameters:
     ///   - modelName: The identifier for the model repository.
     ///   - hubApi: The API object to interact with the model hub. Defaults to a shared instance.
-    public init(modelName: String, hubApi: HubApi = .shared) async throws {
+    ///   - computeUnits: The hardware devices to use for model computation. Use `.cpuAndNeuralEngine` for best performance.
+    public init(modelName: String, hubApi: HubApi = .shared, computeUnits: MLComputeUnits = .all) async throws {
         let repo = Hub.Repo(id: modelName)
+        let encoderMask =
+            computeUnits == .cpuAndNeuralEngine ? "text_encoder_neural.mlpackage" : "text_encoder.mlpackage"
         let modelURL = try await hubApi.snapshot(
             from: repo,
-            matching: ["text_encoder.mlpackage/*", "config.json", "tokenizer.json"]
+            matching: ["\(encoderMask)/*", "config.json", "tokenizer.json"]
         )
         let configPath = modelURL.appendingPathComponent("config.json").path
         let tokenizerPath = modelURL.appendingPathComponent("tokenizer.json").path
         self.model = try readModel(
-            fromURL: modelURL.appendingPathComponent("text_encoder.mlpackage", isDirectory: true)
+            fromURL: modelURL.appendingPathComponent(encoderMask, isDirectory: true),
+            computeUnits: computeUnits
         )
         self.processor = try TextProcessor(configPath: configPath, tokenizerPath: tokenizerPath, model: self.model)
     }
@@ -174,9 +190,9 @@ public class ImageEncoder {
     /// - Parameters:
     ///   - modelPath: The path to the directory containing the machine learning model.
     ///   - configPath: Optional. The path to the configuration file. Defaults to config.json in the model directory.
-    public init(modelPath: String, configPath: String? = nil) throws {
+    public init(modelPath: String, configPath: String? = nil, computeUnits: MLComputeUnits = .all) throws {
         let finalConfigPath = configPath ?? modelPath + "/config.json"
-        self.model = try readModel(fromPath: modelPath)
+        self.model = try readModel(fromPath: modelPath, computeUnits: computeUnits)
         self.processor = try ImageProcessor(configPath: finalConfigPath)
     }
 
@@ -184,12 +200,16 @@ public class ImageEncoder {
     /// - Parameters:
     ///   - modelName: The identifier for the model repository.
     ///   - hubApi: The API object to interact with the model hub. Defaults to a shared instance.
-    public init(modelName: String, hubApi: HubApi = .shared) async throws {
+    ///   - computeUnits: The hardware devices to use for model computation. Use `.cpuAndNeuralEngine` for best performance.
+    public init(modelName: String, hubApi: HubApi = .shared, computeUnits: MLComputeUnits = .all) async throws {
         let repo = Hub.Repo(id: modelName)
-        let modelURL = try await hubApi.snapshot(from: repo, matching: ["image_encoder.mlpackage/*", "config.json"])
+        let encoderMask =
+            computeUnits == .cpuAndNeuralEngine ? "image_encoder_neural.mlpackage" : "image_encoder.mlpackage"
+        let modelURL = try await hubApi.snapshot(from: repo, matching: ["\(encoderMask)/*", "config.json"])
         let configPath = modelURL.appendingPathComponent("config.json").path
         self.model = try readModel(
-            fromURL: modelURL.appendingPathComponent("image_encoder.mlpackage", isDirectory: true)
+            fromURL: modelURL.appendingPathComponent(encoderMask, isDirectory: true),
+            computeUnits: computeUnits
         )
         self.processor = try ImageProcessor(configPath: configPath)
     }
