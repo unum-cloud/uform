@@ -20,16 +20,14 @@ yarn add uform
 ```js
 import { getModel, Modality, TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from '@unum-cloud/uform';
 
-const { configPath, modalityPaths, tokenizerPath } = await getModel({
+const { configPath, modalityPaths, tokenizerPath } = await getModel(
     modelId: 'unum-cloud/uform3-image-text-english-small',
-    modalities: [Modality.TextEncoder, Modality.ImageEncoder],
-    token: null, // Optional Hugging Face token for private models
-    saveDir: null, // Optional directory to save the model to       
-});
+    modalities: [Modality.TextEncoder, Modality.ImageEncoder] 
+);
 
 const textProcessor = new TextProcessor(configPath, tokenizerPath);
 await textProcessor.init();
-const processedTexts = await textProcessor.process("a small red panda in a zoo");
+const processedTexts = await textProcessor.process(["a small red panda in a zoo"]);
 
 const textEncoder = new TextEncoder(modalityPaths.text_encoder, textProcessor);
 await textEncoder.init();
