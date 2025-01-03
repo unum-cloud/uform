@@ -21,8 +21,8 @@ yarn add uform
 import { getModel, Modality, TextProcessor, TextEncoder, ImageEncoder, ImageProcessor } from '@unum-cloud/uform';
 
 const { configPath, modalityPaths, tokenizerPath } = await getModel(
-    modelId: 'unum-cloud/uform3-image-text-english-small',
-    modalities: [Modality.TextEncoder, Modality.ImageEncoder] 
+    'unum-cloud/uform3-image-text-english-small',
+    [Modality.TextEncoder, Modality.ImageEncoder] 
 );
 
 const textProcessor = new TextProcessor(configPath, tokenizerPath);
