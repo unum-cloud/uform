@@ -41,7 +41,7 @@ maintainers = [
 name = "uform"
 readme = "README.md"
 requires-python = ">=3.7"
-version = "3.1.0"
+version = "3.1.1"
 
 [project.scripts]
 uform-chat = "uform.chat:main"
