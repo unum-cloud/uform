@@ -21,7 +21,7 @@
   "files": [
     "javascript/index.mjs",
     "javascript/encoders.mjs",
-    "javascript/hub.js"
+    "javascript/hub.mjs"
   ],
   "directories": {
     "doc": "docs"
