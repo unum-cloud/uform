@@ -99,7 +99,8 @@ func readConfig(fromPath path: String) throws -> [String: Any] {
 ///   - computeUnits: The hardware devices to use for model computation.
 /// - Returns: An instance of `MLModel`.
 func readModel(fromURL modelURL: URL, computeUnits: MLComputeUnits = .all) throws -> MLModel {
-    let compiledModelURL = try MLModel.compileModel(at: modelURL)
+    let compiledModelURL =
+        modelURL.absoluteString.hasSuffix(".mlmodelc/") ? modelURL : try MLModel.compileModel(at: modelURL)
     let config = MLModelConfiguration()
     config.computeUnits = computeUnits
     return try MLModel(contentsOf: compiledModelURL, configuration: config)
