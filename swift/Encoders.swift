@@ -112,7 +112,7 @@ func readModel(fromURL modelURL: URL, computeUnits: MLComputeUnits = .all) throw
 /// - Returns: An instance of `MLModel`.
 func readModel(fromPath path: String, computeUnits: MLComputeUnits = .all) throws -> MLModel {
     let absPath = path.hasPrefix("/") ? path : FileManager.default.currentDirectoryPath + "/" + path
-    let modelURL = URL(fileURLWithPath: absPath, isDirectory: true)
+    let modelURL = URL(fileURLWithPath: absPath, isDirectory: !absPath.hasSuffix(".mlmodelc"))
     return try readModel(fromURL: modelURL, computeUnits: computeUnits)
 }
 
